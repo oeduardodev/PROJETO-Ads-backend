@@ -14,14 +14,14 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F00 — contrato, escopo e pesquisa |
-| Passo | 002 — `docs(adr): fixar limites do catálogo e decisões iniciais` |
-| Estado | DONE: ADRs documentados e validação documental verde |
+| Passo | 003 — `docs(sources): mapear fontes oficiais do piloto` |
+| Estado | DONE: fontes oficiais mapeadas, acesso observado e pendências de automação registradas |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 002, §§ 1, 3, 5, 7, 13 e 14 |
-| Roteiro consultado | Documento completo; passo 002 e contrato Git da seção 2 |
-| Commit anterior | `44f9a61c285b48206746dd71f05399a86bf8465a` — passo 001, backend local |
-| Commit atual | `HEAD` do backend após o commit `docs(adr): fixar limites do catálogo e decisões iniciais` (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 003 — confirmar URLs oficiais e política de descoberta do piloto |
+| Arquitetura consultada | Documento completo; para o passo 003, §§ 4, 10.1, 13 e 15 |
+| Roteiro consultado | Documento completo; passo 003 e contrato Git da seção 2 |
+| Commit anterior | `c9f04ddb9cf560cc10f20af92b3080208247fc22` — passo 002, backend local |
+| Commit atual | `HEAD` do backend após o commit `docs(sources): mapear fontes oficiais do piloto` (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 004 — montar corpus rotulado de 30–50 documentos oficiais; gate G0 só após 005 e revisão |
 
 ## Passo 001 — evidências
 
@@ -42,6 +42,14 @@
 - Validação prescrita executada: conferência estrutural dos três ADRs, 4 casos positivos, 6 negativos e 2 incertos; invariantes de escopo e componentes presentes; referência ao SHA do passo 001 no progresso; `git diff --check` e `git diff --cached --check` sem erros. Resultado: verde.
 - Lint, typecheck, teste e build de código: ainda não existem scripts; o passo 011 os criará. Não se aplicam ao passo documental 002.
 
+## Passo 003 — evidências
+
+- Artefatos: `docs/research/source-matrix.csv` e `docs/research/crawl-policy.md`.
+- Pesquisa em páginas institucionais oficiais: UFPB/PRG, UFCG/COMPROV, UEPB/PROGRAD e IFPB/Portal do Estudante. As quatro listagens responderam HTTP 200 em acesso HTTPS direto em 2026-11-02; contatos e critérios de filtragem estão documentados.
+- `robots.txt`: UFPB/PRG 404, UFCG/COMPROV 200 com bloqueios de caminhos internos, UEPB 403, IFPB/Portal do Estudante 404. Esses resultados não autorizam coleta automática; UEPB fica em pesquisa manual até esclarecimento. A política registra a licença exibida pela COMPROV e pendências de termos/retenção.
+- Comandos e resultados: pesquisa Web em domínios institucionais; requisições HTTPS diretas com `urllib.request` para as quatro páginas e `robots.txt`; validação CSV com 4 linhas, uma por instituição, campos completos, URLs HTTPS, host exato, status 200 e links presentes na política: PASS. `git diff --check`: PASS.
+- Testes de código, lint, typecheck e build: não se aplicam ao passo de pesquisa; scripts ainda não existem.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
@@ -54,5 +62,5 @@
 
 ### Outras pendências
 
-- Passos 003–005 e gate G0: pesquisar fontes oficiais, formar corpus de 30–50 documentos rotulados e validar métricas/decisões antes de instalar dependências.
+- Passos 004–005 e gate G0: formar corpus de 30–50 documentos oficiais rotulados e validar métricas/decisões antes de instalar dependências. Não tratar a matriz de fontes como aprovação de crawling.
 - Referência visual: imagem inspecionada. Linguagem de cartaz/colagem: fundo marfim, preto dominante, tipografia sans extremamente pesada nos títulos, blocos verde limão, laranja intenso, azul elétrico e lilás, contornos pretos espessos, sombras deslocadas, cantos e formas oblíquas, raios e setas desenhadas, fotos em meio-tom, busca larga e cards com imagem institucional. Extrair tokens e componentes no passo 067 e aplicar na interface pública no passo 068, com equivalentes responsivos/acessíveis e sem apresentar oportunidades fictícias como vigentes.
