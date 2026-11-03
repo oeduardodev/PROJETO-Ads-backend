@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F01 — fundação do workspace e engenharia |
-| Passo | 011 — `chore(quality): lint format typecheck tests e scripts raiz` |
-| Estado | DONE: scripts e testes locais verdes nos dois repositórios |
+| Passo | 012 — `ci(github): validar pull requests e branch protegida` |
+| Estado | DONE local: workflow verde e falha controlada nos dois repositórios; execução remota pendente por proibição de push |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 011, § 12.1 e critérios de teste do § 12.2 |
-| Roteiro consultado | Documento completo; passo 011 e sequência lint, typecheck, test, build em checkout limpo |
-| Commit anterior backend | `7dca1e3c8310e7dd2ec1972902f509689f60d0d5` — passo 010 |
-| Commit frontend | `c70ba5a37eb726a5cf830da7bce90f0ce4bdc232` — primeiro commit coordenado do passo 011 |
-| Commit atual backend | `HEAD` após o commit de qualidade do passo 011 (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 012 — workflow CI para pull requests e política de branch |
+| Arquitetura consultada | Documento completo; para o passo 012, § 11, sobretudo CI/CD e controle de migrations |
+| Roteiro consultado | Documento completo; passo 012, branch local de teste e falha proposital controlada |
+| Commit anterior backend | `edf7e9f97ba8fc01f1baec5a6567124155c837d2` — passo 011 |
+| Commit frontend | `5e8b5637d9c17228ab15697b4d30860125c5418a` — primeiro commit coordenado do passo 012 |
+| Commit atual backend | `HEAD` após o commit de CI do passo 012 (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 013 — setup local reproduzível em README |
 
 ## Passo 001 — evidências
 
@@ -117,6 +117,14 @@
 - Backend: quatro testes unitários do contrato de configuração (segredos obrigatórios, erro sem valor, Redis e CORS) e um teste de execução HTTP de `/health` com CORS. Frontend: Vitest/Angular testa aviso de catálogo em preparação sem links externos fictícios; teste local sobe `ng serve` e confirma HTML em português sem API. Esses testes de execução não substituem a suíte de navegador e os fluxos completos previstos nos passos posteriores.
 - Validação prescrita: `corepack pnpm install --frozen-lockfile` PASS em ambos; `format:check`, `lint`, `typecheck`, `test` e `build` PASS em ambos, executados nessa ordem após formatação. Backend: 4/4 unitários e 1/1 HTTP; frontend: 1/1 unitário e 1/1 inicialização local. `test:e2e` PASS nos dois como smoke; `git diff --cached --check` no frontend PASS, executar no backend após staging.
 - Pendente: ampliar cobertura conforme módulos reais e testar Playwright, acessibilidade, integrações e contratos nas etapas correspondentes. `pnpm peers check` no frontend ainda aponta conflito transitivo `@emnapi/*` já observado no passo 008, sem falha de build ou teste. Nenhum push ou deploy.
+
+## Passo 012 — evidências
+
+- Estado real antes do passo: backend e frontend limpos nos commits `edf7e9f` e `c70ba5a`. O passo foi executado nas branches locais `ci-step-012`, sem push. Arquitetura § 11 prevê CI para lint, typecheck, testes e build, com migrations controladas.
+- Artefatos: `.github/workflows/ci.yml` em cada repositório, com permissão somente de leitura, gatilhos PR/`main`/manual, Node 24.15.0, pnpm 12.16.1, cache de pnpm, instalação congelada, formatação, lint, typecheck, testes e build. `docs/engineering/git-workflow.md` documenta PR, revisão, status `quality` e futura proteção de `main` em cada repositório. Não há job de deploy ou migration.
+- Validação local: `act --list` reconheceu o job em ambos. `act pull_request --job quality` na branch de teste passou no backend (4 testes unitários, build) e no frontend (1 teste unitário, build). Uma falha temporária de teste em cada repositório tornou o respectivo job vermelho na etapa de testes; as falhas foram removidas e as suítes locais voltaram a passar. `git diff --cached --check` PASS em ambos antes dos commits.
+- Limite: a tentativa de salvar cache no `act` em `/mnt/c/Users/Eduardo Batista/...` emitiu aviso porque o caminho contém espaço; o job concluiu verde. Isso não comprova o cache no runner hospedado. Os repositórios GitHub continuam vazios porque o usuário proibiu push; portanto, PR hospedado, status remoto e ruleset de branch não foram executados nem marcados como concluídos. A política descreve como verificar isso após autorização futura de publicação.
+- Passo 011 revalidado em checkouts Git limpos, após os commits, com `pnpm install --frozen-lockfile`, lint, typecheck, teste e build verdes em ambos. Nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 
