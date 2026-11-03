@@ -92,7 +92,7 @@ test('facets count distinct published processes under combined filters and hide 
         campuses.set(acronym, campus);
       }
       async function createProcess(acronym, status, selectionType, requiresEnem) {
-        return tx.selectionProcess.create({
+        const process = await tx.selectionProcess.create({
           data: {
             institutionId: institutions.get(acronym).id,
             publicationStatus: status,
@@ -100,8 +100,21 @@ test('facets count distinct published processes under combined filters and hide 
             requiresEnem,
             regularSisuFlow: false,
             tuitionFree: true,
+            verifiedAt,
+            referenceUrl: 'https://example.org/test-only',
           },
         });
+        if (status === 'PUBLICADO') {
+          await tx.reviewDecision.create({
+            data: {
+              processId: process.id,
+              reviewerId: 'fixture-only',
+              decision: 'APPROVE',
+              reason: 'Transação sintética revertida após o teste',
+            },
+          });
+        }
+        return process;
       }
       async function offer(process, acronym, modality, index) {
         return tx.offering.create({

@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F03 — API pública e contratos versionados |
-| Passo | 025 — `feat(api): fornecer facetas e contagens` |
+| Passo | 026 — `feat(api): pesquisar processos publicados` |
 | Estado | DONE local no HEAD; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 025, §§ 7–9 e 12 |
-| Roteiro consultado | Documento completo; passo 025 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `50fcea80a14fc6898e4555d65a24eba4667b2f42` — passo 024 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 025 |
-| Commit atual backend | HEAD — passo 025; sem push |
-| Próximo passo | 026 — busca pública; G1 ainda pendente |
+| Arquitetura consultada | Documento completo; para o passo 026, §§ 7–9 e 12 |
+| Roteiro consultado | Documento completo; passo 026 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `50a08f22384afa854391e7706a4b332d102653f3` — passo 025 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 026 |
+| Commit atual backend | HEAD — passo 026; sem push |
+| Próximo passo | 027 — detalhe público; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -228,6 +228,13 @@
 - Artefatos: parser de UF/modalidade/tipo/ENEM, consulta limitada a processos publicados elegíveis, `GET /api/v1/filters` e agregação por processo distinto. UF e modalidade são satisfeitas pela mesma oferta. Rascunhos e demonstração histórica ficam fora.
 - Validação prescrita: `pnpm install --frozen-lockfile`, `db:validate`, `db:migrate:status` (nove migrations em dia no banco local), `format:check`, `lint`, `typecheck`, `build`, `test` (10/10), `test:e2e` (1/1) e `test:integration` (15/15) PASS. Teste HTTP confirmou resposta vazia para a seed em rascunho e erro 400 para parâmetro inválido; teste em transação revertida cobriu filtros combinados, multi-oferta, mesma oferta para UF/modalidade e ENEM trivalente. Nenhum dado sintético persistiu.
 - Pendências: avaliação de desempenho da agregação em memória quando houver volume real; a busca pública completa entra no 026. G1 segue pendente até 029; nenhum push, deploy ou migration de produção.
+
+## Passo 026 — evidências
+
+- Estado real antes do passo: backend limpo em `50a08f22384afa854391e7706a4b332d102653f3`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidos roteiro 026 e arquitetura §§ 7–9 e 12. O endpoint de facetas existia, mas não havia busca pública. O usuário decidiu `open_only` com qualquer janela completa aberta e `sort=recent|deadline|course`; ADR 0013 aceito antes da migration.
+- Artefatos: `GET /api/v1/processes` com todos os parâmetros do roteiro, limites, normalização de diacríticos, ENEM trivalente, paginação e desempate estável por ID. Migration local `20261103193000_process_verified_at` registra verificação de processo e índice. Apenas processos publicados, revisados, com URL de referência, tipo e instituição pública verificada entram na resposta. Demonstração histórica continua em rascunho. Cálculo de janela usa fuso e rejeita horários ausentes ou ambíguos. Contrato e limitação documentados em `docs/engineering/public-search.md`.
+- Validação prescrita: `pnpm install --frozen-lockfile`, `db:validate`, `format:check`, `lint`, `typecheck`, `test` com build (12/12), `test:e2e` (1/1), `test:integration` (17/17) e `git diff --check` PASS. Banco e Redis locais; fixture sintética publicada existe somente dentro de transação revertida. Testes cobrem catálogo vazio, erro 400, acentos, ENEM `true`/`false`/`unknown`, janela completa, prazo parcial, três ordenações e páginas estáveis. A migration foi aplicada apenas ao banco descartável local `alem_do_sisu_step026`. A suíte também aceitou o novo índice de publicação como plano válido. Uma repetição falhou por comando local incorreto e outra por credencial de teste incorreta; a execução final com infraestrutura e configuração corretas ficou verde.
+- Pendências: medir latência e memória da ordenação sobre todos os candidatos antes de escala; validar URL oficial contra a fonte no fluxo editorial antes de qualquer publicação real; função geral de estados de prazo no 028. Houve aviso de depreciação de concorrência interna do `pg` na integração, sem falha. G1 segue pendente até 029; nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 

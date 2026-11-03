@@ -44,7 +44,7 @@ test('query plans can use publication and trigram course indexes', async () => {
       await tx.$queryRaw`EXPLAIN (FORMAT JSON) SELECT id FROM selection_processes WHERE publication_status = 'RASCUNHO'::"PublicationStatus" AND institution_id = '00000000-0000-0000-0000-000000000000'::uuid`;
     const coursePlan =
       await tx.$queryRaw`EXPLAIN (FORMAT JSON) SELECT id FROM offerings WHERE normalized_course_name ILIKE '%engenharia%'`;
-    assert.match(JSON.stringify(statusPlan), /processes_publication_institution_idx/u);
+    assert.match(JSON.stringify(statusPlan), /processes_publication_(?:institution|verified)_idx/u);
     assert.match(JSON.stringify(coursePlan), /offerings_course_trgm_idx/u);
   });
 });

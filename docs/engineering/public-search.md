@@ -1,0 +1,9 @@
+# Busca pública de processos — passo 026
+
+`GET /api/v1/processes` aceita `q`, `uf`, `city`, `degree`, `modality`, `requires_enem`, `selection_type`, `open_only`, `sort`, `page` e `page_size`. A paginação começa em 1, admite até 10.000 páginas e até 100 itens por página. `q` admite até 120 caracteres, `city` 150, `degree` 32; entradas inválidas recebem 400. `requires_enem` aceita `true`, `false` e `unknown` (valor nulo persistido).
+
+A busca ignora diacríticos em nomes de instituição, cursos e cidades. Um processo só aparece quando foi publicado e revisado, tem URL de referência e data de verificação, pertence a instituição pública verificada e representa graduação gratuita fora do fluxo regular do SiSU. A demonstração histórica da seed permanece em rascunho e fora da resposta. A resposta contém apenas campos públicos e `meta` de paginação.
+
+`sort=recent` é o padrão e ordena pela verificação mais recente; `deadline` usa o próximo fim futuro confirmado; `course` usa o primeiro nome normalizado de curso. A chave `id` desempata todas as ordens. `open_only=true` exige ao menos uma janela com data, hora e fuso completos que esteja aberta no instante da consulta. Horários inexistentes, inválidos ou ambíguos não são tratados como abertos nem recebem 23h59 presumido. O ADR 0013 registra estas escolhas; o passo 028 centralizará os estados completos de prazo.
+
+A implementação atual carrega os candidatos elegíveis para calcular prazos e ordenar. Antes de haver volume real, é preciso medir latência, consumo de memória e limites de cardinalidade e, se necessário, mover a ordenação e a paginação para consulta parametrizada no banco. A existência de URL e decisão de revisão no registro ainda não equivale a uma auditoria editorial da fonte; a publicação real permanece condicionada à verificação humana e à política do passo de revisão.
