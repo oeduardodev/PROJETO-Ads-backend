@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F01 — fundação do workspace e engenharia |
-| Passo | 010 — `chore(config): validar ambientes e segredos` |
-| Estado | DONE: configuração obrigatória validada antes da inicialização; flags web públicas separadas |
+| Passo | 011 — `chore(quality): lint format typecheck tests e scripts raiz` |
+| Estado | DONE: scripts e testes locais verdes nos dois repositórios |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 010, §§ 7.1–7.2, 10.3 e 11.1 |
-| Roteiro consultado | Documento completo; passo 010 e falha de segredo obrigatório/bundle sem tokens privados |
-| Commit anterior backend | `b2d992ffd832564d28b830c4480169f171b7a839` — passo 009 |
-| Commit frontend | `ed48ebfcca09ab7f23c2ff93fed9da303aa64e96` — primeiro commit coordenado do passo 010 |
-| Commit atual backend | `HEAD` após o commit de configuração do passo 010 (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 011 — lint, formatação, typecheck, testes e scripts raiz |
+| Arquitetura consultada | Documento completo; para o passo 011, § 12.1 e critérios de teste do § 12.2 |
+| Roteiro consultado | Documento completo; passo 011 e sequência lint, typecheck, test, build em checkout limpo |
+| Commit anterior backend | `7dca1e3c8310e7dd2ec1972902f509689f60d0d5` — passo 010 |
+| Commit frontend | `c70ba5a37eb726a5cf830da7bce90f0ce4bdc232` — primeiro commit coordenado do passo 011 |
+| Commit atual backend | `HEAD` após o commit de qualidade do passo 011 (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 012 — workflow CI para pull requests e política de branch |
 
 ## Passo 001 — evidências
 
@@ -109,6 +109,14 @@
 - Frontend: `src/environments/` contém apenas `apiBaseUrl`, `publicSiteUrl` e `catalogEnabled` públicos. `angular.json` substitui o arquivo no build de desenvolvimento, e a configuração é registrada em token de injeção. Produção deixa URLs vazias até definição de ambiente, sem chamadas de API pelo shell.
 - Validação: build TypeScript do backend PASS; API e worker sem `DATABASE_URL` encerraram com `Configuration error: DATABASE_URL is required`; ausência de `REDIS_URL` e senha no URL do PostgreSQL falharam com mensagens específicas; configuração local válida iniciou API (`GET /health` HTTP 200, CORS restrito à origem configurada) e worker (saída 0, sem listener). Builds Angular de desenvolvimento e produção PASS; URL local apareceu somente no bundle de desenvolvimento; nomes de variáveis privadas, hosts locais e a senha real de teste não apareceram no JavaScript de produção. `git diff --cached --check` no frontend PASS; executar no backend após staging.
 - Limites: a validação ainda não conecta ao banco nem ao Redis; readiness de dependências entra no passo 019. Provedores de busca/IA, autenticação, storage e URLs públicas definitivas dependem das etapas correspondentes. Nenhum push, deploy ou migração de produção.
+
+## Passo 011 — evidências
+
+- Estado real antes do passo: backend limpo em `7dca1e3`, frontend limpo em `ed48ebf`; documentação e contratos canônicos permanecem no backend. A arquitetura § 12.1 separa testes unitários, contrato, integração, conectores, IA, E2E e segurança.
+- Artefatos nos dois repositórios: `eslint.config.mjs` com ESLint flat config, `.prettierrc.json`, `.prettierignore`, scripts raiz `lint`, `typecheck`, `test`, `build`, `test:e2e`, `format` e `format:check`, dependências fixadas em `package.json`/`pnpm-lock.yaml`. Código existente foi formatado, sem mudança de comportamento intencional.
+- Backend: quatro testes unitários do contrato de configuração (segredos obrigatórios, erro sem valor, Redis e CORS) e um teste de execução HTTP de `/health` com CORS. Frontend: Vitest/Angular testa aviso de catálogo em preparação sem links externos fictícios; teste local sobe `ng serve` e confirma HTML em português sem API. Esses testes de execução não substituem a suíte de navegador e os fluxos completos previstos nos passos posteriores.
+- Validação prescrita: `corepack pnpm install --frozen-lockfile` PASS em ambos; `format:check`, `lint`, `typecheck`, `test` e `build` PASS em ambos, executados nessa ordem após formatação. Backend: 4/4 unitários e 1/1 HTTP; frontend: 1/1 unitário e 1/1 inicialização local. `test:e2e` PASS nos dois como smoke; `git diff --cached --check` no frontend PASS, executar no backend após staging.
+- Pendente: ampliar cobertura conforme módulos reais e testar Playwright, acessibilidade, integrações e contratos nas etapas correspondentes. `pnpm peers check` no frontend ainda aponta conflito transitivo `@emnapi/*` já observado no passo 008, sem falha de build ou teste. Nenhum push ou deploy.
 
 ## Pendências e decisões
 

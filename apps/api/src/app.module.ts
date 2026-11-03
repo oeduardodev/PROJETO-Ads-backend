@@ -16,5 +16,24 @@ import { AccountsModule } from './modules/accounts/accounts.module.js';
 import { AlertsModule } from './modules/alerts/alerts.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 
-@Module({ imports: [HealthModule, InstitutionsModule, CampusesModule, SourcesModule, DiscoveryModule, CrawlingModule, DocumentsModule, ExtractionModule, ValidationModule, SelectionProcessesModule, OfferingsModule, ReviewsModule, SearchModule, AccountsModule, AlertsModule, AuditModule] })
+@Module({
+  imports: [
+    HealthModule,
+    InstitutionsModule,
+    CampusesModule,
+    SourcesModule,
+    DiscoveryModule,
+    CrawlingModule,
+    DocumentsModule,
+    ExtractionModule,
+    ValidationModule,
+    SelectionProcessesModule,
+    OfferingsModule,
+    ReviewsModule,
+    SearchModule,
+    AccountsModule,
+    AlertsModule,
+    AuditModule,
+  ],
+})
 export class AppModule {}

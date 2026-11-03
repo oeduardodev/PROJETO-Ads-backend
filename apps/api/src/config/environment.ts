@@ -64,7 +64,9 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
   if (!Number.isInteger(port) || port < 1 || port > 65535) {
     throw new ConfigurationError('PORT must be an integer from 1 to 65535');
   }
-  const corsOrigins = required(env, 'CORS_ORIGINS').split(',').map((value) => value.trim());
+  const corsOrigins = required(env, 'CORS_ORIGINS')
+    .split(',')
+    .map((value) => value.trim());
   for (const origin of corsOrigins) {
     let url: URL;
     try {
@@ -72,7 +74,12 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
     } catch {
       throw new ConfigurationError('CORS_ORIGINS must contain absolute HTTP(S) origins');
     }
-    if (!['http:', 'https:'].includes(url.protocol) || url.origin !== origin || url.username || url.password) {
+    if (
+      !['http:', 'https:'].includes(url.protocol) ||
+      url.origin !== origin ||
+      url.username ||
+      url.password
+    ) {
       throw new ConfigurationError('CORS_ORIGINS must contain only HTTP(S) origins');
     }
   }

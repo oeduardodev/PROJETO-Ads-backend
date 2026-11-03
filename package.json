@@ -3,7 +3,23 @@
   "private": true,
   "version": "0.0.0",
   "packageManager": "pnpm@12.16.1",
+  "scripts": {
+    "lint": "eslint apps test",
+    "typecheck": "corepack pnpm --filter @alem-do-sisu/api exec tsc -p tsconfig.json --noEmit",
+    "test": "corepack pnpm build && node --test test/config.test.mjs",
+    "build": "corepack pnpm --filter @alem-do-sisu/api build",
+    "test:e2e": "node --test test/e2e/health.test.mjs",
+    "format": "prettier --write \"apps/**/*.{ts,json}\" \"test/**/*.mjs\" package.json eslint.config.mjs",
+    "format:check": "prettier --check \"apps/**/*.{ts,json}\" \"test/**/*.mjs\" package.json eslint.config.mjs"
+  },
   "engines": {
     "node": ">=22.12.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "eslint": "10.14.0",
+    "globals": "17.14.0",
+    "prettier": "3.9.10",
+    "typescript-eslint": "8.72.1"
   }
 }
