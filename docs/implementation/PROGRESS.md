@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F01 — fundação do workspace e engenharia |
-| Passo | 008 — `feat(web): inicializar Angular standalone` |
-| Estado | DONE: shell Angular com rotas e Tailwind compila e inicia sem API |
+| Passo | 009 — `chore(infra): dockerizar PostgreSQL e Redis locais` |
+| Estado | DONE: PostgreSQL e Redis locais saudáveis; volumes persistem após reinício |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 008, §§ 3.1, 9.1–9.4 e 11.1 |
-| Roteiro consultado | Documento completo; passo 008 e validação de build/shell local |
-| Commit anterior backend | `0a2ee56afaf400bbbc288ad10f13bf4a1c89d613` — passo 007 |
-| Commit frontend | `28e5ab7cb07c01855a061f939b81591e3a515658` — primeiro commit coordenado do passo 008 |
-| Commit atual backend | `HEAD` após o commit de progresso do passo 008 (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 009 — Postgres e Redis locais em Docker Compose |
+| Arquitetura consultada | Documento completo; para o passo 009, §§ 6, 7.2 e 11–11.1 |
+| Roteiro consultado | Documento completo; passo 009 e teste de subida/persistência após reinício |
+| Commit anterior backend | `bb963e028307a03df93b079248ca124024bcc613` — progresso do passo 008 |
+| Commit frontend | `28e5ab7cb07c01855a061f939b81591e3a515658` — passo 008 |
+| Commit atual backend | `HEAD` após o commit do passo 009 (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 010 — exemplos e validação de configuração por ambiente |
 
 ## Passo 001 — evidências
 
@@ -92,6 +92,14 @@
 - Validação prescrita: `corepack pnpm install --frozen-lockfile`: PASS após registrar `allowBuilds` para quatro dependências do scaffold; `corepack pnpm --filter @alem-do-sisu/web build`: PASS (bundle inicial 212,35 kB bruto); `ng serve` em 127.0.0.1:4208: PASS, HTTP 200 com `pt-BR` e título correto, sem backend ativo; servidor de teste encerrado. `git diff --cached --check` no frontend: PASS. O navegador integrado não estava disponível para inspeção visual nesta sessão; revisão visual permanece para as etapas de interface.
 - Instalação: a primeira tentativa parou em `ERR_PNPM_IGNORED_BUILDS`; a configuração explícita em `pnpm-workspace.yaml` permitiu `@parcel/watcher`, `esbuild`, `lmdb` e `msgpackr-extract`, e a repetição passou. `pnpm peers check` ainda aponta conflito transitivo entre `@oxc-parser/binding-wasm32-wasi` e `@napi-rs/wasm-runtime` sobre `@emnapi/*`; o build e o servidor funcionam. Não foi aplicado override sem necessidade comprovada.
 - Ordem dos commits: frontend `28e5ab7cb07c01855a061f939b81591e3a515658` primeiro; backend `HEAD` deste registro segundo. Nenhum push, deploy ou publicação de edital.
+
+## Passo 009 — evidências
+
+- Estado real antes do passo: backend limpo em `bb963e0`; frontend limpo em `28e5ab7`. A arquitetura §§ 6, 7.2 e 11–11.1 define PostgreSQL como fonte persistente e Redis como infraestrutura de filas; o passo 009 limita-se aos serviços locais.
+- Artefatos: `infra/compose.dev.yml` com PostgreSQL 17.7 e Redis 7.4.12 fixados, healthchecks, portas vinculadas a `127.0.0.1`, volumes nomeados e AOF do Redis; `infra/README.md` com uso local e endereços da API/worker. Senha local em `.env` ignorado pelo Git; nenhum segredo entrou no índice.
+- Ambiente de teste: Docker Engine 29.1.3 e Compose 2.40.3 instalados no Ubuntu 24.04 do WSL 2, sem Docker Desktop. `docker compose --env-file .env -f infra/compose.dev.yml config --quiet`: PASS; `up -d --wait`: ambos os serviços `healthy`.
+- Persistência: criados um marcador SQL e uma chave Redis descartáveis; após `docker compose restart` e `up -d --wait`, ambos retornaram `step009`. Os dois volumes nomeados foram inspecionados, e as portas 5433/6380 responderam via TCP no Windows. Marcadores removidos em seguida. Resultado: PASS.
+- `git diff --cached --check`: executar após staging. Nenhuma migration, publicação, operação de produção, push ou deploy. Configuração validada da API/worker e `.env.example` entram no passo 010; scripts gerais de qualidade entram no 011.
 
 ## Pendências e decisões
 
