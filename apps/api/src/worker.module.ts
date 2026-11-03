@@ -1,0 +1,11 @@
+import { Module } from '@nestjs/common';
+import { SourcesModule } from './modules/sources/sources.module.js';
+import { DiscoveryModule } from './modules/discovery/discovery.module.js';
+import { CrawlingModule } from './modules/crawling/crawling.module.js';
+import { DocumentsModule } from './modules/documents/documents.module.js';
+import { ExtractionModule } from './modules/extraction/extraction.module.js';
+import { ValidationModule } from './modules/validation/validation.module.js';
+import { SelectionProcessesModule } from './modules/selection-processes/selection-processes.module.js';
+
+@Module({ imports: [SourcesModule, DiscoveryModule, CrawlingModule, DocumentsModule, ExtractionModule, ValidationModule, SelectionProcessesModule] })
+export class WorkerModule {}

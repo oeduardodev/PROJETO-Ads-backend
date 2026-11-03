@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F01 — fundação do workspace e engenharia |
-| Passo | 006 — `chore(repo): iniciar workspace pnpm e convenções Git` |
-| Estado | DONE: workspaces separados conforme ADR 0000; instalações e lockfiles validados |
+| Passo | 007 — `feat(api): inicializar aplicação NestJS modular` |
+| Estado | DONE: API REST responde `/health`; worker inicia sem escutar HTTP |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 006, §§ 3, 7.1, 9.2 e 11 |
-| Roteiro consultado | Documento completo; passo 006 e validação `pnpm install` |
-| Commit anterior | `05b7118c8ce0c9a2105ce78dee0182ce012998da` — passo 005, backend local |
-| Commit frontend | `ce3440118939535b72543d7adc59e491203246e1` — primeiro commit coordenado do passo 006 |
-| Commit atual backend | `HEAD` após o commit backend do passo 006 (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 007 — bootstrap NestJS modular no backend |
+| Arquitetura consultada | Documento completo; para o passo 007, §§ 3.1–3.2, 7.1–7.2 e 11 |
+| Roteiro consultado | Documento completo; passo 007 e validação `/health`/worker |
+| Commit anterior | `bcb715f296e06495cd4cf32e85a920cea90fc7c6` — passo 006, backend local |
+| Commit frontend | `ce3440118939535b72543d7adc59e491203246e1` — passo 006, sem alterações neste passo |
+| Commit atual backend | `HEAD` após o commit backend do passo 007 (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 008 — bootstrap Angular standalone no frontend |
 
 ## Passo 001 — evidências
 
@@ -76,6 +76,13 @@
 - Ambiente: Node v24.15.0, Corepack v0.34.6 e pnpm v12.16.1 fixado por `packageManager`. Como `pnpm` não está globalmente no PATH, `corepack pnpm` executou os comandos prescritos sem alterar o repositório remoto.
 - Validação prescrita: `corepack pnpm install` e `corepack pnpm install --frozen-lockfile` passaram em ambos os workspaces, cada um com dois projetos. `git check-ignore .env .env.local node_modules/sample` confirmou exclusão nas duas raízes; não há arquivo `.env` com segredo staged. `git diff --cached --check` no frontend: PASS; no backend: executar antes do commit. Lint, typecheck, testes de aplicação e build entram no passo 011.
 - Ordem dos commits deste passo: frontend `ce3440118939535b72543d7adc59e491203246e1` primeiro; backend `HEAD` deste registro segundo. A compatibilidade é pnpm 12.16.1 e workspaces independentes; não há contrato API/Web ainda. Nenhum push.
+
+## Passo 007 — evidências
+
+- Estado real antes do passo: backend limpo em `bcb715f`; frontend limpo em `ce34401`. A arquitetura §§ 3, 7 e 11 requer API modular e worker independente, sem trabalho pesado em request HTTP.
+- Artefatos: `apps/api/src/main.ts` inicia REST; `apps/api/src/worker.ts` usa `createApplicationContext` sem servidor HTTP; `apps/api/src/modules/` contém health e módulos de domínio vazios. TypeScript estrito, ESM, NestJS 12.3.2, TypeScript 6.0.3 e dependências fixadas no lockfile. Os módulos vazios não executam coleta, IA ou publicação.
+- Validação prescrita: `corepack pnpm install`: PASS; `corepack pnpm --filter @alem-do-sisu/api build`: PASS; API iniciada localmente com `PORT=3107`, `GET http://127.0.0.1:3107/health` → HTTP 200 e `{"status":"ok"}`; `corepack pnpm --filter @alem-do-sisu/api start:worker` → inicialização sem erro e saída 0; conexão TCP a 127.0.0.1:3108 recusada, confirmando ausência de listener do worker. API de teste encerrada. `git diff --cached --check`: executar após staging.
+- Limite deste passo: worker ainda não tem jobs e termina após inicialização; a fila entra nos passos de descoberta. Configuração validada, Postgres/Redis, lint e testes automatizados entram nos passos 009–011. Nenhum push ou deploy.
 
 ## Pendências e decisões
 
