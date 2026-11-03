@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F01 — fundação do workspace e engenharia |
-| Passo | 012 — `ci(github): validar pull requests e branch protegida` |
-| Estado | DONE local: workflow verde e falha controlada nos dois repositórios; execução remota pendente por proibição de push |
+| Passo | 013 — `docs(dev): publicar setup reproduzível` |
+| Estado | DONE local: README reproduziu Compose, API, worker e web; remotos continuam vazios sem push |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 012, § 11, sobretudo CI/CD e controle de migrations |
-| Roteiro consultado | Documento completo; passo 012, branch local de teste e falha proposital controlada |
-| Commit anterior backend | `edf7e9f97ba8fc01f1baec5a6567124155c837d2` — passo 011 |
-| Commit frontend | `5e8b5637d9c17228ab15697b4d30860125c5418a` — primeiro commit coordenado do passo 012 |
-| Commit atual backend | `HEAD` após o commit de CI do passo 012 (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 013 — setup local reproduzível em README |
+| Arquitetura consultada | Documento completo; para o passo 013, §§ 3, 7, 9 e 11–11.1 |
+| Roteiro consultado | Documento completo; passo 013 e reprodução do ambiente somente com o README |
+| Commit anterior backend | `9b128561ad51352dd743f3e1ab29dffc518cf8b7` — passo 012 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — primeiro commit coordenado do passo 013 |
+| Commit atual backend | `HEAD` após o commit documental do passo 013 (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 014 — spike e ADR do ORM antes da primeira migration local |
 
 ## Passo 001 — evidências
 
@@ -125,6 +125,14 @@
 - Validação local: `act --list` reconheceu o job em ambos. `act pull_request --job quality` na branch de teste passou no backend (4 testes unitários, build) e no frontend (1 teste unitário, build). Uma falha temporária de teste em cada repositório tornou o respectivo job vermelho na etapa de testes; as falhas foram removidas e as suítes locais voltaram a passar. `git diff --cached --check` PASS em ambos antes dos commits.
 - Limite: a tentativa de salvar cache no `act` em `/mnt/c/Users/Eduardo Batista/...` emitiu aviso porque o caminho contém espaço; o job concluiu verde. Isso não comprova o cache no runner hospedado. Os repositórios GitHub continuam vazios porque o usuário proibiu push; portanto, PR hospedado, status remoto e ruleset de branch não foram executados nem marcados como concluídos. A política descreve como verificar isso após autorização futura de publicação.
 - Passo 011 revalidado em checkouts Git limpos, após os commits, com `pnpm install --frozen-lockfile`, lint, typecheck, teste e build verdes em ambos. Nenhum push, deploy ou migration de produção.
+
+## Passo 013 — evidências
+
+- Estado real antes do passo: backend limpo em `9b12856`, frontend limpo em `5e8b563`; repositórios Git separados e remotos vazios por proibição explícita de push. A arquitetura §§ 3, 7, 9 e 11–11.1 define processos, serviços e parâmetros documentados.
+- Artefatos: `README.md` na raiz de cada repositório e `docs/engineering/local-development.md` em ambos. O README do backend dá pré-requisitos, `.env` local sem sobrescrever arquivo existente, instalação congelada, portas, sequência Compose/API/worker/web, URLs, testes e parada/reset apenas local. O frontend documenta execução sem API e limites do shell. `.gitattributes` fixa LF nos dois repositórios após problema real de CRLF no Windows; Angular CLI teve telemetria opcional desativada para não interromper o primeiro `ng serve`.
+- Reprodução local seguindo os comandos do README: Compose `up -d --wait` trouxe PostgreSQL e Redis `healthy`; `node --env-file=.env apps/api/dist/main.js` respondeu `GET /health` HTTP 200 com `{"status":"ok"}`; worker iniciou e encerrou com saída 0; `ng serve --host 127.0.0.1 --port 4200` respondeu HTTP 200. Processos de teste Node/Angular foram encerrados. Links internos dos READMEs e comandos citados foram conferidos.
+- Após ajuste de fim de linha, `format:check`, lint, typecheck, testes e build passaram nos dois repositórios; `git diff --cached --check` no frontend PASS, executar no backend após staging. A primeira checagem de formatação após `git restore` identificou CRLF em um teste por repositório; os arquivos foram normalizados e a causa foi tratada com `.gitattributes`.
+- Limite: um desenvolvedor com cópias locais consegue seguir o guia; clonar os remotos vazios ainda não reproduz o código até que uma publicação seja explicitamente autorizada. O worker não executa jobs e a API não testa dependências no readiness ainda. Nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 
