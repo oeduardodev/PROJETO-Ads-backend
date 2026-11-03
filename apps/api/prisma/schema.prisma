@@ -67,6 +67,7 @@ model Institution {
   campuses       Campus[]
   allowedDomains AllowedDomain[]
   sources        Source[]
+  processes      SelectionProcess[]
 
   @@map("institutions")
 }
@@ -81,7 +82,9 @@ model Campus {
   state          String      @db.Char(2)
   timezone       String      @db.VarChar(64)
   institution    Institution @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  offerings      Offering[]
 
+  @@unique([id, institutionId], map: "campuses_id_institution_key")
   @@unique([institutionId, normalizedName, normalizedCity], map: "campuses_institution_name_city_key")
   @@index([state, normalizedCity], map: "campuses_state_city_idx")
   @@map("campuses")
@@ -205,4 +208,95 @@ model Document {
   @@index([sha256], map: "documents_sha256_idx")
   @@index([discoveredUrlId], map: "documents_discovered_url_idx")
   @@map("documents")
+}
+
+model SelectionProcess {
+  id              String              @id @default(uuid()) @db.Uuid
+  institutionId   String              @map("institution_id") @db.Uuid
+  noticeCode      String?             @map("notice_code") @db.VarChar(100)
+  noticeYear      Int?                @map("notice_year")
+  selectionType   String?             @map("selection_type") @db.VarChar(64)
+  regularSisuFlow Boolean?            @map("regular_sisu_flow")
+  requiresEnem    Boolean?            @map("requires_enem")
+  tuitionFree     Boolean?            @map("tuition_free")
+  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
+  institution     Institution         @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  offerings       Offering[]
+  windows         ApplicationWindow[]
+  requirements    Requirement[]
+
+  @@unique([institutionId, noticeCode, noticeYear], map: "processes_institution_notice_year_key")
+  @@unique([id, institutionId], map: "processes_id_institution_key")
+  @@map("selection_processes")
+}
+
+model Offering {
+  id                   String                @id @default(uuid()) @db.Uuid
+  processId            String                @map("process_id") @db.Uuid
+  institutionId        String                @map("institution_id") @db.Uuid
+  campusId             String?               @map("campus_id") @db.Uuid
+  courseName           String                @map("course_name") @db.VarChar(250)
+  normalizedCourseName String                @map("normalized_course_name") @db.VarChar(250)
+  degreeType           String?               @map("degree_type") @db.VarChar(32)
+  modality             String?               @db.VarChar(64)
+  shift                String?               @db.VarChar(64)
+  seats                Int?
+  process              SelectionProcess      @relation(fields: [processId, institutionId], references: [id, institutionId], onDelete: Restrict)
+  campus               Campus?               @relation(fields: [campusId, institutionId], references: [id, institutionId], onDelete: Restrict)
+  reservations         OfferingReservation[]
+  windows              ApplicationWindow[]
+  requirements         Requirement[]
+
+  @@unique([id, processId], map: "offerings_id_process_key")
+  @@index([normalizedCourseName], map: "offerings_course_idx")
+  @@index([campusId], map: "offerings_campus_idx")
+  @@map("offerings")
+}
+
+model OfferingReservation {
+  id                 String        @id @default(uuid()) @db.Uuid
+  offeringId         String        @map("offering_id") @db.Uuid
+  category           String        @db.VarChar(150)
+  normalizedCategory String        @map("normalized_category") @db.VarChar(150)
+  seats              Int?
+  offering           Offering      @relation(fields: [offeringId], references: [id], onDelete: Restrict)
+  requirements       Requirement[]
+
+  @@unique([offeringId, normalizedCategory], map: "reservations_offering_category_key")
+  @@unique([id, offeringId], map: "reservations_id_offering_key")
+  @@map("offering_reservations")
+}
+
+model ApplicationWindow {
+  id              String            @id @default(uuid()) @db.Uuid
+  processId       String            @map("process_id") @db.Uuid
+  offeringId      String?           @map("offering_id") @db.Uuid
+  label           String?           @db.VarChar(150)
+  startDate       DateTime?         @map("start_date") @db.Date
+  startTime       String?           @map("start_time") @db.VarChar(5)
+  endDate         DateTime?         @map("end_date") @db.Date
+  endTime         String?           @map("end_time") @db.VarChar(5)
+  timezone        String?           @db.VarChar(64)
+  instructionsUrl String?           @map("instructions_url") @db.Text
+  process         SelectionProcess  @relation(fields: [processId], references: [id], onDelete: Restrict)
+  offering        Offering?         @relation(fields: [offeringId, processId], references: [id, processId], onDelete: Restrict)
+
+  @@index([processId, endDate], map: "windows_process_end_date_idx")
+  @@map("application_windows")
+}
+
+model Requirement {
+  id            String               @id @default(uuid()) @db.Uuid
+  processId     String               @map("process_id") @db.Uuid
+  offeringId    String?              @map("offering_id") @db.Uuid
+  reservationId String?              @map("reservation_id") @db.Uuid
+  criterion     String               @db.VarChar(200)
+  required      Boolean?
+  valueJson     Json?                @map("value_json")
+  process       SelectionProcess     @relation(fields: [processId], references: [id], onDelete: Restrict)
+  offering      Offering?            @relation(fields: [offeringId, processId], references: [id, processId], onDelete: Restrict)
+  reservation   OfferingReservation? @relation(fields: [reservationId, offeringId], references: [id, offeringId], onDelete: Restrict)
+
+  @@index([processId], map: "requirements_process_idx")
+  @@map("requirements")
 }

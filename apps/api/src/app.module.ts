@@ -8,7 +8,7 @@ import { CrawlingModule } from './modules/crawling/crawling.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
 import { ExtractionModule } from './modules/extraction/extraction.module.js';
 import { ValidationModule } from './modules/validation/validation.module.js';
-import { SelectionProcessesModule } from './modules/selection-processes/selection-processes.module.js';
+import { ProcessesModule } from './modules/processes/processes.module.js';
 import { OfferingsModule } from './modules/offerings/offerings.module.js';
 import { ReviewsModule } from './modules/reviews/reviews.module.js';
 import { SearchModule } from './modules/search/search.module.js';
@@ -29,7 +29,7 @@ import { DatabaseModule } from './database/database.module.js';
     DocumentsModule,
     ExtractionModule,
     ValidationModule,
-    SelectionProcessesModule,
+    ProcessesModule,
     OfferingsModule,
     ReviewsModule,
     SearchModule,

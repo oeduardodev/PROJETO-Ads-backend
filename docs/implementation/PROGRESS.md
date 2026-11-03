@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F02 — persistência e regras do domínio |
-| Passo | 018 — `feat(documents): persistir snapshots e versões` |
-| Estado | DONE local com fixtures sintéticas e integração PostgreSQL; commit pendente nesta edição; remotos continuam vazios sem push |
+| Passo | 019 — `feat(processes): modelar processos, ofertas e inscrições` |
+| Estado | Testes de integração verdes; commit local pendente; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 018, §§ 3.1, 4.2, 6 e 10.1 |
-| Roteiro consultado | Documento completo; passo 018 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `10d2058d34743b6477d056908c65c15512a58650` — passo 017 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 018 |
-| Commit atual backend | `HEAD` após o commit do passo 018; sem push |
-| Próximo passo | 019 — processos, ofertas e inscrições; G1 ainda pendente |
+| Arquitetura consultada | Documento completo; para o passo 019, §§ 1.2, 5.3–5.4, 6–6.2 |
+| Roteiro consultado | Documento completo; passo 019 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `4eadb4b9bfe04e45715a8c746d8377252984c718` — passo 018 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 019 |
+| Commit atual backend | Pendente — passo 019; sem push |
+| Próximo passo | 020 — evidências, retificações e decisões; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -173,6 +173,15 @@
 - Validação prescrita: cinco migrations aplicadas em `alem_do_sisu_step018` **local vazio** e `db:migrate:status` PASS. Teste com HTML sintético: recaptura idêntica manteve ID/versão; bytes novos criaram versão 2; retorno aos bytes originais criou versão 3 e reutilizou o blob; outra URL compartilhou o mesmo hash. Resultado temporário: 4 documentos, 2 blobs; após cleanup no banco: 4 instituições, 0 documentos, 0 blobs. URL oficial foi rejeitada mesmo em teste; storage fora de `NODE_ENV=test` foi rejeitado. Integração 5/5 PASS, incluindo regressões 015–017.
 - Qualidade: `corepack pnpm install --frozen-lockfile`, `db:validate`, `db:migrate:status`, `format:check`, `lint`, `typecheck`, `test` (8/8), `test:e2e` (1/1), `test:integration` (5/5) e `build` PASS. O primeiro lint exigiu preservar a causa de um erro de storage; corrigido e suíte repetida verde. `git diff --cached --check` será executado após staging. Nenhum PDF ou HTML institucional foi copiado, e não houve push, deploy ou migration de produção.
 - Pendências: decisão de provedor de produção, licença e prazo de retenção por fonte; MIME real, limite e expiração no futuro coletor autorizado. G1 permanece pendente até 029.
+
+## Passo 019 — evidências
+
+- Estado real ao iniciar: backend limpo em `4eadb4b9bfe04e45715a8c746d8377252984c718`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidos roteiro 019, arquitetura §§ 1.2, 5.3–5.4, 6–6.2, glossário e máquina de estados. Usuário escolheu tabelas filhas e data/hora separadas; ADR 0009 aceito antes da migration.
+- Artefatos: migration `20261103160000_processes_offerings_windows`, repositórios Nest de processos, ofertas, janelas e requisitos, documentação de modelo e teste de integração sintético. Constraints de banco rejeitam vagas negativas e relacionamentos entre instituições diferentes. Nenhuma publicação ou coleta.
+- Validação prescrita: seis migrations aplicadas em banco **local vazio** `alem_do_sisu_step019`; integração 6/6 PASS. Processo sintético com dois cursos, reservas e janelas distintas preservou os detalhes; prazo só com data manteve hora nula. Vagas negativas e campus de outra instituição foram rejeitados. Dados de teste removidos após execução.
+- Geração SQL: `migrate dev --create-only` parou em aviso de unique index no modo não interativo; `migrate diff` contra o banco local do passo 018 produziu SQL revisado, com checks explícitos. Nenhuma migration de produção.
+- Qualidade final: `pnpm install --frozen-lockfile`, `db:validate`, `db:migrate:status`, `format:check`, `lint`, `typecheck`, `build`, `test` (8/8), `test:e2e` (1/1) e `test:integration` (6/6) PASS. Execução inicial paralela de build e teste colidiu na geração do Prisma; repetidos serialmente, ambos verdes. O Compose local desligou entre comandos; reiniciado no mesmo comando da verificação de banco, com migration e integração verdes. `git diff --check` PASS.
+- Pendências: evidências/revisões/decisões entram no 020. G1 permanece pendente até 029. Nenhum push, deploy, migração de produção ou dado público publicado.
 
 ## Pendências e decisões
 

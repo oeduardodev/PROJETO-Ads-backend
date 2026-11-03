@@ -5,7 +5,7 @@ import { CrawlingModule } from './modules/crawling/crawling.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
 import { ExtractionModule } from './modules/extraction/extraction.module.js';
 import { ValidationModule } from './modules/validation/validation.module.js';
-import { SelectionProcessesModule } from './modules/selection-processes/selection-processes.module.js';
+import { ProcessesModule } from './modules/processes/processes.module.js';
 import { DatabaseModule } from './database/database.module.js';
 
 @Module({
@@ -17,7 +17,7 @@ import { DatabaseModule } from './database/database.module.js';
     DocumentsModule,
     ExtractionModule,
     ValidationModule,
-    SelectionProcessesModule,
+    ProcessesModule,
   ],
 })
 export class WorkerModule {}
