@@ -154,6 +154,7 @@ model DiscoveredUrl {
   relevanceScore Float?                 @map("relevance_score")
   status         DiscoveredUrlStatus    @default(CANDIDATE)
   observations   DiscoveryObservation[]
+  documents      Document[]
 
   @@map("discovered_urls")
 }
@@ -173,4 +174,35 @@ model DiscoveryObservation {
   @@unique([discoveredUrlId, crawlRunId], map: "discovery_observations_url_run_key")
   @@index([sourceId, firstSeenAt], map: "discovery_observations_source_seen_idx")
   @@map("discovery_observations")
+}
+
+model DocumentBlob {
+  sha256      String     @id @db.Char(64)
+  storageKey  String     @map("storage_key") @db.Text
+  byteLength  Int        @map("byte_length")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  documents   Document[]
+
+  @@unique([sha256, storageKey], map: "document_blobs_hash_storage_key")
+  @@map("document_blobs")
+}
+
+model Document {
+  id              String         @id @default(uuid()) @db.Uuid
+  discoveredUrlId String?        @map("discovered_url_id") @db.Uuid
+  url             String         @db.Text
+  sha256          String         @db.Char(64)
+  storageKey      String         @map("storage_key") @db.Text
+  mediaType       String         @map("media_type") @db.VarChar(128)
+  version         Int
+  capturedAt      DateTime       @default(now()) @map("captured_at") @db.Timestamptz(6)
+  lastSeenAt      DateTime       @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  issuedAt        DateTime?      @map("issued_at") @db.Timestamptz(6)
+  blob            DocumentBlob   @relation(fields: [sha256, storageKey], references: [sha256, storageKey], onDelete: Restrict)
+  discoveredUrl   DiscoveredUrl? @relation(fields: [discoveredUrlId], references: [id], onDelete: Restrict)
+
+  @@unique([url, version], map: "documents_url_version_key")
+  @@index([sha256], map: "documents_sha256_idx")
+  @@index([discoveredUrlId], map: "documents_discovered_url_idx")
+  @@map("documents")
 }

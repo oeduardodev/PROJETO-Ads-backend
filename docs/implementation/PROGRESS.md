@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F02 — persistência e regras do domínio |
-| Passo | 017 — `feat(discovery): registrar execuções e URLs descobertas` |
-| Estado | DONE local após deduplicação e integração PostgreSQL; commit pendente nesta edição; remotos continuam vazios sem push |
+| Passo | 018 — `feat(documents): persistir snapshots e versões` |
+| Estado | DONE local com fixtures sintéticas e integração PostgreSQL; commit pendente nesta edição; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 017, §§ 1, 4.1–4.3, 5, 6 e 7.2 |
-| Roteiro consultado | Documento completo; passo 017 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `f5c4745318c4abf6c2ef0f126f192f60c03530ed` — passo 016 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 014 |
-| Commit atual backend | `HEAD` após o commit do passo 017; sem push |
-| Próximo passo | 018 — snapshots e versões documentais; G1 ainda pendente |
+| Arquitetura consultada | Documento completo; para o passo 018, §§ 3.1, 4.2, 6 e 10.1 |
+| Roteiro consultado | Documento completo; passo 018 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `10d2058d34743b6477d056908c65c15512a58650` — passo 017 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 018 |
+| Commit atual backend | `HEAD` após o commit do passo 018; sem push |
+| Próximo passo | 019 — processos, ofertas e inscrições; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -165,6 +165,14 @@
 - Validação prescrita: quatro migrations aplicadas em `alem_do_sisu_step017` **local vazio**; `db:migrate:status` informou schema atualizado. A mesma URL oficial do corpus, detectada três vezes por duas fontes e com fragmento em uma ocorrência, resultou em 1 candidato, `seen_count=3` e 2 observações com contagens 2 e 1. Observação com execução de outra fonte foi rejeitada e revertida. Teste de integração 4/4 PASS, incluindo os passos 015–016; após cleanup: 4 instituições, 0 fontes, 0 execuções, 0 candidatos e 0 observações.
 - Qualidade: `corepack pnpm install --frozen-lockfile`, `db:validate`, `format:check`, `lint`, `typecheck`, `test` (8/8), `test:e2e` (1/1) e `build` PASS. `git diff --cached --check` será executado após staging. Nenhum fetch, crawling, publicação, push, deploy ou migration de produção.
 - Pendências: resolver DNS/redirecionamentos e permissões de acesso antes de qualquer fetch; snapshots e versões entram no passo 018. G1 permanece pendente até o 029.
+
+## Passo 018 — evidências
+
+- Estado real antes do passo: backend em `10d2058d34743b6477d056908c65c15512a58650`, com rascunho não rastreado do ADR 0008 e preparação do progresso; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidos roteiro 018, arquitetura §§ 3.1, 4.2, 6 e 10.1 e política de coleta. O usuário aceitou metadados versionados e storage local **somente para fixtures de teste**; ADR 0008 aceito antes da migration.
+- Artefatos: migration `20261103154133_document_snapshots` cria `document_blobs` com identidade SHA-256 e `documents` com URL, MIME, versão, captura, último avistamento, `storage_key` e vínculo opcional ao candidato. FKs garantem correspondência de hash e chave; checks restringem hash, tamanho, MIME e versão. `DocumentsRepository` mantém histórico por URL e reaproveita blob por hash; `FixtureLocalStorage` grava apenas bytes sintéticos em diretório temporário sob `NODE_ENV=test`. Política em `docs/engineering/document-snapshots.md`.
+- Validação prescrita: cinco migrations aplicadas em `alem_do_sisu_step018` **local vazio** e `db:migrate:status` PASS. Teste com HTML sintético: recaptura idêntica manteve ID/versão; bytes novos criaram versão 2; retorno aos bytes originais criou versão 3 e reutilizou o blob; outra URL compartilhou o mesmo hash. Resultado temporário: 4 documentos, 2 blobs; após cleanup no banco: 4 instituições, 0 documentos, 0 blobs. URL oficial foi rejeitada mesmo em teste; storage fora de `NODE_ENV=test` foi rejeitado. Integração 5/5 PASS, incluindo regressões 015–017.
+- Qualidade: `corepack pnpm install --frozen-lockfile`, `db:validate`, `db:migrate:status`, `format:check`, `lint`, `typecheck`, `test` (8/8), `test:e2e` (1/1), `test:integration` (5/5) e `build` PASS. O primeiro lint exigiu preservar a causa de um erro de storage; corrigido e suíte repetida verde. `git diff --cached --check` será executado após staging. Nenhum PDF ou HTML institucional foi copiado, e não houve push, deploy ou migration de produção.
+- Pendências: decisão de provedor de produção, licença e prazo de retenção por fonte; MIME real, limite e expiração no futuro coletor autorizado. G1 permanece pendente até 029.
 
 ## Pendências e decisões
 

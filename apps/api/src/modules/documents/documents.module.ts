@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { DocumentsRepository } from './documents.repository.js';
 
-@Module({})
+@Module({ providers: [DocumentsRepository], exports: [DocumentsRepository] })
 export class DocumentsModule {}
