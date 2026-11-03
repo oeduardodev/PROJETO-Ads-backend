@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F03 — API pública e contratos versionados |
-| Passo | 024 — `feat(api): listar instituições verificadas` |
-| Estado | Validação local verde; commit pendente; remotos continuam vazios sem push |
+| Passo | 025 — `feat(api): fornecer facetas e contagens` |
+| Estado | DONE local no HEAD; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 024, §§ 7–9 e 12 |
-| Roteiro consultado | Documento completo; passo 024 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `2b1dc36026c9aa57919c0d352d429e4e56482da1` — passo 023 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 024 |
-| Commit atual backend | Pendente — passo 024; sem push |
-| Próximo passo | 025 — facetas e contagens; G1 ainda pendente |
+| Arquitetura consultada | Documento completo; para o passo 025, §§ 7–9 e 12 |
+| Roteiro consultado | Documento completo; passo 025 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `50fcea80a14fc6898e4555d65a24eba4667b2f42` — passo 024 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 025 |
+| Commit atual backend | HEAD — passo 025; sem push |
+| Próximo passo | 026 — busca pública; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -221,6 +221,13 @@
 - Validação prescrita: nove migrations aplicadas em banco **local vazio** `alem_do_sisu_step024`; seed sem instituições verificadas. Integração 13/13 PASS após manter sessão WSL ativa: fixture local simulou revisão de UFPB, uma fonte e dois campi; somente o campus revisado apareceu, paginação e erro 400 funcionaram, e campos internos foram ausentes. Cleanup devolveu a seed ao estado não verificado. Uma execução anterior falhou quando o serviço PostgreSQL do WSL encerrou durante a suíte; repetição completa com sessão ativa foi verde.
 - Qualidade final: `pnpm install --frozen-lockfile`, `db:validate`, `format:check`, `lint`, `typecheck`, `build`, `test` (9/9), `test:e2e` (1/1), `test:integration` (13/13) PASS. Não há cobertura completa prometida nem dado novo publicado.
 - Pendências: facetas publicadas no 025. G1 segue pendente até 029; nenhum push, deploy ou migration de produção.
+
+## Passo 025 — evidências
+
+- Estado real antes do passo: backend limpo em `50fcea80a14fc6898e4555d65a24eba4667b2f42`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidos roteiro 025 e arquitetura §§ 7–9 e 12. Usuário escolheu contagens com todos os filtros ativos, registradas no ADR 0012 aceito antes do commit.
+- Artefatos: parser de UF/modalidade/tipo/ENEM, consulta limitada a processos publicados elegíveis, `GET /api/v1/filters` e agregação por processo distinto. UF e modalidade são satisfeitas pela mesma oferta. Rascunhos e demonstração histórica ficam fora.
+- Validação prescrita: `pnpm install --frozen-lockfile`, `db:validate`, `db:migrate:status` (nove migrations em dia no banco local), `format:check`, `lint`, `typecheck`, `build`, `test` (10/10), `test:e2e` (1/1) e `test:integration` (15/15) PASS. Teste HTTP confirmou resposta vazia para a seed em rascunho e erro 400 para parâmetro inválido; teste em transação revertida cobriu filtros combinados, multi-oferta, mesma oferta para UF/modalidade e ENEM trivalente. Nenhum dado sintético persistiu.
+- Pendências: avaliação de desempenho da agregação em memória quando houver volume real; a busca pública completa entra no 026. G1 segue pendente até 029; nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 
