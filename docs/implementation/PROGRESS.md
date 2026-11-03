@@ -14,14 +14,14 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F00 — contrato, escopo e pesquisa |
-| Passo | 003 — `docs(sources): mapear fontes oficiais do piloto` |
-| Estado | DONE: fontes oficiais mapeadas, acesso observado e pendências de automação registradas |
+| Passo | 004 — `test(fixtures): montar corpus rotulado de editais reais` |
+| Estado | DONE: 35 artefatos históricos oficiais rotulados; casos pendentes seguem em revisão humana |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 003, §§ 4, 10.1, 13 e 15 |
-| Roteiro consultado | Documento completo; passo 003 e contrato Git da seção 2 |
-| Commit anterior | `c9f04ddb9cf560cc10f20af92b3080208247fc22` — passo 002, backend local |
-| Commit atual | `HEAD` do backend após o commit `docs(sources): mapear fontes oficiais do piloto` (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 004 — montar corpus rotulado de 30–50 documentos oficiais; gate G0 só após 005 e revisão |
+| Arquitetura consultada | Documento completo; para o passo 004, §§ 4.3, 5.2–5.4, 10.1, 12.1–12.2, 13 e 14 |
+| Roteiro consultado | Documento completo; passo 004 e contrato Git da seção 2 |
+| Commit anterior | `5b04ed09bff01c9e2279c2942099be578b999ee0` — passo 003, backend local |
+| Commit atual | `HEAD` do backend após o commit do passo 004 (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 005 — glossário, estados e métricas; gate G0 após revisão do checkpoint |
 
 ## Passo 001 — evidências
 
@@ -50,6 +50,15 @@
 - Comandos e resultados: pesquisa Web em domínios institucionais; requisições HTTPS diretas com `urllib.request` para as quatro páginas e `robots.txt`; validação CSV com 4 linhas, uma por instituição, campos completos, URLs HTTPS, host exato, status 200 e links presentes na política: PASS. `git diff --check`: PASS.
 - Testes de código, lint, typecheck e build: não se aplicam ao passo de pesquisa; scripts ainda não existem.
 
+## Passo 004 — evidências
+
+- Estado real antes do passo: backend no commit `5b04ed0`, com árvore limpa; frontend é repositório Git separado e ainda vazio. Nenhuma dependência instalada ou serviço em execução.
+- Artefatos: `test/fixtures/institutions/candidate-manifest.csv` (48 URLs oficiais, 35 promovidas e 13 candidatas), `docs/research/golden-dataset.csv` (35 documentos históricos de UFPB 15, UFCG 5, UEPB 5 e IFPB 10), notas de curadoria e validador Python. Há HTML, PDFs de editais, retificações e negativos; páginas e PDFs do mesmo processo são artefatos distintos, não processos adicionais.
+- Gabarito: campos de escopo, tipo, SiSU, ENEM, prazo, fuso, vínculo de revisão, fonte oficial, seção/página e data de conferência. `UNKNOWN` preserva ausências; oito artefatos têm revisão parcial e três seleções de vagas remanescentes estão em `PENDING_REVIEW` pelo ADR 0003 aceito pelo usuário. Nada foi publicado.
+- Casos verificados: ENEM exigido (UFPB-13, IFPB-15), dispensado (UFPB-09), prazo sem horário final (UFCG-03), duplicata HTML/PDF (UFPB-02/09), fora do escopo (UFPB-05), retificação de prazo (IFPB-15/16: 27/07 para 20/07/2026) e retificação de requisito ENEM (UFPB-15/16). PDFs continuam somente nos portais oficiais; nenhuma lista nominal foi incorporada.
+- Validação prescrita: `python test/fixtures/institutions/validate_golden_dataset.py` confirma 35 documentos, quatro instituições, URLs oficiais, datas válidas, histórico no momento da revisão, seis tipos de caso, pares de revisão e estados consistentes. Resultado: PASS. `git diff --cached --check`: executar após staging. Lint, typecheck, teste de aplicação e build ainda não existem; o passo 011 criará esses scripts.
+- Pendências: manter os três casos de vagas remanescentes em revisão humana; manter campos `UNKNOWN` e divergências documentais sem inferência; obter confirmação de licenças/retenção antes de armazenamento ou coleta automática. G0 ainda não aprovado; depende do passo 005 e da revisão do checkpoint.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
@@ -62,5 +71,5 @@
 
 ### Outras pendências
 
-- Passos 004–005 e gate G0: formar corpus de 30–50 documentos oficiais rotulados e validar métricas/decisões antes de instalar dependências. Não tratar a matriz de fontes como aprovação de crawling.
+- Passo 005 e gate G0: definir glossário, estados e métricas e revisar matriz, corpus e ADRs antes de instalar dependências. Não tratar a matriz de fontes como aprovação de crawling.
 - Referência visual: imagem inspecionada. Linguagem de cartaz/colagem: fundo marfim, preto dominante, tipografia sans extremamente pesada nos títulos, blocos verde limão, laranja intenso, azul elétrico e lilás, contornos pretos espessos, sombras deslocadas, cantos e formas oblíquas, raios e setas desenhadas, fotos em meio-tom, busca larga e cards com imagem institucional. Extrair tokens e componentes no passo 067 e aplicar na interface pública no passo 068, com equivalentes responsivos/acessíveis e sem apresentar oportunidades fictícias como vigentes.
