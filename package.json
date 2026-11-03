@@ -6,8 +6,8 @@
   "scripts": {
     "lint": "eslint apps test",
     "typecheck": "corepack pnpm --filter @alem-do-sisu/api exec prisma generate && corepack pnpm --filter @alem-do-sisu/api exec tsc -p tsconfig.json --noEmit",
-    "test": "corepack pnpm build && node --test test/config.test.mjs test/domain.test.mjs",
-    "test:integration": "node --test test/integration/institutions.test.mjs",
+    "test": "corepack pnpm build && node --test test/config.test.mjs test/domain.test.mjs test/source-url.test.mjs",
+    "test:integration": "node --test test/integration/institutions.test.mjs test/integration/sources.test.mjs",
     "build": "corepack pnpm --filter @alem-do-sisu/api build",
     "test:e2e": "node --test test/e2e/health.test.mjs",
     "format": "prettier --write \"apps/**/*.{ts,json}\" \"test/**/*.mjs\" package.json eslint.config.mjs",

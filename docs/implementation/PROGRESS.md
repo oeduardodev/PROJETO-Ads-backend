@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F02 — persistência e regras do domínio |
-| Passo | 015 — `feat(domain): persistir instituições e campi` |
-| Estado | DONE local após seed e integração PostgreSQL; commit pendente nesta edição; remotos continuam vazios sem push |
+| Passo | 016 — `feat(sources): modelar fontes monitoradas e allowlist` |
+| Estado | DONE local após integração PostgreSQL; commit pendente nesta edição; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 015, §§ 1, 5, 6 e 7 |
-| Roteiro consultado | Documento completo; passo 015 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `4553743f276e2b1c5d7c55b5872a4debb168e645` — passo 014 |
+| Arquitetura consultada | Documento completo; para o passo 016, §§ 1, 4.1–4.2, 5, 6 e 7 |
+| Roteiro consultado | Documento completo; passo 016 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `b8dbabc1774607ebf9f5b39df55c602193f36e4d` — passo 015 |
 | Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 014 |
-| Commit atual backend | `HEAD` após o commit do passo 015; sem push |
-| Próximo passo | 016 — fontes monitoradas e allowlist; G1 ainda pendente |
+| Commit atual backend | `HEAD` após o commit do passo 016; sem push |
+| Próximo passo | 017 — execuções de coleta e URLs descobertas; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -149,6 +149,14 @@
 - Seed local idempotente com UFPB, UFCG, UEPB e IFPB. Nomes, jurisdição pública e links de referência foram conferidos em páginas institucionais: [UFPB](https://www.ufpb.br/apresentacao/), [estatuto UFCG](https://sods.ufcg.edu.br/index.php/legislacao/estatuto/estatuto-ufcg), [UEPB](https://uepb.edu.br/) e [PDI IFPB](https://pdi.ifpb.edu.br/capitulos/capitulo-01.html). Não foram criados campi, processos ou editais na seed; o script recusa banco fora de loopback.
 - Validação prescrita: em `alem_do_sisu_step015` **local vazio**, `db:migrate:deploy` aplicou baseline e migration 015; `db:migrate:status` PASS. Duas execuções da seed mantiveram exatamente quatro instituições. Teste de integração: 2/2 PASS, cobrindo quatro instituições com fonte oficial e sem `verified_at`, campus válido temporário, rejeição de campus órfão via FK, UF inválida via normalizador e `CHECK`, e duplicidade normalizada. Após o teste: 4 instituições e 0 campi. A primeira execução do teste encontrou um uso incorreto de `assert.rejects` para erro síncrono; corrigido para `assert.throws` e repetido verde.
 - Qualidade: `corepack pnpm install --frozen-lockfile`, `format:check`, `lint`, `typecheck`, `test` (6/6), `test:e2e` (1/1) e `build` PASS. `git diff --cached --check` será executado após staging. Fontes automáticas, URLs candidatas e publicação continuam fora deste passo. G1 permanece pendente até 029; nenhum push, deploy ou migration de produção.
+
+## Passo 016 — evidências
+
+- Estado real antes do passo: backend limpo em `b8dbabc1774607ebf9f5b39df55c602193f36e4d`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidas arquitetura §§ 1, 4.1–4.2, 5, 6 e 7 e instruções 016. A abrangência da allowlist era ambígua; o usuário escolheu host exato e o ADR 0006 foi aceito antes da migration.
+- Artefatos: modelos Prisma `allowed_domains` e `sources`, migration `20261103152248_source_registry`, FKs que vinculam fonte/host à mesma instituição, URL única por instituição, `CHECK` de frequência/prioridade e bloqueio de `collection_allowed` sem `reviewed_at`. Repositórios Nest validam HTTPS, DNS público, host exato, URL de evidência, frequência e prioridade. Fonte começa `DRAFT` e domínio sem permissão de coleta. Política em `docs/engineering/source-registry.md`.
+- Validação prescrita: em `alem_do_sisu_step016` **local vazio**, `db:migrate:deploy` aplicou as três migrations e a seed criou as quatro instituições. Teste de integração 3/3 PASS: duas fontes oficiais distintas da UFPB no mesmo host, rejeição de `drive.ufpb.br` não listado, rejeição do host em outra instituição e de ativação sem revisão. Após cleanup: 4 instituições, 0 domínios permitidos, 0 fontes. Teste unitário rejeitou IP privado, localhost, protocolo HTTP, credenciais, porta customizada e caracteres de controle.
+- Qualidade: `corepack pnpm install --frozen-lockfile`, `db:migrate:status`, `format:check`, `lint`, `typecheck`, `test` (8/8), `test:e2e` (1/1) e `build` PASS. O primeiro lint encontrou uma regex com caracteres de controle; a validação foi reescrita sem regex e toda a sequência foi repetida verde. `git diff --cached --check` será executado após staging.
+- Pendências: validar DNS resolvido e redirecionamentos a cada fetch no coletor futuro; revisar acesso, licenças e retenção por fonte antes de permitir crawling. Nenhuma busca automática, publicação, push, deploy ou migration de produção. G1 permanece pendente até o passo 029.
 
 ## Pendências e decisões
 

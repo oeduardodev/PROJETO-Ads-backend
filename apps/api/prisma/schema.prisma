@@ -12,6 +12,25 @@ enum Jurisdiction {
   ESTADUAL
 }
 
+enum SourceKind {
+  HTML_INDEX
+  SITEMAP
+  RSS
+}
+
+enum SourceStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+}
+
+enum SourceHealth {
+  UNKNOWN
+  HEALTHY
+  DEGRADED
+  BLOCKED
+}
+
 model Institution {
   id             String       @id @default(uuid()) @db.Uuid
   name           String       @db.VarChar(250)
@@ -22,6 +41,8 @@ model Institution {
   verifiedAt     DateTime?    @map("verified_at") @db.Timestamptz(6)
   referenceUrl   String?      @map("reference_url") @db.Text
   campuses       Campus[]
+  allowedDomains AllowedDomain[]
+  sources        Source[]
 
   @@map("institutions")
 }
@@ -40,4 +61,42 @@ model Campus {
   @@unique([institutionId, normalizedName, normalizedCity], map: "campuses_institution_name_city_key")
   @@index([state, normalizedCity], map: "campuses_state_city_idx")
   @@map("campuses")
+}
+
+model AllowedDomain {
+  id                String       @id @default(uuid()) @db.Uuid
+  institutionId     String       @map("institution_id") @db.Uuid
+  host              String       @db.VarChar(253)
+  evidenceUrl       String       @map("evidence_url") @db.Text
+  reviewedAt        DateTime?    @map("reviewed_at") @db.Timestamptz(6)
+  collectionAllowed Boolean      @default(false) @map("collection_allowed")
+  institution       Institution  @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  sources           Source[]
+
+  @@unique([institutionId, host], map: "allowed_domains_institution_host_key")
+  @@unique([id, institutionId], map: "allowed_domains_id_institution_key")
+  @@map("allowed_domains")
+}
+
+model Source {
+  id               String        @id @default(uuid()) @db.Uuid
+  institutionId    String        @map("institution_id") @db.Uuid
+  allowedDomainId  String        @map("allowed_domain_id") @db.Uuid
+  url              String        @db.Text
+  kind             SourceKind
+  selector         String?       @db.Text
+  frequencyMinutes Int           @default(1440) @map("frequency_minutes")
+  priority         Int           @default(100)
+  status           SourceStatus  @default(DRAFT)
+  health           SourceHealth  @default(UNKNOWN)
+  lastCheckedAt    DateTime?     @map("last_checked_at") @db.Timestamptz(6)
+  lastSuccessAt    DateTime?     @map("last_success_at") @db.Timestamptz(6)
+  etag             String?       @db.VarChar(512)
+  lastModified     String?       @map("last_modified") @db.VarChar(128)
+  institution      Institution   @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  allowedDomain    AllowedDomain @relation(fields: [allowedDomainId, institutionId], references: [id, institutionId], onDelete: Restrict)
+
+  @@unique([institutionId, url], map: "sources_institution_url_key")
+  @@index([status, priority], map: "sources_status_priority_idx")
+  @@map("sources")
 }
