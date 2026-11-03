@@ -55,6 +55,14 @@ enum DiscoveredUrlStatus {
   QUARANTINED
 }
 
+enum PublicationStatus {
+  RASCUNHO
+  EM_REVISAO
+  PUBLICADO
+  OCULTO
+  ARQUIVADO
+}
+
 model Institution {
   id             String       @id @default(uuid()) @db.Uuid
   name           String       @db.VarChar(250)
@@ -203,6 +211,8 @@ model Document {
   issuedAt        DateTime?      @map("issued_at") @db.Timestamptz(6)
   blob            DocumentBlob   @relation(fields: [sha256, storageKey], references: [sha256, storageKey], onDelete: Restrict)
   discoveredUrl   DiscoveredUrl? @relation(fields: [discoveredUrlId], references: [id], onDelete: Restrict)
+  evidence        Evidence[]
+  revisions       Revision[]
 
   @@unique([url, version], map: "documents_url_version_key")
   @@index([sha256], map: "documents_sha256_idx")
@@ -219,15 +229,66 @@ model SelectionProcess {
   regularSisuFlow Boolean?            @map("regular_sisu_flow")
   requiresEnem    Boolean?            @map("requires_enem")
   tuitionFree     Boolean?            @map("tuition_free")
+  publicationStatus PublicationStatus @default(RASCUNHO) @map("publication_status")
   createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   institution     Institution         @relation(fields: [institutionId], references: [id], onDelete: Restrict)
   offerings       Offering[]
   windows         ApplicationWindow[]
   requirements    Requirement[]
+  evidence        Evidence[]
+  revisions       Revision[]
+  reviewDecisions ReviewDecision[]
 
   @@unique([institutionId, noticeCode, noticeYear], map: "processes_institution_notice_year_key")
   @@unique([id, institutionId], map: "processes_id_institution_key")
   @@map("selection_processes")
+}
+
+model Evidence {
+  id            String           @id @default(uuid()) @db.Uuid
+  processId     String           @map("process_id") @db.Uuid
+  documentId    String           @map("document_id") @db.Uuid
+  fieldPath     String           @map("field_path") @db.VarChar(250)
+  pageOrSection String?          @map("page_or_section") @db.VarChar(150)
+  quote         String           @db.Text
+  checkedAt     DateTime?        @map("checked_at") @db.Timestamptz(6)
+  process       SelectionProcess @relation(fields: [processId], references: [id], onDelete: Restrict)
+  document      Document         @relation(fields: [documentId], references: [id], onDelete: Restrict)
+
+  @@index([processId, fieldPath], map: "evidence_process_field_idx")
+  @@index([documentId], map: "evidence_document_idx")
+  @@map("evidence")
+}
+
+model Revision {
+  id                String           @id @default(uuid()) @db.Uuid
+  processId         String           @map("process_id") @db.Uuid
+  documentId        String           @map("document_id") @db.Uuid
+  changedFieldsJson Json             @map("changed_fields_json")
+  supersedesId      String?          @map("supersedes_id") @db.Uuid
+  detectedAt        DateTime         @default(now()) @map("detected_at") @db.Timestamptz(6)
+  process           SelectionProcess @relation(fields: [processId], references: [id], onDelete: Restrict)
+  document          Document         @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  supersedes        Revision?        @relation("revision_history", fields: [supersedesId, processId], references: [id, processId], onDelete: Restrict)
+  supersededBy      Revision[]       @relation("revision_history")
+
+  @@unique([id, processId], map: "revisions_id_process_key")
+  @@unique([supersedesId], map: "revisions_supersedes_key")
+  @@index([processId, detectedAt], map: "revisions_process_detected_idx")
+  @@map("revisions")
+}
+
+model ReviewDecision {
+  id         String           @id @default(uuid()) @db.Uuid
+  processId  String           @map("process_id") @db.Uuid
+  reviewerId String           @map("reviewer_id") @db.VarChar(128)
+  decision   String           @db.VarChar(64)
+  reason     String           @db.Text
+  reviewedAt DateTime         @default(now()) @map("reviewed_at") @db.Timestamptz(6)
+  process    SelectionProcess @relation(fields: [processId], references: [id], onDelete: Restrict)
+
+  @@index([processId, reviewedAt], map: "review_decisions_process_reviewed_idx")
+  @@map("review_decisions")
 }
 
 model Offering {

@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F02 — persistência e regras do domínio |
-| Passo | 019 — `feat(processes): modelar processos, ofertas e inscrições` |
-| Estado | Testes de integração verdes; commit local pendente; remotos continuam vazios sem push |
+| Passo | 020 — `feat(review): evidências, retificações e decisões` |
+| Estado | Validação local em andamento; commit pendente; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 019, §§ 1.2, 5.3–5.4, 6–6.2 |
-| Roteiro consultado | Documento completo; passo 019 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `4eadb4b9bfe04e45715a8c746d8377252984c718` — passo 018 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 019 |
-| Commit atual backend | Pendente — passo 019; sem push |
-| Próximo passo | 020 — evidências, retificações e decisões; G1 ainda pendente |
+| Arquitetura consultada | Documento completo; para o passo 020, §§ 5.2–5.4, 6–6.2 |
+| Roteiro consultado | Documento completo; passo 020 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `430dffd5d5634a958c2fa2525a8695c39a3daae2` — passo 019 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 020 |
+| Commit atual backend | Pendente — passo 020; sem push |
+| Próximo passo | 021 — índices, constraints e seed histórica; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -182,6 +182,14 @@
 - Geração SQL: `migrate dev --create-only` parou em aviso de unique index no modo não interativo; `migrate diff` contra o banco local do passo 018 produziu SQL revisado, com checks explícitos. Nenhuma migration de produção.
 - Qualidade final: `pnpm install --frozen-lockfile`, `db:validate`, `db:migrate:status`, `format:check`, `lint`, `typecheck`, `build`, `test` (8/8), `test:e2e` (1/1) e `test:integration` (6/6) PASS. Execução inicial paralela de build e teste colidiu na geração do Prisma; repetidos serialmente, ambos verdes. O Compose local desligou entre comandos; reiniciado no mesmo comando da verificação de banco, com migration e integração verdes. `git diff --check` PASS.
 - Pendências: evidências/revisões/decisões entram no 020. G1 permanece pendente até 029. Nenhum push, deploy, migração de produção ou dado público publicado.
+
+## Passo 020 — evidências
+
+- Estado real antes do passo: backend limpo em `430dffd5d5634a958c2fa2525a8695c39a3daae2`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidos roteiro 020 e arquitetura §§ 5.2–5.4, 6–6.2, incluindo histórico de retificações, evidência por campo e estados separados.
+- Artefatos: migration `20261103163000_evidence_revisions_reviews` cria `evidence`, `revisions`, `review_decisions` e `publication_status` com default `RASCUNHO`. Revisões possuem predecessor do mesmo processo; triggers impedem UPDATE/DELETE da trilha. Repositório Nest apenas acrescenta registros e consulta histórico, sem comando de publicação. Sem fonte oficial real ou link inventado.
+- Validação prescrita: sete migrations aplicadas em banco **local vazio** `alem_do_sisu_step020`; seed local das quatro instituições. Integração 7/7 PASS: retificação sintética manteve versão anterior, decisão contém ator/motivo/horário e UPDATE foi rejeitado; transação revertida deixou zero decisões de teste. G1 permanece pendente até 029.
+- Qualidade final: `db:validate`, `typecheck`, `format:check`, `lint`, `build`, `test` (8/8), `test:e2e` (1/1) e `test:integration` (7/7) PASS. O teste de integração usa somente banco local; `git diff --check` e `git diff --cached --check` conferidos antes do commit.
+- Pendências: índices/seed histórica no 021; identidade administrativa e regras de aprovação em etapas posteriores. Nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 
