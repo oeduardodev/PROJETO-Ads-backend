@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F02 — persistência e regras do domínio |
-| Passo | 020 — `feat(review): evidências, retificações e decisões` |
+| Passo | 021 — `feat(db): índices, constraints e seed consistente` |
 | Estado | Validação local em andamento; commit pendente; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 020, §§ 5.2–5.4, 6–6.2 |
-| Roteiro consultado | Documento completo; passo 020 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `430dffd5d5634a958c2fa2525a8695c39a3daae2` — passo 019 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 020 |
-| Commit atual backend | Pendente — passo 020; sem push |
-| Próximo passo | 021 — índices, constraints e seed histórica; G1 ainda pendente |
+| Arquitetura consultada | Documento completo; para o passo 021, §§ 1.2, 6–6.2 e 12.2 |
+| Roteiro consultado | Documento completo; passo 021 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `22efa252aca6bf729364c771789c43fb05e629d2` — passo 020 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 021 |
+| Commit atual backend | Pendente — passo 021; sem push |
+| Próximo passo | 022 — testes de migrations e invariantes; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -190,6 +190,14 @@
 - Validação prescrita: sete migrations aplicadas em banco **local vazio** `alem_do_sisu_step020`; seed local das quatro instituições. Integração 7/7 PASS: retificação sintética manteve versão anterior, decisão contém ator/motivo/horário e UPDATE foi rejeitado; transação revertida deixou zero decisões de teste. G1 permanece pendente até 029.
 - Qualidade final: `db:validate`, `typecheck`, `format:check`, `lint`, `build`, `test` (8/8), `test:e2e` (1/1) e `test:integration` (7/7) PASS. O teste de integração usa somente banco local; `git diff --check` e `git diff --cached --check` conferidos antes do commit.
 - Pendências: índices/seed histórica no 021; identidade administrativa e regras de aprovação em etapas posteriores. Nenhum push, deploy ou migration de produção.
+
+## Passo 021 — evidências
+
+- Estado real antes do passo: backend limpo em `22efa252aca6bf729364c771789c43fb05e629d2`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidos roteiro 021 e arquitetura §§ 1.2, 6–6.2 e 12.2. A seed histórica era ambígua perante a proibição de editais inventados; o usuário escolheu UFPB-12, já conferido no corpus, em rascunho e bloqueado de publicação. ADR 0010 aceito antes da migration.
+- Artefatos: migration `20261103170000_query_indexes_historical_seed` adiciona índices de publicação, instituição, tipo/ENEM, modalidade/grau, prazo e GIN trigram para curso; checks para ano, URL HTTPS e demonstração histórica não publicável. Seed local acrescenta UFPB-12 com URL e janela oficiais do corpus, sem preencher gratuidade/vagas não confirmadas, sem PDF e sem publicação.
+- Validação prescrita: oito migrations aplicadas em banco **local vazio** `alem_do_sisu_step021`; seed reexecutada duas vezes no teste sem duplicatas. Integração 9/9 PASS: histórico manteve um processo e uma janela, `PUBLICADO` foi rejeitado por constraint, `EXPLAIN` indicou que índices de publicação e trigram podem ser usados. O teste força o planejador a considerar índices porque o banco pequeno favoreceria leitura sequencial.
+- Qualidade final: `db:validate`, `format:check`, `lint`, `typecheck`, `build`, `test` (8/8), `test:e2e` (1/1) e `test:integration` (9/9) PASS. Migration aplicada em banco local novo; diff revisado sem dados reais publicados.
+- Pendências: testes amplos de migrations e recuperação entram no 022. G1 permanece pendente até 029; nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 

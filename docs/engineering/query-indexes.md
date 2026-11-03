@@ -1,0 +1,5 @@
+# Índices e seed histórica
+
+O passo 021 adiciona índices para estado de publicação/instituição, tipo/ENEM, modalidade/grau e data/hora final. Os índices anteriores já cobrem UF/cidade do campus e nome de curso normalizado. `pg_trgm` permite busca parcial e tolerância a diacríticos sobre o nome normalizado. O teste usa `EXPLAIN (FORMAT JSON)` com `enable_seqscan=off` para demonstrar que PostgreSQL pode escolher os índices; em um banco com poucos registros, o planejador normalmente prefere leitura sequencial. A medição com volume real fica para a pesquisa pública.
+
+A seed local inclui o edital histórico UFPB-12 do corpus revisado em `docs/research/golden-dataset.csv`. Guarda apenas campos conferidos, URL oficial, uma janela explícita e o marcador `demo_historical`. Gratuidade, ofertas e vagas continuam nulas/ausentes. O estado é `RASCUNHO`, e uma constraint impede `PUBLICADO` para registros de demonstração. Reexecutar a seed não cria duplicatas. Nenhum PDF é copiado e a seed não é executada em produção.

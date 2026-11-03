@@ -229,6 +229,8 @@ model SelectionProcess {
   regularSisuFlow Boolean?            @map("regular_sisu_flow")
   requiresEnem    Boolean?            @map("requires_enem")
   tuitionFree     Boolean?            @map("tuition_free")
+  demoHistorical  Boolean             @default(false) @map("demo_historical")
+  referenceUrl    String?             @map("reference_url") @db.Text
   publicationStatus PublicationStatus @default(RASCUNHO) @map("publication_status")
   createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   institution     Institution         @relation(fields: [institutionId], references: [id], onDelete: Restrict)
@@ -241,6 +243,8 @@ model SelectionProcess {
 
   @@unique([institutionId, noticeCode, noticeYear], map: "processes_institution_notice_year_key")
   @@unique([id, institutionId], map: "processes_id_institution_key")
+  @@index([publicationStatus, institutionId], map: "processes_publication_institution_idx")
+  @@index([selectionType, requiresEnem], map: "processes_type_enem_idx")
   @@map("selection_processes")
 }
 
@@ -311,6 +315,7 @@ model Offering {
   @@unique([id, processId], map: "offerings_id_process_key")
   @@index([normalizedCourseName], map: "offerings_course_idx")
   @@index([campusId], map: "offerings_campus_idx")
+  @@index([modality, degreeType], map: "offerings_modality_degree_idx")
   @@map("offerings")
 }
 
@@ -343,6 +348,7 @@ model ApplicationWindow {
   offering        Offering?         @relation(fields: [offeringId, processId], references: [id, processId], onDelete: Restrict)
 
   @@index([processId, endDate], map: "windows_process_end_date_idx")
+  @@index([endDate, endTime], map: "windows_end_date_time_idx")
   @@map("application_windows")
 }
 
