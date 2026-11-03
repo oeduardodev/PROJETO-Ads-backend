@@ -56,7 +56,7 @@ corepack pnpm install --frozen-lockfile
    corepack pnpm --filter @alem-do-sisu/web exec ng serve --host 127.0.0.1 --port 4200
    ```
 
-Acesse `http://127.0.0.1:4200/` e verifique `http://127.0.0.1:3000/health` (HTTP 200, `{"status":"ok"}`). O shell web funciona mesmo sem a API e deixa claro que o catálogo está em preparação. Não há migration nem seed automática neste passo.
+Acesse `http://127.0.0.1:4200/` e verifique `http://127.0.0.1:3000/health` (HTTP 200, `{"status":"ok"}`). O shell web funciona mesmo sem a API e deixa claro que o catálogo está em preparação. O Prisma está integrado, mas a baseline local deve ser aplicada explicitamente conforme [docs/engineering/migrations.md](docs/engineering/migrations.md); não há migration nem seed automática.
 
 ## Testar e encerrar
 

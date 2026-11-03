@@ -15,9 +15,11 @@ import { SearchModule } from './modules/search/search.module.js';
 import { AccountsModule } from './modules/accounts/accounts.module.js';
 import { AlertsModule } from './modules/alerts/alerts.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
+import { DatabaseModule } from './database/database.module.js';
 
 @Module({
   imports: [
+    DatabaseModule,
     HealthModule,
     InstitutionsModule,
     CampusesModule,

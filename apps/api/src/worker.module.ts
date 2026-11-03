@@ -6,9 +6,11 @@ import { DocumentsModule } from './modules/documents/documents.module.js';
 import { ExtractionModule } from './modules/extraction/extraction.module.js';
 import { ValidationModule } from './modules/validation/validation.module.js';
 import { SelectionProcessesModule } from './modules/selection-processes/selection-processes.module.js';
+import { DatabaseModule } from './database/database.module.js';
 
 @Module({
   imports: [
+    DatabaseModule,
     SourcesModule,
     DiscoveryModule,
     CrawlingModule,

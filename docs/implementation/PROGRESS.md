@@ -13,16 +13,16 @@
 
 | Campo | Valor |
 | --- | --- |
-| Fase | F01 — fundação do workspace e engenharia |
-| Passo | 013 — `docs(dev): publicar setup reproduzível` |
-| Estado | DONE local: README reproduziu Compose, API, worker e web; remotos continuam vazios sem push |
+| Fase | F02 — persistência e regras do domínio |
+| Passo | 014 — `feat(db): integrar Prisma e primeira migração` |
+| Estado | DONE local após validação em banco vazio; commit pendente nesta edição; remotos continuam vazios sem push |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 013, §§ 3, 7, 9 e 11–11.1 |
-| Roteiro consultado | Documento completo; passo 013 e reprodução do ambiente somente com o README |
-| Commit anterior backend | `9b128561ad51352dd743f3e1ab29dffc518cf8b7` — passo 012 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — primeiro commit coordenado do passo 013 |
-| Commit atual backend | `HEAD` após o commit documental do passo 013 (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 014 — spike e ADR do ORM antes da primeira migration local |
+| Arquitetura consultada | Documento completo; para o passo 014, §§ 1, 5, 6 e 7.1 |
+| Roteiro consultado | Documento completo; passo 014 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `38dca8c143513e182b0689ffa97785428cc887f2` — passo 013 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 014 |
+| Commit atual backend | `HEAD` após o commit do passo 014; sem push |
+| Próximo passo | 015 — persistir instituições e campi; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -133,6 +133,14 @@
 - Reprodução local seguindo os comandos do README: Compose `up -d --wait` trouxe PostgreSQL e Redis `healthy`; `node --env-file=.env apps/api/dist/main.js` respondeu `GET /health` HTTP 200 com `{"status":"ok"}`; worker iniciou e encerrou com saída 0; `ng serve --host 127.0.0.1 --port 4200` respondeu HTTP 200. Processos de teste Node/Angular foram encerrados. Links internos dos READMEs e comandos citados foram conferidos.
 - Após ajuste de fim de linha, `format:check`, lint, typecheck, testes e build passaram nos dois repositórios; `git diff --cached --check` no frontend PASS, executar no backend após staging. A primeira checagem de formatação após `git restore` identificou CRLF em um teste por repositório; os arquivos foram normalizados e a causa foi tratada com `.gitattributes`.
 - Limite: um desenvolvedor com cópias locais consegue seguir o guia; clonar os remotos vazios ainda não reproduz o código até que uma publicação seja explicitamente autorizada. O worker não executa jobs e a API não testa dependências no readiness ainda. Nenhum push, deploy ou migration de produção.
+
+## Passo 014 — evidências
+
+- Estado real antes do passo: backend em `38dca8c` com apenas o rascunho não rastreado do ADR 0005; frontend limpo em `b426b7f`. A arquitetura §§ 1, 5, 6 e 7.1 e o roteiro 014 foram relidos antes da mudança. O usuário escolheu explicitamente Prisma 7.10.1 após spike comparativo com TypeORM; ADR 0005 aceito.
+- Artefatos: Prisma CLI/client/adapter PostgreSQL 7.10.1 fixados no lockfile; `schema.prisma` sem entidades de domínio, `prisma.config.ts`, migration gerada `20261103015429_baseline`, `DatabaseModule` global e `PrismaService` com client Nest sob demanda e desconexão no ciclo de vida. API e worker recebem o módulo, sem executar migration no boot. O client gerado é ignorado pelo Git e regenerado no build/typecheck. Política de backup, restauração e migration compensatória em `docs/engineering/migrations.md`.
+- Validação prescrita: `prisma validate` e `prisma generate` PASS; em PostgreSQL 17.7 local, `db:migrate:deploy` aplicou a única baseline no banco **vazio** `alem_do_sisu_step014_verify`; `db:migrate:status` informou schema atualizado, e `_prisma_migrations` registrou `20261103015429_baseline|t`. A migration vazia é intencional: tabelas `institutions`/`campuses` pertencem ao passo 015. A primeira tentativa detectou uma baseline duplicada produzida pelo comando `--create-only`; a cópia manual foi removida e o teste foi repetido em outro banco vazio até passar.
+- Qualidade após correção: `corepack pnpm install --frozen-lockfile`, `format:check`, `lint`, `typecheck`, `test`, `test:e2e` e `build` PASS; 4 testes de configuração e 1 smoke HTTP verdes. Worker com `.env` local inicializou e encerrou com código 0. `git diff --check` PASS; `git diff --cached --check` será executado após staging. Nenhum dado de edital foi criado ou publicado.
+- Pendências: tabelas e seed no passo 015, readiness das dependências no passo 019; G1 só no fim do passo 029. Nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 

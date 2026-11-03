@@ -4,7 +4,14 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default defineConfig([
-  { ignores: ['**/dist/**', '**/node_modules/**', '**/coverage/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/node_modules/**',
+      '**/coverage/**',
+      'apps/api/src/generated/prisma/**',
+    ],
+  },
   {
     files: ['apps/**/*.ts'],
     extends: [js.configs.recommended, tseslint.configs.recommended],
