@@ -2,7 +2,7 @@
 
 Este Compose sobe apenas PostgreSQL 17.7 e Redis 7.4.12 para desenvolvimento. Não há migrations, deploy ou serviços de produção. As imagens oficiais foram fixadas por versão. PostgreSQL 17 usa o volume em `/var/lib/postgresql/data`; Redis grava AOF em `/data`. Os serviços publicam somente em `127.0.0.1` (portas 5433 e 6380 por padrão).
 
-Crie `.env` na raiz do backend com `POSTGRES_PASSWORD=<senha-local>`; o arquivo é ignorado pelo Git. Execute a partir da raiz do backend:
+Copie `.env.example` para `.env` na raiz do backend e preencha `POSTGRES_PASSWORD` com senha local; o arquivo é ignorado pelo Git. Para iniciar a API/worker, preencha também `DATABASE_URL` no formato `postgresql://alem_do_sisu:<senha-local>@127.0.0.1:5433/alem_do_sisu` e os demais valores obrigatórios indicados no exemplo. Codifique caracteres especiais da senha no URL. Execute a partir da raiz do backend:
 
 ```text
 docker compose --env-file .env -f infra/compose.dev.yml config --quiet

@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F01 — fundação do workspace e engenharia |
-| Passo | 009 — `chore(infra): dockerizar PostgreSQL e Redis locais` |
-| Estado | DONE: PostgreSQL e Redis locais saudáveis; volumes persistem após reinício |
+| Passo | 010 — `chore(config): validar ambientes e segredos` |
+| Estado | DONE: configuração obrigatória validada antes da inicialização; flags web públicas separadas |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 009, §§ 6, 7.2 e 11–11.1 |
-| Roteiro consultado | Documento completo; passo 009 e teste de subida/persistência após reinício |
-| Commit anterior backend | `bb963e028307a03df93b079248ca124024bcc613` — progresso do passo 008 |
-| Commit frontend | `28e5ab7cb07c01855a061f939b81591e3a515658` — passo 008 |
-| Commit atual backend | `HEAD` após o commit do passo 009 (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 010 — exemplos e validação de configuração por ambiente |
+| Arquitetura consultada | Documento completo; para o passo 010, §§ 7.1–7.2, 10.3 e 11.1 |
+| Roteiro consultado | Documento completo; passo 010 e falha de segredo obrigatório/bundle sem tokens privados |
+| Commit anterior backend | `b2d992ffd832564d28b830c4480169f171b7a839` — passo 009 |
+| Commit frontend | `ed48ebfcca09ab7f23c2ff93fed9da303aa64e96` — primeiro commit coordenado do passo 010 |
+| Commit atual backend | `HEAD` após o commit de configuração do passo 010 (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 011 — lint, formatação, typecheck, testes e scripts raiz |
 
 ## Passo 001 — evidências
 
@@ -100,6 +100,15 @@
 - Ambiente de teste: Docker Engine 29.1.3 e Compose 2.40.3 instalados no Ubuntu 24.04 do WSL 2, sem Docker Desktop. `docker compose --env-file .env -f infra/compose.dev.yml config --quiet`: PASS; `up -d --wait`: ambos os serviços `healthy`.
 - Persistência: criados um marcador SQL e uma chave Redis descartáveis; após `docker compose restart` e `up -d --wait`, ambos retornaram `step009`. Os dois volumes nomeados foram inspecionados, e as portas 5433/6380 responderam via TCP no Windows. Marcadores removidos em seguida. Resultado: PASS.
 - `git diff --cached --check`: executar após staging. Nenhuma migration, publicação, operação de produção, push ou deploy. Configuração validada da API/worker e `.env.example` entram no passo 010; scripts gerais de qualidade entram no 011.
+
+## Passo 010 — evidências
+
+- Estado real antes do passo: backend limpo em `b2d992f` e frontend limpo em `28e5ab7`. A arquitetura §§ 7.1–7.2, 10.3 e 11.1 exige segredos fora do bundle e do Git; o roteiro pede falha clara quando falta segredo obrigatório.
+- Ambiguidade resolvida por decisão explícita do usuário: chaves de busca/IA só serão exigidas quando seus conectores forem ativados. ADR 0004 registra alternativas e aceite; a ausência dessas chaves não impede o shell atual. `DATABASE_URL` com usuário/senha/banco e `REDIS_URL` são exigidos antes de inicializar API/worker; `CORS_ORIGINS` é exigido pela API.
+- Backend: `.env.example` sem credenciais, `apps/api/src/config/environment.ts` com validação e mensagens sem valores de segredo; inicialização da API e worker invoca o validador. `.env` local com senha gerada permaneceu ignorado. `infra/README.md` explica preenchimento local.
+- Frontend: `src/environments/` contém apenas `apiBaseUrl`, `publicSiteUrl` e `catalogEnabled` públicos. `angular.json` substitui o arquivo no build de desenvolvimento, e a configuração é registrada em token de injeção. Produção deixa URLs vazias até definição de ambiente, sem chamadas de API pelo shell.
+- Validação: build TypeScript do backend PASS; API e worker sem `DATABASE_URL` encerraram com `Configuration error: DATABASE_URL is required`; ausência de `REDIS_URL` e senha no URL do PostgreSQL falharam com mensagens específicas; configuração local válida iniciou API (`GET /health` HTTP 200, CORS restrito à origem configurada) e worker (saída 0, sem listener). Builds Angular de desenvolvimento e produção PASS; URL local apareceu somente no bundle de desenvolvimento; nomes de variáveis privadas, hosts locais e a senha real de teste não apareceram no JavaScript de produção. `git diff --cached --check` no frontend PASS; executar no backend após staging.
+- Limites: a validação ainda não conecta ao banco nem ao Redis; readiness de dependências entra no passo 019. Provedores de busca/IA, autenticação, storage e URLs públicas definitivas dependem das etapas correspondentes. Nenhum push, deploy ou migração de produção.
 
 ## Pendências e decisões
 
