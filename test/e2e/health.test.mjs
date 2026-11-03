@@ -43,6 +43,16 @@ test('API serves health with configured CORS origin', async () => {
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('access-control-allow-origin'), 'http://127.0.0.1:4200');
     assert.deepEqual(await response.json(), { status: 'ok' });
+    const ready = await fetch(`http://127.0.0.1:${port}/ready`);
+    assert.equal(ready.status, 503);
+    const readyBody = await ready.json();
+    assert.equal(readyBody.error.code, 'SERVICE_UNAVAILABLE');
+    assert.equal(readyBody.error.message, 'Service unavailable');
+    assert.match(readyBody.error.requestId, /^[0-9a-f-]{36}$/u);
+    assert.doesNotMatch(JSON.stringify(readyBody), /test_password|test_db/iu);
+    const missing = await fetch(`http://127.0.0.1:${port}/missing`);
+    assert.equal(missing.status, 404);
+    assert.equal((await missing.json()).error.code, 'NOT_FOUND');
   } finally {
     child.kill();
   }

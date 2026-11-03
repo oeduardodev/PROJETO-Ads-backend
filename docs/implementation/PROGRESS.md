@@ -13,16 +13,16 @@
 
 | Campo | Valor |
 | --- | --- |
-| Fase | F02 — persistência e regras do domínio |
-| Passo | 022 — `test(db): cobrir migrations e invariantes` |
+| Fase | F03 — API pública e contratos versionados |
+| Passo | 023 — `feat(api): health, readiness e erros padronizados` |
 | Estado | Validação local verde; commit pendente; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 022, §§ 6–6.2, 10–11 e 12.1 |
-| Roteiro consultado | Documento completo; passo 022 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `b6ed11deec45d2a1421ff714ae00755717df56c2` — passo 021 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 022 |
-| Commit atual backend | Pendente — passo 022; sem push |
-| Próximo passo | 023 — health, readiness e erros REST; G1 ainda pendente |
+| Arquitetura consultada | Documento completo; para o passo 023, §§ 7, 8, 9 e 12 |
+| Roteiro consultado | Documento completo; passo 023 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `6ac81b75835b101ea3cb31ae415d3e68d36cb050` — passo 022 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 023 |
+| Commit atual backend | Pendente — passo 023; sem push |
+| Próximo passo | 024 — listar instituições verificadas; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -205,6 +205,14 @@
 - Artefatos: job `database` em `.github/workflows/ci.yml` com PostgreSQL efêmero, migrations desde schema vazio, status, seed e testes; `test/integration/db/invariants.test.mjs` cobre FKs restritivas, limpeza explícita e checks SQL; `docs/ops/migrations.md` documenta reset descartável, backup verificado e recuperação sem autorizar produção.
 - Validação prescrita: reprodução local do job em `alem_do_sisu_step022` **novo**: oito migrations aplicadas, `migrate status` atualizado, seed e integração 11/11 PASS. `format:check`, `lint`, `typecheck`, `build`, `test` (8/8), `test:e2e` (1/1), parse YAML e `git diff --check` PASS. O job remoto não foi executado porque não houve push; o YAML está preparado e a sequência foi reproduzida localmente.
 - Pendências: verificação real do runner quando houver atualização remota autorizada; sem push por instrução expressa. G1 permanece pendente até 029. Nenhuma migration em produção.
+
+## Passo 023 — evidências
+
+- Estado real antes do passo: backend limpo em `6ac81b75835b101ea3cb31ae415d3e68d36cb050`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidos roteiro 023 e arquitetura §§ 7, 8, 9 e 12. O código possuía somente `/health` fixo, sem prontidão ou padrão de erros.
+- Artefatos: `/ready` consulta PostgreSQL e Redis sem execução de DDL; `/health` continua liveness. Filtro global devolve erros estáveis sem mensagem interna e com ID de correlação. Utilitário de paginação limita entrada. Job CI de banco recebe Redis efêmero. Documentação em `docs/engineering/api-errors.md`. O cliente Redis segue API documentada pelo projeto ioredis; Nest documenta filtros globais.
+- Validação prescrita: unitários 9/9, E2E 1/1 (health, ready indisponível, 404 e ausência de segredo), integração 12/12 com dependências locais saudáveis e falhas simuladas separadas de banco e Redis; logs identificaram o componente, resposta não mostrou causa sensível. `lint`, `typecheck`, `build` PASS. Nenhum push ou deploy.
+- Qualidade final: `pnpm install --frozen-lockfile`, `db:validate`, `format:check`, `lint`, `typecheck`, `build`, `test` (9/9), `test:e2e` (1/1), `test:integration` (12/12), parse do YAML e `git diff --check` PASS.
+- Pendências: endpoints públicos de dados vêm nos passos 024–025; G1 segue pendente até 029. Nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 
