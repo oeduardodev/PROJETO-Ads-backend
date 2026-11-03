@@ -50,7 +50,7 @@ test('API serves health with configured CORS origin', async () => {
     assert.equal(readyBody.error.message, 'Service unavailable');
     assert.match(readyBody.error.requestId, /^[0-9a-f-]{36}$/u);
     assert.doesNotMatch(JSON.stringify(readyBody), /test_password|test_db/iu);
-    const missing = await fetch(`http://127.0.0.1:${port}/missing`);
+    const missing = await fetch(`http://127.0.0.1:${port}/api/v1/missing`);
     assert.equal(missing.status, 404);
     assert.equal((await missing.json()).error.code, 'NOT_FOUND');
   } finally {

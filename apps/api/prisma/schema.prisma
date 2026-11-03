@@ -89,12 +89,14 @@ model Campus {
   normalizedCity String      @map("normalized_city") @db.VarChar(150)
   state          String      @db.Char(2)
   timezone       String      @db.VarChar(64)
+  verifiedAt     DateTime?   @map("verified_at") @db.Timestamptz(6)
   institution    Institution @relation(fields: [institutionId], references: [id], onDelete: Restrict)
   offerings      Offering[]
 
   @@unique([id, institutionId], map: "campuses_id_institution_key")
   @@unique([institutionId, normalizedName, normalizedCity], map: "campuses_institution_name_city_key")
   @@index([state, normalizedCity], map: "campuses_state_city_idx")
+  @@index([institutionId, verifiedAt], map: "campuses_institution_verified_idx")
   @@map("campuses")
 }
 

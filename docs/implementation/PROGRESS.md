@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F03 — API pública e contratos versionados |
-| Passo | 023 — `feat(api): health, readiness e erros padronizados` |
+| Passo | 024 — `feat(api): listar instituições verificadas` |
 | Estado | Validação local verde; commit pendente; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 023, §§ 7, 8, 9 e 12 |
-| Roteiro consultado | Documento completo; passo 023 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `6ac81b75835b101ea3cb31ae415d3e68d36cb050` — passo 022 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 023 |
-| Commit atual backend | Pendente — passo 023; sem push |
-| Próximo passo | 024 — listar instituições verificadas; G1 ainda pendente |
+| Arquitetura consultada | Documento completo; para o passo 024, §§ 7–9 e 12 |
+| Roteiro consultado | Documento completo; passo 024 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `2b1dc36026c9aa57919c0d352d429e4e56482da1` — passo 023 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 024 |
+| Commit atual backend | Pendente — passo 024; sem push |
+| Próximo passo | 025 — facetas e contagens; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -213,6 +213,14 @@
 - Validação prescrita: unitários 9/9, E2E 1/1 (health, ready indisponível, 404 e ausência de segredo), integração 12/12 com dependências locais saudáveis e falhas simuladas separadas de banco e Redis; logs identificaram o componente, resposta não mostrou causa sensível. `lint`, `typecheck`, `build` PASS. Nenhum push ou deploy.
 - Qualidade final: `pnpm install --frozen-lockfile`, `db:validate`, `format:check`, `lint`, `typecheck`, `build`, `test` (9/9), `test:e2e` (1/1), `test:integration` (12/12), parse do YAML e `git diff --check` PASS.
 - Pendências: endpoints públicos de dados vêm nos passos 024–025; G1 segue pendente até 029. Nenhum push, deploy ou migration de produção.
+
+## Passo 024 — evidências
+
+- Estado real antes do passo: backend limpo em `2b1dc36026c9aa57919c0d352d429e4e56482da1`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidos roteiro 024 e arquitetura §§ 7–9 e 12. Usuário decidiu exigir instituição pública revisada, fonte oficial ativa em domínio revisado e verificação individual do campus. ADR 0011 aceito antes da migration.
+- Artefatos: migration `20261103173000_campus_verification` adiciona `campuses.verified_at` e índice; `GET /api/v1/institutions` usa paginação estável, projeta apenas dados públicos e horários agregados de monitoramento, sem URLs/seletores de fontes. Prefixo `/api/v1` segue arquitetura; `/health` e `/ready` continuam na raiz.
+- Validação prescrita: nove migrations aplicadas em banco **local vazio** `alem_do_sisu_step024`; seed sem instituições verificadas. Integração 13/13 PASS após manter sessão WSL ativa: fixture local simulou revisão de UFPB, uma fonte e dois campi; somente o campus revisado apareceu, paginação e erro 400 funcionaram, e campos internos foram ausentes. Cleanup devolveu a seed ao estado não verificado. Uma execução anterior falhou quando o serviço PostgreSQL do WSL encerrou durante a suíte; repetição completa com sessão ativa foi verde.
+- Qualidade final: `pnpm install --frozen-lockfile`, `db:validate`, `format:check`, `lint`, `typecheck`, `build`, `test` (9/9), `test:e2e` (1/1), `test:integration` (13/13) PASS. Não há cobertura completa prometida nem dado novo publicado.
+- Pendências: facetas publicadas no 025. G1 segue pendente até 029; nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 
