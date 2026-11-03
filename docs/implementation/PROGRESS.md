@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F02 — persistência e regras do domínio |
-| Passo | 021 — `feat(db): índices, constraints e seed consistente` |
-| Estado | Validação local em andamento; commit pendente; remotos continuam vazios sem push |
+| Passo | 022 — `test(db): cobrir migrations e invariantes` |
+| Estado | Validação local verde; commit pendente; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 021, §§ 1.2, 6–6.2 e 12.2 |
-| Roteiro consultado | Documento completo; passo 021 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `22efa252aca6bf729364c771789c43fb05e629d2` — passo 020 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 021 |
-| Commit atual backend | Pendente — passo 021; sem push |
-| Próximo passo | 022 — testes de migrations e invariantes; G1 ainda pendente |
+| Arquitetura consultada | Documento completo; para o passo 022, §§ 6–6.2, 10–11 e 12.1 |
+| Roteiro consultado | Documento completo; passo 022 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `b6ed11deec45d2a1421ff714ae00755717df56c2` — passo 021 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 022 |
+| Commit atual backend | Pendente — passo 022; sem push |
+| Próximo passo | 023 — health, readiness e erros REST; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -198,6 +198,13 @@
 - Validação prescrita: oito migrations aplicadas em banco **local vazio** `alem_do_sisu_step021`; seed reexecutada duas vezes no teste sem duplicatas. Integração 9/9 PASS: histórico manteve um processo e uma janela, `PUBLICADO` foi rejeitado por constraint, `EXPLAIN` indicou que índices de publicação e trigram podem ser usados. O teste força o planejador a considerar índices porque o banco pequeno favoreceria leitura sequencial.
 - Qualidade final: `db:validate`, `format:check`, `lint`, `typecheck`, `build`, `test` (8/8), `test:e2e` (1/1) e `test:integration` (9/9) PASS. Migration aplicada em banco local novo; diff revisado sem dados reais publicados.
 - Pendências: testes amplos de migrations e recuperação entram no 022. G1 permanece pendente até 029; nenhum push, deploy ou migration de produção.
+
+## Passo 022 — evidências
+
+- Estado real antes do passo: backend limpo em `b6ed11deec45d2a1421ff714ae00755717df56c2`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidos roteiro 022 e arquitetura §§ 6–6.2, 10–11 e 12.1. CI anterior só verificava qualidade, sem PostgreSQL.
+- Artefatos: job `database` em `.github/workflows/ci.yml` com PostgreSQL efêmero, migrations desde schema vazio, status, seed e testes; `test/integration/db/invariants.test.mjs` cobre FKs restritivas, limpeza explícita e checks SQL; `docs/ops/migrations.md` documenta reset descartável, backup verificado e recuperação sem autorizar produção.
+- Validação prescrita: reprodução local do job em `alem_do_sisu_step022` **novo**: oito migrations aplicadas, `migrate status` atualizado, seed e integração 11/11 PASS. `format:check`, `lint`, `typecheck`, `build`, `test` (8/8), `test:e2e` (1/1), parse YAML e `git diff --check` PASS. O job remoto não foi executado porque não houve push; o YAML está preparado e a sequência foi reproduzida localmente.
+- Pendências: verificação real do runner quando houver atualização remota autorizada; sem push por instrução expressa. G1 permanece pendente até 029. Nenhuma migration em produção.
 
 ## Pendências e decisões
 

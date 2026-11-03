@@ -38,3 +38,46 @@ jobs:
         run: pnpm test
       - name: Build
         run: pnpm build
+
+  database:
+    name: database integration
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17.7-alpine
+        env:
+          POSTGRES_DB: alem_do_sisu_ci
+          POSTGRES_USER: alem_do_sisu_ci
+          POSTGRES_PASSWORD: ci_ephemeral_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U alem_do_sisu_ci -d alem_do_sisu_ci"
+          --health-interval 5s --health-timeout 3s --health-retries 12
+    env:
+      DATABASE_URL: postgresql://alem_do_sisu_ci:ci_ephemeral_only@127.0.0.1:5432/alem_do_sisu_ci?schema=public
+      TEST_DATABASE_URL: postgresql://alem_do_sisu_ci:ci_ephemeral_only@127.0.0.1:5432/alem_do_sisu_ci?schema=public
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24.15.0
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 12.16.1
+          cache: true
+      - name: Ensure Corepack is available for workspace scripts
+        run: command -v corepack >/dev/null || npm install --global corepack@0.34.6
+      - name: Install frozen dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Build test client
+        run: pnpm build
+      - name: Migrate empty ephemeral schema
+        run: pnpm --filter @alem-do-sisu/api db:migrate:deploy
+      - name: Confirm migration state
+        run: pnpm --filter @alem-do-sisu/api db:migrate:status
+      - name: Seed reviewed historical fixture
+        run: node apps/api/dist/database/seed.js
+      - name: PostgreSQL integration and constraints
+        run: pnpm test:integration
