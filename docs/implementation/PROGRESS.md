@@ -13,15 +13,16 @@
 
 | Campo | Valor |
 | --- | --- |
-| Fase | F00 — contrato, escopo e pesquisa |
-| Passo | 005 — `docs(contract): definir glossário, estados e métricas` |
-| Estado | DONE: contrato de domínio documentado e gate G0 aprovado para fundação local |
+| Fase | F01 — fundação do workspace e engenharia |
+| Passo | 006 — `chore(repo): iniciar workspace pnpm e convenções Git` |
+| Estado | DONE: workspaces separados conforme ADR 0000; instalações e lockfiles validados |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 005, §§ 2.2, 5.4, 6.2, 9.3, 12, 13 e 14 |
-| Roteiro consultado | Documento completo; passo 005 e gate G0 |
-| Commit anterior | `abc9b2c` — passo 004, backend local |
-| Commit atual | `HEAD` do backend após o commit do passo 005 (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 006 — fundação dos dois repositórios pnpm conforme ADR 0000 |
+| Arquitetura consultada | Documento completo; para o passo 006, §§ 3, 7.1, 9.2 e 11 |
+| Roteiro consultado | Documento completo; passo 006 e validação `pnpm install` |
+| Commit anterior | `05b7118c8ce0c9a2105ce78dee0182ce012998da` — passo 005, backend local |
+| Commit frontend | `ce3440118939535b72543d7adc59e491203246e1` — primeiro commit coordenado do passo 006 |
+| Commit atual backend | `HEAD` após o commit backend do passo 006 (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 007 — bootstrap NestJS modular no backend |
 
 ## Passo 001 — evidências
 
@@ -67,6 +68,14 @@
 - Métrica inicial calculada no corpus: 35 artefatos, 4 instituições, 29 `IN_SCOPE`, 3 `OUT_OF_SCOPE`, 3 `PENDING_REVIEW`; `requires_enem` conhecido em 27/35 e horário final em 23/35. Precisão do extrator, recall de descoberta, custo e latência permanecem `NOT_MEASURED` até haver componentes para executar.
 - Validação prescrita: compatibilidade de todos os 12 códigos `selection_type` do CSV com o glossário; presença dos estados conceituais; contagens e rótulos de métricas; `python test/fixtures/institutions/validate_golden_dataset.py`; verificação de quatro linhas da matriz e ADRs 0000–0003 aceitos. Resultado: PASS. `git diff --cached --check`: executar após staging. Lint, typecheck, testes de aplicação e build serão criados no passo 011.
 - G0 — Pesquisa aprovada **para iniciar a fundação local**: matriz oficial de quatro instituições revisada, 35 artefatos rotulados, escopo e ADRs 0000–0003 revisados e aceitos, exceções e conflitos preservados. O gate não autoriza coleta automática, publicação de editais, push, deploy ou migração de produção. Os três casos de remanescentes continuam exigindo decisão humana individual.
+
+## Passo 006 — evidências
+
+- Estado real antes do passo: backend limpo em `05b7118`; frontend `main` vazio, com remoto GitHub configurado, sem commits. ADR 0000 determina dois repositórios e documentação canônica no backend.
+- Artefatos coordenados: `pnpm-workspace.yaml`, `package.json`, `pnpm-lock.yaml`, `.editorconfig` e `.gitignore` nas duas raízes; `apps/api/package.json` no backend; `apps/web/package.json` no frontend; convenções em `docs/implementation/COMMITS.md` e `frontend/CONTRIBUTING.md`. NestJS/Angular serão criados nos passos 007/008.
+- Ambiente: Node v24.15.0, Corepack v0.34.6 e pnpm v12.16.1 fixado por `packageManager`. Como `pnpm` não está globalmente no PATH, `corepack pnpm` executou os comandos prescritos sem alterar o repositório remoto.
+- Validação prescrita: `corepack pnpm install` e `corepack pnpm install --frozen-lockfile` passaram em ambos os workspaces, cada um com dois projetos. `git check-ignore .env .env.local node_modules/sample` confirmou exclusão nas duas raízes; não há arquivo `.env` com segredo staged. `git diff --cached --check` no frontend: PASS; no backend: executar antes do commit. Lint, typecheck, testes de aplicação e build entram no passo 011.
+- Ordem dos commits deste passo: frontend `ce3440118939535b72543d7adc59e491203246e1` primeiro; backend `HEAD` deste registro segundo. A compatibilidade é pnpm 12.16.1 e workspaces independentes; não há contrato API/Web ainda. Nenhum push.
 
 ## Pendências e decisões
 
