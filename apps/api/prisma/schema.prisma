@@ -31,6 +31,30 @@ enum SourceHealth {
   BLOCKED
 }
 
+enum CrawlRunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+enum CrawlErrorCode {
+  NETWORK
+  TIMEOUT
+  RATE_LIMITED
+  HTTP_4XX
+  HTTP_5XX
+  ACCESS_DENIED
+  PARSE_ERROR
+  UNKNOWN
+}
+
+enum DiscoveredUrlStatus {
+  CANDIDATE
+  FETCHED
+  REJECTED
+  QUARANTINED
+}
+
 model Institution {
   id             String       @id @default(uuid()) @db.Uuid
   name           String       @db.VarChar(250)
@@ -95,8 +119,58 @@ model Source {
   lastModified     String?       @map("last_modified") @db.VarChar(128)
   institution      Institution   @relation(fields: [institutionId], references: [id], onDelete: Restrict)
   allowedDomain    AllowedDomain @relation(fields: [allowedDomainId, institutionId], references: [id, institutionId], onDelete: Restrict)
+  crawlRuns        CrawlRun[]
+  observations     DiscoveryObservation[]
 
   @@unique([institutionId, url], map: "sources_institution_url_key")
   @@index([status, priority], map: "sources_status_priority_idx")
   @@map("sources")
+}
+
+model CrawlRun {
+  id           String                 @id @default(uuid()) @db.Uuid
+  sourceId     String                 @map("source_id") @db.Uuid
+  startedAt    DateTime               @default(now()) @map("started_at") @db.Timestamptz(6)
+  finishedAt   DateTime?              @map("finished_at") @db.Timestamptz(6)
+  attempt      Int                    @default(1)
+  status       CrawlRunStatus         @default(RUNNING)
+  httpStatus   Int?                   @map("http_status")
+  success      Boolean?
+  errorCode    CrawlErrorCode?        @map("error_code")
+  source       Source                 @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  observations DiscoveryObservation[]
+
+  @@unique([id, sourceId], map: "crawl_runs_id_source_key")
+  @@index([sourceId, startedAt], map: "crawl_runs_source_started_idx")
+  @@map("crawl_runs")
+}
+
+model DiscoveredUrl {
+  id             String                 @id @default(uuid()) @db.Uuid
+  canonicalUrl   String                 @unique @map("canonical_url") @db.Text
+  foundAt        DateTime               @default(now()) @map("found_at") @db.Timestamptz(6)
+  lastSeenAt     DateTime               @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  seenCount      Int                    @default(1) @map("seen_count")
+  relevanceScore Float?                 @map("relevance_score")
+  status         DiscoveredUrlStatus    @default(CANDIDATE)
+  observations   DiscoveryObservation[]
+
+  @@map("discovered_urls")
+}
+
+model DiscoveryObservation {
+  id              String        @id @default(uuid()) @db.Uuid
+  discoveredUrlId String        @map("discovered_url_id") @db.Uuid
+  sourceId        String        @map("source_id") @db.Uuid
+  crawlRunId      String        @map("crawl_run_id") @db.Uuid
+  firstSeenAt     DateTime      @default(now()) @map("first_seen_at") @db.Timestamptz(6)
+  lastSeenAt      DateTime      @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  seenCount       Int           @default(1) @map("seen_count")
+  discoveredUrl   DiscoveredUrl @relation(fields: [discoveredUrlId], references: [id], onDelete: Restrict)
+  source          Source        @relation(fields: [sourceId], references: [id], onDelete: Restrict)
+  crawlRun        CrawlRun      @relation(fields: [crawlRunId, sourceId], references: [id, sourceId], onDelete: Restrict)
+
+  @@unique([discoveredUrlId, crawlRunId], map: "discovery_observations_url_run_key")
+  @@index([sourceId, firstSeenAt], map: "discovery_observations_source_seen_idx")
+  @@map("discovery_observations")
 }

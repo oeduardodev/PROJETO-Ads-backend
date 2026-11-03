@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F02 — persistência e regras do domínio |
-| Passo | 016 — `feat(sources): modelar fontes monitoradas e allowlist` |
-| Estado | DONE local após integração PostgreSQL; commit pendente nesta edição; remotos continuam vazios sem push |
+| Passo | 017 — `feat(discovery): registrar execuções e URLs descobertas` |
+| Estado | DONE local após deduplicação e integração PostgreSQL; commit pendente nesta edição; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 016, §§ 1, 4.1–4.2, 5, 6 e 7 |
-| Roteiro consultado | Documento completo; passo 016 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `b8dbabc1774607ebf9f5b39df55c602193f36e4d` — passo 015 |
+| Arquitetura consultada | Documento completo; para o passo 017, §§ 1, 4.1–4.3, 5, 6 e 7.2 |
+| Roteiro consultado | Documento completo; passo 017 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `f5c4745318c4abf6c2ef0f126f192f60c03530ed` — passo 016 |
 | Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 014 |
-| Commit atual backend | `HEAD` após o commit do passo 016; sem push |
-| Próximo passo | 017 — execuções de coleta e URLs descobertas; G1 ainda pendente |
+| Commit atual backend | `HEAD` após o commit do passo 017; sem push |
+| Próximo passo | 018 — snapshots e versões documentais; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -157,6 +157,14 @@
 - Validação prescrita: em `alem_do_sisu_step016` **local vazio**, `db:migrate:deploy` aplicou as três migrations e a seed criou as quatro instituições. Teste de integração 3/3 PASS: duas fontes oficiais distintas da UFPB no mesmo host, rejeição de `drive.ufpb.br` não listado, rejeição do host em outra instituição e de ativação sem revisão. Após cleanup: 4 instituições, 0 domínios permitidos, 0 fontes. Teste unitário rejeitou IP privado, localhost, protocolo HTTP, credenciais, porta customizada e caracteres de controle.
 - Qualidade: `corepack pnpm install --frozen-lockfile`, `db:migrate:status`, `format:check`, `lint`, `typecheck`, `test` (8/8), `test:e2e` (1/1) e `build` PASS. O primeiro lint encontrou uma regex com caracteres de controle; a validação foi reescrita sem regex e toda a sequência foi repetida verde. `git diff --cached --check` será executado após staging.
 - Pendências: validar DNS resolvido e redirecionamentos a cada fetch no coletor futuro; revisar acesso, licenças e retenção por fonte antes de permitir crawling. Nenhuma busca automática, publicação, push, deploy ou migration de produção. G1 permanece pendente até o passo 029.
+
+## Passo 017 — evidências
+
+- Estado real antes do passo: backend limpo em `f5c4745318c4abf6c2ef0f126f192f60c03530ed`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidas arquitetura §§ 1, 4.1–4.3, 5, 6 e 7.2 e instruções 017. O escopo de deduplicação entre fontes era ambíguo; o usuário escolheu identidade global por URL e o ADR 0007 foi aceito antes da migration.
+- Artefatos: migration `20261103153048_discovery_records` com `crawl_runs`, `discovered_urls` e `discovery_observations`; unicidade global da URL canônica, observação por execução, FKs de fonte/execução, contadores e `CHECK` de tentativa, estado, HTTP status e pontuação. Repositórios Nest registram execução, resultado classificado e descoberta transacional, sem fazer HTTP nem publicar candidatos. Semântica e limites em `docs/engineering/discovery-records.md`.
+- Validação prescrita: quatro migrations aplicadas em `alem_do_sisu_step017` **local vazio**; `db:migrate:status` informou schema atualizado. A mesma URL oficial do corpus, detectada três vezes por duas fontes e com fragmento em uma ocorrência, resultou em 1 candidato, `seen_count=3` e 2 observações com contagens 2 e 1. Observação com execução de outra fonte foi rejeitada e revertida. Teste de integração 4/4 PASS, incluindo os passos 015–016; após cleanup: 4 instituições, 0 fontes, 0 execuções, 0 candidatos e 0 observações.
+- Qualidade: `corepack pnpm install --frozen-lockfile`, `db:validate`, `format:check`, `lint`, `typecheck`, `test` (8/8), `test:e2e` (1/1) e `build` PASS. `git diff --cached --check` será executado após staging. Nenhum fetch, crawling, publicação, push, deploy ou migration de produção.
+- Pendências: resolver DNS/redirecionamentos e permissões de acesso antes de qualquer fetch; snapshots e versões entram no passo 018. G1 permanece pendente até o 029.
 
 ## Pendências e decisões
 

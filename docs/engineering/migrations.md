@@ -1,6 +1,6 @@
 # Migrations PostgreSQL
 
-O schema Prisma em `apps/api/prisma/schema.prisma` e o SQL versionado em `apps/api/prisma/migrations/` são a referência para alterações do banco. A migration `20261103015429_baseline` é vazia por intenção; `20261103015903_institutions_campuses` cria as tabelas do passo 015, com chave estrangeira, índices únicos e restrição de UF; `20261103152248_source_registry` cria a allowlist de hosts e as fontes em rascunho. API e worker criam o client gerenciado, mas não aplicam migrations ao iniciar.
+O schema Prisma em `apps/api/prisma/schema.prisma` e o SQL versionado em `apps/api/prisma/migrations/` são a referência para alterações do banco. A migration `20261103015429_baseline` é vazia por intenção; `20261103015903_institutions_campuses` cria as tabelas do passo 015, com chave estrangeira, índices únicos e restrição de UF; `20261103152248_source_registry` cria a allowlist de hosts e as fontes em rascunho; `20261103153048_discovery_records` registra execuções, candidatos e observações. API e worker criam o client gerenciado, mas não aplicam migrations ao iniciar.
 
 ## Desenvolvimento local
 

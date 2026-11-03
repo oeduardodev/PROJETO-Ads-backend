@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { CrawlRunsRepository } from './crawl-runs.repository.js';
 
-@Module({})
+@Module({ providers: [CrawlRunsRepository], exports: [CrawlRunsRepository] })
 export class CrawlingModule {}
