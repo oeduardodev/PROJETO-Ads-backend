@@ -14,14 +14,14 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F00 — contrato, escopo e pesquisa |
-| Passo | 004 — `test(fixtures): montar corpus rotulado de editais reais` |
-| Estado | DONE: 35 artefatos históricos oficiais rotulados; casos pendentes seguem em revisão humana |
+| Passo | 005 — `docs(contract): definir glossário, estados e métricas` |
+| Estado | DONE: contrato de domínio documentado e gate G0 aprovado para fundação local |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 004, §§ 4.3, 5.2–5.4, 10.1, 12.1–12.2, 13 e 14 |
-| Roteiro consultado | Documento completo; passo 004 e contrato Git da seção 2 |
-| Commit anterior | `5b04ed09bff01c9e2279c2942099be578b999ee0` — passo 003, backend local |
-| Commit atual | `HEAD` do backend após o commit do passo 004 (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 005 — glossário, estados e métricas; gate G0 após revisão do checkpoint |
+| Arquitetura consultada | Documento completo; para o passo 005, §§ 2.2, 5.4, 6.2, 9.3, 12, 13 e 14 |
+| Roteiro consultado | Documento completo; passo 005 e gate G0 |
+| Commit anterior | `abc9b2c` — passo 004, backend local |
+| Commit atual | `HEAD` do backend após o commit do passo 005 (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 006 — fundação dos dois repositórios pnpm conforme ADR 0000 |
 
 ## Passo 001 — evidências
 
@@ -59,6 +59,15 @@
 - Validação prescrita: `python test/fixtures/institutions/validate_golden_dataset.py` confirma 35 documentos, quatro instituições, URLs oficiais, datas válidas, histórico no momento da revisão, seis tipos de caso, pares de revisão e estados consistentes. Resultado: PASS. `git diff --cached --check`: executar após staging. Lint, typecheck, teste de aplicação e build ainda não existem; o passo 011 criará esses scripts.
 - Pendências: manter os três casos de vagas remanescentes em revisão humana; manter campos `UNKNOWN` e divergências documentais sem inferência; obter confirmação de licenças/retenção antes de armazenamento ou coleta automática. G0 ainda não aprovado; depende do passo 005 e da revisão do checkpoint.
 
+## Passo 005 — evidências e checkpoint G0
+
+- Estado real antes do passo: backend no commit `abc9b2c`, árvore limpa; frontend em `main` sem commit. Nenhuma dependência, pipeline, API ou UI ainda existe.
+- Artefatos: `docs/domain/glossary.md`, `docs/domain/state-machine.md` e `docs/quality/metrics.md`. O gabarito do IFPB-13/14/15/16 recebeu `ENEM_OWN_SELECTION` porque o edital 112/2026 comprova seleção institucional por nota do ENEM; nenhum prazo ou URL foi alterado neste passo.
+- Taxonomia: 12 tipos do corpus, escopo trivalente e independência entre SiSU e ENEM; estados de ingestão, publicação e inscrição separados. Casos `UNKNOWN` e `PENDING_REVIEW` não podem virar fatos públicos. Metas de 95% de precisão do piloto, 100% de URL oficial, p95 < 500 ms e WCAG 2.2 AA são objetivos, não medições atuais.
+- Métrica inicial calculada no corpus: 35 artefatos, 4 instituições, 29 `IN_SCOPE`, 3 `OUT_OF_SCOPE`, 3 `PENDING_REVIEW`; `requires_enem` conhecido em 27/35 e horário final em 23/35. Precisão do extrator, recall de descoberta, custo e latência permanecem `NOT_MEASURED` até haver componentes para executar.
+- Validação prescrita: compatibilidade de todos os 12 códigos `selection_type` do CSV com o glossário; presença dos estados conceituais; contagens e rótulos de métricas; `python test/fixtures/institutions/validate_golden_dataset.py`; verificação de quatro linhas da matriz e ADRs 0000–0003 aceitos. Resultado: PASS. `git diff --cached --check`: executar após staging. Lint, typecheck, testes de aplicação e build serão criados no passo 011.
+- G0 — Pesquisa aprovada **para iniciar a fundação local**: matriz oficial de quatro instituições revisada, 35 artefatos rotulados, escopo e ADRs 0000–0003 revisados e aceitos, exceções e conflitos preservados. O gate não autoriza coleta automática, publicação de editais, push, deploy ou migração de produção. Os três casos de remanescentes continuam exigindo decisão humana individual.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
@@ -71,5 +80,5 @@
 
 ### Outras pendências
 
-- Passo 005 e gate G0: definir glossário, estados e métricas e revisar matriz, corpus e ADRs antes de instalar dependências. Não tratar a matriz de fontes como aprovação de crawling.
+- Após G0: iniciar dependências e fundação somente nos passos 006–013. Não tratar a matriz de fontes como aprovação de crawling. Restrições de acesso, licença e retenção serão resolvidas por fonte antes de automatizar a coleta.
 - Referência visual: imagem inspecionada. Linguagem de cartaz/colagem: fundo marfim, preto dominante, tipografia sans extremamente pesada nos títulos, blocos verde limão, laranja intenso, azul elétrico e lilás, contornos pretos espessos, sombras deslocadas, cantos e formas oblíquas, raios e setas desenhadas, fotos em meio-tom, busca larga e cards com imagem institucional. Extrair tokens e componentes no passo 067 e aplicar na interface pública no passo 068, com equivalentes responsivos/acessíveis e sem apresentar oportunidades fictícias como vigentes.
