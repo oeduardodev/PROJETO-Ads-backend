@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F01 — fundação do workspace e engenharia |
-| Passo | 007 — `feat(api): inicializar aplicação NestJS modular` |
-| Estado | DONE: API REST responde `/health`; worker inicia sem escutar HTTP |
+| Passo | 008 — `feat(web): inicializar Angular standalone` |
+| Estado | DONE: shell Angular com rotas e Tailwind compila e inicia sem API |
 | Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 007, §§ 3.1–3.2, 7.1–7.2 e 11 |
-| Roteiro consultado | Documento completo; passo 007 e validação `/health`/worker |
-| Commit anterior | `bcb715f296e06495cd4cf32e85a920cea90fc7c6` — passo 006, backend local |
-| Commit frontend | `ce3440118939535b72543d7adc59e491203246e1` — passo 006, sem alterações neste passo |
-| Commit atual backend | `HEAD` após o commit backend do passo 007 (consultar `git log -1 --format=%H`; sem push) |
-| Próximo passo | 008 — bootstrap Angular standalone no frontend |
+| Arquitetura consultada | Documento completo; para o passo 008, §§ 3.1, 9.1–9.4 e 11.1 |
+| Roteiro consultado | Documento completo; passo 008 e validação de build/shell local |
+| Commit anterior backend | `0a2ee56afaf400bbbc288ad10f13bf4a1c89d613` — passo 007 |
+| Commit frontend | `28e5ab7cb07c01855a061f939b81591e3a515658` — primeiro commit coordenado do passo 008 |
+| Commit atual backend | `HEAD` após o commit de progresso do passo 008 (consultar `git log -1 --format=%H`; sem push) |
+| Próximo passo | 009 — Postgres e Redis locais em Docker Compose |
 
 ## Passo 001 — evidências
 
@@ -83,6 +83,15 @@
 - Artefatos: `apps/api/src/main.ts` inicia REST; `apps/api/src/worker.ts` usa `createApplicationContext` sem servidor HTTP; `apps/api/src/modules/` contém health e módulos de domínio vazios. TypeScript estrito, ESM, NestJS 12.3.2, TypeScript 6.0.3 e dependências fixadas no lockfile. Os módulos vazios não executam coleta, IA ou publicação.
 - Validação prescrita: `corepack pnpm install`: PASS; `corepack pnpm --filter @alem-do-sisu/api build`: PASS; API iniciada localmente com `PORT=3107`, `GET http://127.0.0.1:3107/health` → HTTP 200 e `{"status":"ok"}`; `corepack pnpm --filter @alem-do-sisu/api start:worker` → inicialização sem erro e saída 0; conexão TCP a 127.0.0.1:3108 recusada, confirmando ausência de listener do worker. API de teste encerrada. `git diff --cached --check`: executar após staging.
 - Limite deste passo: worker ainda não tem jobs e termina após inicialização; a fila entra nos passos de descoberta. Configuração validada, Postgres/Redis, lint e testes automatizados entram nos passos 009–011. Nenhum push ou deploy.
+
+## Passo 008 — evidências
+
+- Estado real antes do passo: frontend limpo em `ce34401`, com workspace vazio; backend limpo em `0a2ee56`. O passo só altera o frontend e este registro canônico de progresso.
+- Artefatos: Angular 22.2.4 standalone com roteamento e TypeScript 6.0.3 estrito em `frontend/apps/web`; Tailwind 4.3.3; feature `home`, pastas `core`/`shared`, shell com idioma `pt-BR`, link para pular conteúdo, foco visível, redução de movimento e layout responsivo. SSR/SSG continuam pendentes do ADR no passo 074.
+- Referência visual: `style-reference.png` foi inspecionada e amostrada sem alterar a imagem. Tokens em `src/styles.css`: marfim `#fcf5ed`, preto `#050505`, verde `#c1fb01`, laranja `#fe6402`, azul `#3845fd`, lilás `#e389fc`; tipografia sans pesada, bordas e sombras deslocadas. O shell usa parte da linguagem de cartaz; composição completa, busca e cards ficam nos passos 067–068, sem oportunidades fictícias como vigentes.
+- Validação prescrita: `corepack pnpm install --frozen-lockfile`: PASS após registrar `allowBuilds` para quatro dependências do scaffold; `corepack pnpm --filter @alem-do-sisu/web build`: PASS (bundle inicial 212,35 kB bruto); `ng serve` em 127.0.0.1:4208: PASS, HTTP 200 com `pt-BR` e título correto, sem backend ativo; servidor de teste encerrado. `git diff --cached --check` no frontend: PASS. O navegador integrado não estava disponível para inspeção visual nesta sessão; revisão visual permanece para as etapas de interface.
+- Instalação: a primeira tentativa parou em `ERR_PNPM_IGNORED_BUILDS`; a configuração explícita em `pnpm-workspace.yaml` permitiu `@parcel/watcher`, `esbuild`, `lmdb` e `msgpackr-extract`, e a repetição passou. `pnpm peers check` ainda aponta conflito transitivo entre `@oxc-parser/binding-wasm32-wasi` e `@napi-rs/wasm-runtime` sobre `@emnapi/*`; o build e o servidor funcionam. Não foi aplicado override sem necessidade comprovada.
+- Ordem dos commits: frontend `28e5ab7cb07c01855a061f939b81591e3a515658` primeiro; backend `HEAD` deste registro segundo. Nenhum push, deploy ou publicação de edital.
 
 ## Pendências e decisões
 
