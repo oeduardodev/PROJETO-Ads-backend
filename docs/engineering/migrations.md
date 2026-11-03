@@ -1,6 +1,6 @@
 # Migrations PostgreSQL
 
-O schema Prisma em `apps/api/prisma/schema.prisma` e o SQL versionado em `apps/api/prisma/migrations/` são a referência para alterações do banco. A migration `20261103015429_baseline` é vazia por intenção: as tabelas de instituições e campi entram no passo 015. API e worker criam o client gerenciado, mas não aplicam migrations ao iniciar.
+O schema Prisma em `apps/api/prisma/schema.prisma` e o SQL versionado em `apps/api/prisma/migrations/` são a referência para alterações do banco. A migration `20261103015429_baseline` é vazia por intenção; `20261103015903_institutions_campuses` cria as tabelas do passo 015, com chave estrangeira, índices únicos e restrição de UF. API e worker criam o client gerenciado, mas não aplicam migrations ao iniciar.
 
 ## Desenvolvimento local
 
@@ -11,6 +11,8 @@ corepack pnpm --filter @alem-do-sisu/api db:validate
 corepack pnpm --filter @alem-do-sisu/api db:migrate:status
 corepack pnpm --filter @alem-do-sisu/api db:migrate:deploy
 ```
+
+Após aplicar as migrations em um banco **local**, `node --env-file=.env apps/api/dist/database/seed.js` cria de forma idempotente UFPB, UFCG, UEPB e IFPB, quando o `DATABASE_URL` do `.env` aponta para esse banco. O script recusa hosts fora do loopback. A seed contém nomes, siglas, natureza pública e links institucionais oficiais; `verified_at` permanece nulo e nenhum campus ou edital é criado. Para o teste de integração, defina `TEST_DATABASE_URL` para um banco local migrado e sem outras instituições, execute a seed e então `corepack pnpm test:integration`.
 
 Para criar uma alteração de schema, edite o arquivo Prisma, use `prisma migrate dev --name nome_descritivo --create-only` em um banco local descartável, revise o SQL gerado e só então aplique a migration localmente. Não use `db push`, `migrate reset` ou sincronização automática no startup para alterar bancos compartilhados.
 

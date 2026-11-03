@@ -39,18 +39,23 @@ function parseUrl(env: NodeJS.ProcessEnv, name: string, protocols: string[]): UR
   return url;
 }
 
-function baseConfig(env: NodeJS.ProcessEnv): BaseConfig {
+export function loadDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
   const databaseUrl = parseUrl(env, 'DATABASE_URL', ['postgres:', 'postgresql:']);
   if (!databaseUrl.username || !databaseUrl.password || databaseUrl.pathname === '/') {
     throw new ConfigurationError('DATABASE_URL requires a username, password and database');
   }
+  return databaseUrl.toString();
+}
+
+function baseConfig(env: NodeJS.ProcessEnv): BaseConfig {
+  const databaseUrl = loadDatabaseUrl(env);
   const redisUrl = parseUrl(env, 'REDIS_URL', ['redis:', 'rediss:']);
   const logLevel = env.LOG_LEVEL?.trim() || 'info';
   if (!['debug', 'info', 'warn', 'error'].includes(logLevel)) {
     throw new ConfigurationError('LOG_LEVEL must be debug, info, warn or error');
   }
   return {
-    databaseUrl: databaseUrl.toString(),
+    databaseUrl,
     redisUrl: redisUrl.toString(),
     logLevel: logLevel as BaseConfig['logLevel'],
   };

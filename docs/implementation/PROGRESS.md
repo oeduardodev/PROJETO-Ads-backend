@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F02 — persistência e regras do domínio |
-| Passo | 014 — `feat(db): integrar Prisma e primeira migração` |
-| Estado | DONE local após validação em banco vazio; commit pendente nesta edição; remotos continuam vazios sem push |
-| Data | 2026-11-02 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 014, §§ 1, 5, 6 e 7.1 |
-| Roteiro consultado | Documento completo; passo 014 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `38dca8c143513e182b0689ffa97785428cc887f2` — passo 013 |
+| Passo | 015 — `feat(domain): persistir instituições e campi` |
+| Estado | DONE local após seed e integração PostgreSQL; commit pendente nesta edição; remotos continuam vazios sem push |
+| Data | 2026-11-03 (America/Sao_Paulo) |
+| Arquitetura consultada | Documento completo; para o passo 015, §§ 1, 5, 6 e 7 |
+| Roteiro consultado | Documento completo; passo 015 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `4553743f276e2b1c5d7c55b5872a4debb168e645` — passo 014 |
 | Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 014 |
-| Commit atual backend | `HEAD` após o commit do passo 014; sem push |
-| Próximo passo | 015 — persistir instituições e campi; G1 ainda pendente |
+| Commit atual backend | `HEAD` após o commit do passo 015; sem push |
+| Próximo passo | 016 — fontes monitoradas e allowlist; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -141,6 +141,14 @@
 - Validação prescrita: `prisma validate` e `prisma generate` PASS; em PostgreSQL 17.7 local, `db:migrate:deploy` aplicou a única baseline no banco **vazio** `alem_do_sisu_step014_verify`; `db:migrate:status` informou schema atualizado, e `_prisma_migrations` registrou `20261103015429_baseline|t`. A migration vazia é intencional: tabelas `institutions`/`campuses` pertencem ao passo 015. A primeira tentativa detectou uma baseline duplicada produzida pelo comando `--create-only`; a cópia manual foi removida e o teste foi repetido em outro banco vazio até passar.
 - Qualidade após correção: `corepack pnpm install --frozen-lockfile`, `format:check`, `lint`, `typecheck`, `test`, `test:e2e` e `build` PASS; 4 testes de configuração e 1 smoke HTTP verdes. Worker com `.env` local inicializou e encerrou com código 0. `git diff --check` PASS; `git diff --cached --check` será executado após staging. Nenhum dado de edital foi criado ou publicado.
 - Pendências: tabelas e seed no passo 015, readiness das dependências no passo 019; G1 só no fim do passo 029. Nenhum push, deploy ou migration de produção.
+
+## Passo 015 — evidências
+
+- Estado real antes do passo: backend limpo em `4553743f276e2b1c5d7c55b5872a4debb168e645`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidas arquitetura §§ 1, 5, 6 e 7 e instruções 015. O escopo foi limitado a instituições/campi, normalização e seed local.
+- Artefatos: modelos Prisma `institutions` e `campuses`, enum de jurisdição, FK com `ON DELETE RESTRICT`, índices de sigla/nome/campus/UF e `CHECK` SQL para as 27 UFs; migration `20261103015903_institutions_campuses`. Repositórios Nest e normalizadores de nome, sigla, município, UF e fuso. `verified_at` permanece nulo até revisão humana. O client de banco passou a validar apenas `DATABASE_URL`, sem depender de Redis na seed.
+- Seed local idempotente com UFPB, UFCG, UEPB e IFPB. Nomes, jurisdição pública e links de referência foram conferidos em páginas institucionais: [UFPB](https://www.ufpb.br/apresentacao/), [estatuto UFCG](https://sods.ufcg.edu.br/index.php/legislacao/estatuto/estatuto-ufcg), [UEPB](https://uepb.edu.br/) e [PDI IFPB](https://pdi.ifpb.edu.br/capitulos/capitulo-01.html). Não foram criados campi, processos ou editais na seed; o script recusa banco fora de loopback.
+- Validação prescrita: em `alem_do_sisu_step015` **local vazio**, `db:migrate:deploy` aplicou baseline e migration 015; `db:migrate:status` PASS. Duas execuções da seed mantiveram exatamente quatro instituições. Teste de integração: 2/2 PASS, cobrindo quatro instituições com fonte oficial e sem `verified_at`, campus válido temporário, rejeição de campus órfão via FK, UF inválida via normalizador e `CHECK`, e duplicidade normalizada. Após o teste: 4 instituições e 0 campi. A primeira execução do teste encontrou um uso incorreto de `assert.rejects` para erro síncrono; corrigido para `assert.throws` e repetido verde.
+- Qualidade: `corepack pnpm install --frozen-lockfile`, `format:check`, `lint`, `typecheck`, `test` (6/6), `test:e2e` (1/1) e `build` PASS. `git diff --cached --check` será executado após staging. Fontes automáticas, URLs candidatas e publicação continuam fora deste passo. G1 permanece pendente até 029; nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 

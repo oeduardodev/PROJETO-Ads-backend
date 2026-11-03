@@ -6,3 +6,38 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum Jurisdiction {
+  FEDERAL
+  ESTADUAL
+}
+
+model Institution {
+  id             String       @id @default(uuid()) @db.Uuid
+  name           String       @db.VarChar(250)
+  normalizedName String       @unique @map("normalized_name") @db.VarChar(250)
+  acronym        String       @unique @db.VarChar(16)
+  jurisdiction   Jurisdiction
+  publicFlag     Boolean      @default(true) @map("public_flag")
+  verifiedAt     DateTime?    @map("verified_at") @db.Timestamptz(6)
+  referenceUrl   String?      @map("reference_url") @db.Text
+  campuses       Campus[]
+
+  @@map("institutions")
+}
+
+model Campus {
+  id             String      @id @default(uuid()) @db.Uuid
+  institutionId  String      @map("institution_id") @db.Uuid
+  name           String      @db.VarChar(200)
+  normalizedName String      @map("normalized_name") @db.VarChar(200)
+  city           String      @db.VarChar(150)
+  normalizedCity String      @map("normalized_city") @db.VarChar(150)
+  state          String      @db.Char(2)
+  timezone       String      @db.VarChar(64)
+  institution    Institution @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+
+  @@unique([institutionId, normalizedName, normalizedCity], map: "campuses_institution_name_city_key")
+  @@index([state, normalizedCity], map: "campuses_state_city_idx")
+  @@map("campuses")
+}

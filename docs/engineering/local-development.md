@@ -16,4 +16,4 @@ No WSL 2 do Windows deste workspace, o Docker Engine e o plugin Compose estão n
 
 `/health` só comprova que a API responde; a verificação de PostgreSQL/Redis no readiness entra no passo 019. O worker encerra após inicialização até que os jobs sejam criados. Os testes `test:e2e` atuais verificam subida e HTTP, enquanto o fluxo de navegador completo virá depois. A interface não contém edital vigente nem consome o corpus histórico como dados públicos.
 
-Não há migration, seed ou reset automático. A [baseline Prisma](migrations.md) é aplicada manualmente em banco local. O corpus e as fontes institucionais ficam em `docs/research/` para curadoria e testes, sujeitos às decisões de licença, retenção e revisão humana registradas no progresso.
+Não há migration, seed ou reset automático. As [migrations Prisma e a seed do piloto](migrations.md) são executadas manualmente em banco local. O corpus e as fontes institucionais ficam em `docs/research/` para curadoria e testes, sujeitos às decisões de licença, retenção e revisão humana registradas no progresso.
