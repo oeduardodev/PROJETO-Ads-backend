@@ -208,11 +208,13 @@ test('detail, list and facets expose only links on reviewed active exact hosts',
       const detail = new PublicDetailService(tx);
       const result = await detail.get(process.id);
       assert.equal(result.officialNoticeUrl, 'https://example.org/test-only/notice');
+      assert.equal(result.applicationStatus, 'INDETERMINADA');
       assert.equal(result.offerings.length, 1);
       assert.equal(result.offerings[0].reservations[0].seats, 8);
       assert.equal(result.offerings[0].campus.city, 'João Pessoa');
       assert.equal(result.windows[0].endDate, '2026-01-20');
       assert.equal(result.windows[0].endTime, null);
+      assert.equal(result.windows[0].applicationStatus, 'INDETERMINADA');
       assert.equal(result.windows[0].instructionsUrl, null);
       assert.deepEqual(result.requirements[0].value, { minimumScore: null });
       assert.equal(result.evidence.length, 1);

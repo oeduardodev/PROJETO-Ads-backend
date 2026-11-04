@@ -1,6 +1,11 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service.js';
 import { publishedProcessWhere } from '../filters/published-query.js';
+import {
+  processStatus,
+  publicApplicationStatus,
+  windowStatus,
+} from '../deadlines/deadline-state.js';
 import { officialHostSources, verifiedOfficialUrl } from './official-url.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
@@ -13,7 +18,7 @@ function civilDate(value: Date | null): string | null {
 export class PublicDetailService {
   constructor(private readonly database: PrismaService) {}
 
-  async get(id: string) {
+  async get(id: string, now = new Date()) {
     if (!UUID.test(id)) throw new BadRequestException();
     const process = await this.database.selectionProcess.findFirst({
       where: { AND: [{ id }, publishedProcessWhere({})] },
@@ -109,6 +114,7 @@ export class PublicDetailService {
       requiresEnem: process.requiresEnem,
       tuitionFree: process.tuitionFree,
       verifiedAt: process.verifiedAt,
+      applicationStatus: publicApplicationStatus(processStatus(process.windows, now.getTime())),
       officialNoticeUrl,
       institution: {
         id: process.institution.id,
@@ -133,6 +139,7 @@ export class PublicDetailService {
         id: window.id,
         offeringId: window.offeringId,
         label: window.label,
+        applicationStatus: publicApplicationStatus(windowStatus(window, now.getTime())),
         startDate: civilDate(window.startDate),
         startTime: window.startTime,
         endDate: civilDate(window.endDate),

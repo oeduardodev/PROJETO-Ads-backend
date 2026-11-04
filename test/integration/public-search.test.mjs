@@ -202,6 +202,7 @@ test('published search handles accents, null ENEM, precise windows, sort and sta
       const open = await search.search(query({ openOnly: true }), page, now);
       assert.equal(open.meta.total, 2);
       assert.ok(open.data.every((item) => item.id !== second.id));
+      assert.ok(open.data.every((item) => item.applicationStatus === 'ABERTA'));
       const unknownEnem = await search.search(query({ requiresEnem: null }), page, now);
       assert.deepEqual(
         unknownEnem.data.map((item) => item.id),
@@ -212,6 +213,7 @@ test('published search handles accents, null ENEM, precise windows, sort and sta
         requiredEnem.data.map((item) => item.id),
         [second.id],
       );
+      assert.equal(requiredEnem.data[0].applicationStatus, 'INDETERMINADA');
       const noEnem = await search.search(query({ requiresEnem: false }), page, now);
       assert.deepEqual(
         noEnem.data.map((item) => item.id),

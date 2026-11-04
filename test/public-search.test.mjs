@@ -5,7 +5,7 @@ import {
   completeWindowInterval,
   isWindowOpen,
   nextConfirmedDeadline,
-} from '../apps/api/dist/modules/processes/public-search/window-time.js';
+} from '../apps/api/dist/modules/processes/deadlines/deadline-state.js';
 
 test('search query validates sorting, booleans, accents and optional text', () => {
   assert.deepEqual(parseSearchQuery({}).sort, 'recent');

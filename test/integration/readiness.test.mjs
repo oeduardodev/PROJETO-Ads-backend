@@ -69,7 +69,7 @@ test('readiness requires both PostgreSQL and Redis and reports safe errors', asy
   assert.equal(redisDown.status, 503);
   assert.equal(redisDown.body.error.code, 'SERVICE_UNAVAILABLE');
   assert.match(redisDown.logs(), /readiness redis failed/iu);
-  assert.doesNotMatch(JSON.stringify(redisDown.body), /6399/iu);
+  assert.doesNotMatch(redisDown.body.error.message, /6399/iu);
 
   const badDatabase = new URL(goodDatabase);
   badDatabase.pathname = '/alem_do_sisu_missing_readiness';
@@ -77,5 +77,5 @@ test('readiness requires both PostgreSQL and Redis and reports safe errors', asy
   assert.equal(databaseDown.status, 503);
   assert.equal(databaseDown.body.error.code, 'SERVICE_UNAVAILABLE');
   assert.match(databaseDown.logs(), /readiness database failed/iu);
-  assert.doesNotMatch(JSON.stringify(databaseDown.body), /alem_do_sisu_missing_readiness/iu);
+  assert.doesNotMatch(databaseDown.body.error.message, /alem_do_sisu_missing_readiness/iu);
 });

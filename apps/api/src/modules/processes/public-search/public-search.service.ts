@@ -6,7 +6,11 @@ import { normalizeKey } from '../../institutions/normalization.js';
 import { publishedProcessWhere } from '../filters/published-query.js';
 import { officialHostSources, verifiedOfficialUrl } from '../public-detail/official-url.js';
 import { SearchQuery } from './search-query.js';
-import { isWindowOpen, nextConfirmedDeadline } from './window-time.js';
+import {
+  nextConfirmedDeadline,
+  processStatus,
+  publicApplicationStatus,
+} from '../deadlines/deadline-state.js';
 
 function escapeLike(value: string): string {
   return value.replace(/[\\%_]/gu, '\\$&');
@@ -109,7 +113,8 @@ export class PublicSearchService {
       const windows = row.windows.filter(
         (window) => window.offeringId === null || offeringIds.has(window.offeringId),
       );
-      if (query.openOnly && !windows.some((window) => isWindowOpen(window, nowMs))) return [];
+      const applicationStatus = processStatus(windows, nowMs);
+      if (query.openOnly && applicationStatus !== 'OPEN') return [];
       const deadline = nextConfirmedDeadline(windows, nowMs);
       const courses = [
         ...new Map(
@@ -134,6 +139,7 @@ export class PublicSearchService {
           courseSortKey: courses[0]?.[0] ?? null,
           deadline,
           nextDeadlineAt: deadline === null ? null : new Date(deadline).toISOString(),
+          applicationStatus,
         },
       ];
     });
@@ -170,6 +176,7 @@ export class PublicSearchService {
           offeringCount: item.offeringCount,
           coursePreview: item.coursePreview,
           nextDeadlineAt: item.nextDeadlineAt,
+          applicationStatus: publicApplicationStatus(item.applicationStatus),
         })),
       meta: { page: pagination.page, pageSize: pagination.pageSize, total },
     };

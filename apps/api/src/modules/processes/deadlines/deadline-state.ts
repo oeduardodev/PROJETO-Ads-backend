@@ -8,6 +8,20 @@ export interface CompleteWindowCandidate {
   timezone: string | null;
 }
 
+export type DeadlineStatus = 'OPEN' | 'CLOSED' | 'UPCOMING' | 'UNKNOWN';
+export type PublicApplicationStatus = 'ABERTA' | 'ENCERRADA' | 'PREVISTA' | 'INDETERMINADA';
+
+const PUBLIC_STATUS: Record<DeadlineStatus, PublicApplicationStatus> = {
+  OPEN: 'ABERTA',
+  CLOSED: 'ENCERRADA',
+  UPCOMING: 'PREVISTA',
+  UNKNOWN: 'INDETERMINADA',
+};
+
+export function publicApplicationStatus(status: DeadlineStatus): PublicApplicationStatus {
+  return PUBLIC_STATUS[status];
+}
+
 function instant(date: Date | null, time: string | null, timezone: string | null): number | null {
   if (!date || !time || !timezone) return null;
   try {
@@ -30,8 +44,23 @@ export function completeWindowInterval(
 }
 
 export function isWindowOpen(window: CompleteWindowCandidate, nowMs: number): boolean {
+  return windowStatus(window, nowMs) === 'OPEN';
+}
+
+export function windowStatus(window: CompleteWindowCandidate, nowMs: number): DeadlineStatus {
   const interval = completeWindowInterval(window);
-  return interval !== null && interval.start <= nowMs && nowMs < interval.end;
+  if (!interval || !Number.isFinite(nowMs)) return 'UNKNOWN';
+  if (nowMs < interval.start) return 'UPCOMING';
+  if (nowMs >= interval.end) return 'CLOSED';
+  return 'OPEN';
+}
+
+export function processStatus(windows: CompleteWindowCandidate[], nowMs: number): DeadlineStatus {
+  const statuses = windows.map((window) => windowStatus(window, nowMs));
+  if (statuses.includes('OPEN')) return 'OPEN';
+  if (statuses.includes('UNKNOWN')) return 'UNKNOWN';
+  if (statuses.includes('UPCOMING')) return 'UPCOMING';
+  return statuses.length ? 'CLOSED' : 'UNKNOWN';
 }
 
 export function nextConfirmedDeadline(
