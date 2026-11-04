@@ -30,6 +30,12 @@ test('worker requires Redis while search and AI keys remain deferred', () => {
     /REDIS_URL is required/,
   );
   assert.equal(loadWorkerConfig(valid).redisUrl, valid.REDIS_URL);
+  assert.equal(loadWorkerConfig(valid).crawlConcurrency, 1);
+  assert.equal(loadWorkerConfig({ ...valid, CRAWL_CONCURRENCY: '4' }).crawlConcurrency, 4);
+  assert.throws(
+    () => loadWorkerConfig({ ...valid, CRAWL_CONCURRENCY: '0' }),
+    /CRAWL_CONCURRENCY must be a positive safe integer/,
+  );
 });
 
 test('API rejects wildcard CORS and accepts only configured origins', () => {

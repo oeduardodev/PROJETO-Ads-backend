@@ -11,6 +11,6 @@ import { JOB_QUEUE_SET, JobsService } from './jobs.service.js';
     },
     JobsService,
   ],
-  exports: [JobsService],
+  exports: [JOB_QUEUE_SET, JobsService],
 })
 export class JobsModule {}

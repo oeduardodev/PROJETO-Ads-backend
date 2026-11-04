@@ -13,16 +13,17 @@
 
 | Campo | Valor |
 | --- | --- |
-| Fase | F03 — API pública e contratos versionados |
-| Passo | 028 — `feat(api): calcular estados de prazo com timezone` |
-| Estado | DONE local no HEAD após commit do 028; remotos continuam vazios sem push |
-| Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 028, §§ 5.4, 6.2, 8 e 12 |
-| Roteiro consultado | Documento completo; passo 028 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `3b956916b8fe06953d651486bc5b94e2e53156cb` — passo 027 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 028 |
-| Commit atual backend | HEAD — passo 028; sem push |
-| Próximo passo | 029 — OpenAPI e cliente tipado; G1 pendente |
+| Fase | F04 — Workers, fontes e descoberta incremental |
+| Passo | 032 — `feat(schedule): agendar recrawl por fonte` |
+| Estado | DONE local no HEAD após commit do 032; remotos continuam vazios, sem push |
+| Data | 2026-11-04 (America/Sao_Paulo) |
+| Arquitetura consultada | §§ 4.2-4.3, 7.2 e 11.2 |
+| Roteiro consultado | Passo 032 e checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `8596f6e` - passo 031 |
+| Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` - passo 029; sem alterações em 030-032 |
+| Commit atual backend | HEAD - passo 032; sem push |
+| Gate G1 | PASS local no passo 029; schema local segue atualizado |
+| Próximo passo | 033 — `feat(fetch): criar cliente HTTP de coleta responsável` |
 
 ## Passo 001 — evidências
 
@@ -277,6 +278,15 @@
 - ADR 0016 atualizado para ACEITO. msgpackr-extract é opcional e seu script de build foi explicitamente negado em pnpm-workspace.yaml; instalação congelada passou.
 - Validação: install --frozen-lockfile, db:validate, format:check, lint, typecheck, test com build (20/20), integração Redis direcionada (2/2: deduplicação após conclusão e três falhas até failed persistido) e E2E (2/2: API e worker), git diff --check PASS. Testes Redis executados somente no compose local; não houve migration nem escrita em produção.
 - Limite: ainda não há handlers de negócio para consumir essas seis filas; serão adicionados junto às estratégias e conectores dos próximos passos. Nenhuma fonte foi coletada, nenhum edital publicado e nenhum segredo de busca/IA foi ativado. G1 segue PASS; próximo passo 032.
+
+## Passo 032 — evidências
+
+- Estado real antes do passo: backend limpo em `8596f6e`; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Roteiro 032 e arquitetura §§ 4.2-4.3, 7.2 e 11.2 foram relidos.
+- ADR 0017 aceito pelo usuário: somente fontes `ACTIVE` com domínio exato revisado e coleta autorizada; excluir `DRAFT`, `PAUSED` e `BLOCKED`; manter `DEGRADED` com prioridade inferior; frequência desde o último check; deduplicação por janela UTC; limite configurável por host exato.
+- Artefatos: `apps/api/src/modules/discovery/scheduler/` adiciona scheduler com lock Redis renovável, ordem por saúde/prioridade e limite de jobs pendentes/ativos por host exato. `schedule_version` identifica a janela e alimenta o `jobId` estável. `CRAWL_CONCURRENCY` tem padrão 1 e validação; repositories listam apenas fontes autorizadas. O worker fecha o scheduler no shutdown. Nenhuma fonte é ativada, nenhum HTTP é iniciado e não houve migration.
+- Validação: `pnpm install --frozen-lockfile`, `db:validate`, `db:migrate:status` (10 migrations em dia no banco local), `format:check`, `lint`, `typecheck`, `test` (23/23), `test:integration` (24/24 com PostgreSQL/Redis locais), `test:e2e` (2/2), `openapi:check` e `git diff --check`: PASS. Os testes de integração cobrem fontes inelegíveis, prioridade/limite por host e duas instâncias concorrentes disputando o lock e a mesma janela.
+- Uma primeira tentativa de integração foi interrompida quando o WSL encerrou os containers; a infraestrutura local foi mantida ativa e a suíte completa foi repetida com sucesso. A repetição emitiu somente avisos de depreciação do cliente `pg`, sem falhas.
+- Pendências: os jobs `source.refresh` ainda não têm consumidores de coleta; clientes HTTP responsáveis entram no passo 033. A política de acesso continua exigindo revisão por fonte antes de marcar o domínio como autorizado. Nenhum dado foi publicado, nenhum push foi feito e G1 permanece PASS.
 
 ## Pendências e decisões
 

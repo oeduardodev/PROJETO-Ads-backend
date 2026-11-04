@@ -30,13 +30,20 @@ function jobId(value: string): string {
 export class JobsService implements OnApplicationShutdown {
   constructor(@Inject(JOB_QUEUE_SET) private readonly queues: JobQueueSet) {}
 
-  enqueueSourceRefresh(data: JobPayloads['source.refresh']) {
+  enqueueSourceRefresh(data: JobPayloads['source.refresh'], priority?: number) {
     const sourceId = uuid(data.sourceId, 'sourceId');
     const scheduleVersion = positiveInteger(data.scheduleVersion, 'scheduleVersion');
+    if (
+      priority !== undefined &&
+      (!Number.isSafeInteger(priority) || priority < 1 || priority > 2_097_151)
+    ) {
+      throw new TypeError('priority must be an integer from 1 to 2097151');
+    }
     return this.add(
       'source.refresh',
       { sourceId, scheduleVersion },
       'source-refresh-' + sourceId + '-v' + scheduleVersion,
+      priority,
     );
   }
 
@@ -95,8 +102,16 @@ export class JobsService implements OnApplicationShutdown {
     await Promise.all(Object.values(this.queues).map((queue) => queue.close()));
   }
 
-  private add<Name extends JobQueueName>(name: Name, payload: JobPayloads[Name], id: string) {
+  private add<Name extends JobQueueName>(
+    name: Name,
+    payload: JobPayloads[Name],
+    id: string,
+    priority?: number,
+  ) {
     const queue = this.queues[name] as Queue;
-    return queue.add(name, payload, { jobId: jobId(id) });
+    return queue.add(name, payload, {
+      jobId: jobId(id),
+      ...(priority === undefined ? {} : { priority }),
+    });
   }
 }

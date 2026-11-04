@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SourceKind } from '../../generated/prisma/enums.js';
+import { SourceHealth, SourceKind, SourceStatus } from '../../generated/prisma/enums.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { normalizeAuthorizedHost, normalizeSourceUrl } from './source-url.js';
 
@@ -73,5 +73,34 @@ export class SourcesRepository {
       where: { institutionId },
       orderBy: [{ priority: 'asc' }, { url: 'asc' }],
     });
+  }
+
+  listSchedulable() {
+    return this.database.source.findMany({
+      where: {
+        status: SourceStatus.ACTIVE,
+        health: { not: SourceHealth.BLOCKED },
+        allowedDomain: {
+          is: { collectionAllowed: true, reviewedAt: { not: null } },
+        },
+      },
+      select: {
+        id: true,
+        frequencyMinutes: true,
+        priority: true,
+        health: true,
+        lastCheckedAt: true,
+        allowedDomain: { select: { host: true } },
+      },
+    });
+  }
+
+  async mapHostsBySourceIds(sourceIds: string[]): Promise<Map<string, string>> {
+    if (sourceIds.length === 0) return new Map();
+    const sources = await this.database.source.findMany({
+      where: { id: { in: sourceIds } },
+      select: { id: true, allowedDomain: { select: { host: true } } },
+    });
+    return new Map(sources.map((source) => [source.id, source.allowedDomain.host]));
   }
 }

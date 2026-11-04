@@ -27,7 +27,7 @@ function serviceWithRecordedCalls() {
 test('all six job producers create stable IDs from persisted record identity', async () => {
   const { service, calls } = serviceWithRecordedCalls();
   const dueAt = '2026-11-04T15:00:00-03:00';
-  await service.enqueueSourceRefresh({ sourceId, scheduleVersion: 2 });
+  await service.enqueueSourceRefresh({ sourceId, scheduleVersion: 2 }, 101);
   await service.enqueueUrlFetch(sourceId);
   await service.enqueueDocumentClassify(documentId, 'A'.repeat(64));
   await service.enqueueDocumentExtract(documentId, 3);
@@ -49,6 +49,7 @@ test('all six job producers create stable IDs from persisted record identity', a
       'process-recheck-' + processId + '-' + Date.parse(dueAt),
     ],
   );
+  assert.equal(calls[0].options.priority, 101);
   assert.equal(calls[2].data.sha256, 'a'.repeat(64));
   assert.equal(calls[5].data.dueAt, '2026-11-04T18:00:00.000Z');
 });

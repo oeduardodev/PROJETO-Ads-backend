@@ -10,7 +10,9 @@ export interface ApiConfig extends BaseConfig {
   corsOrigins: string[];
 }
 
-export type WorkerConfig = BaseConfig;
+export interface WorkerConfig extends BaseConfig {
+  crawlConcurrency: number;
+}
 
 export class ConfigurationError extends Error {
   constructor(message: string) {
@@ -92,5 +94,11 @@ export function loadApiConfig(env: NodeJS.ProcessEnv = process.env): ApiConfig {
 }
 
 export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerConfig {
-  return baseConfig(env);
+  const base = baseConfig(env);
+  const rawConcurrency = env.CRAWL_CONCURRENCY?.trim() || '1';
+  const crawlConcurrency = Number(rawConcurrency);
+  if (!Number.isSafeInteger(crawlConcurrency) || crawlConcurrency < 1) {
+    throw new ConfigurationError('CRAWL_CONCURRENCY must be a positive safe integer');
+  }
+  return { ...base, crawlConcurrency };
 }

@@ -26,3 +26,8 @@ pública não cria clientes de fila e continua separada dos consumidores.
 O registro de producer fecha todas as filas no shutdown do Nest. Processadores
 serão registrados nos passos de descoberta/extração quando suas regras de
 negócio existirem; este passo não consome jobs com handlers vazios.
+
+
+O scheduler do worker consulta fontes a cada minuto sob um lock Redis com lease renovável. Só agenda fontes `ACTIVE` ligadas a um host exato revisado e com coleta autorizada; `DRAFT`, `PAUSED` e `BLOCKED` ficam de fora. `UNKNOWN` e `HEALTHY` usam a prioridade cadastrada; `DEGRADED` permanece elegível com prioridade inferior. A frequência é medida desde `last_checked_at`; fonte nunca verificada fica imediatamente elegível. A versão do job é o minuto UTC de início da janela de frequência, estável entre ticks concorrentes. Janelas perdidas não são reproduzidas em lote.
+
+O limite `CRAWL_CONCURRENCY` é aplicado aos jobs `source.refresh` pendentes ou ativos por host exato; o padrão local é 1. O scheduler verifica o estado da fila e os hosts atuais das fontes desses jobs antes de agendar outra fonte do mesmo host. Isso limita a fila de atualização por fonte; clientes HTTP e consumidores de coleta entram nos passos seguintes.

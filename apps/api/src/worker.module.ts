@@ -7,6 +7,7 @@ import { ExtractionModule } from './modules/extraction/extraction.module.js';
 import { ValidationModule } from './modules/validation/validation.module.js';
 import { ProcessesModule } from './modules/processes/processes.module.js';
 import { JobsModule } from './modules/jobs/jobs.module.js';
+import { SchedulerModule } from './modules/discovery/scheduler/scheduler.module.js';
 import { DatabaseModule } from './database/database.module.js';
 
 @Injectable()
@@ -29,6 +30,7 @@ class WorkerRuntime implements OnApplicationShutdown {
     ValidationModule,
     ProcessesModule,
     JobsModule,
+    SchedulerModule,
   ],
   providers: [WorkerRuntime],
 })
