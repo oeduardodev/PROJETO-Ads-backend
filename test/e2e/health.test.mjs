@@ -53,6 +53,13 @@ test('API serves health with configured CORS origin', async () => {
     const missing = await fetch(`http://127.0.0.1:${port}/api/v1/missing`);
     assert.equal(missing.status, 404);
     assert.equal((await missing.json()).error.code, 'NOT_FOUND');
+    const openapi = await fetch(`http://127.0.0.1:${port}/api/v1/openapi.json`);
+    assert.equal(openapi.status, 200);
+    const contract = await openapi.json();
+    assert.equal(contract.openapi, '3.0.0');
+    assert.ok(contract.paths['/api/v1/processes']);
+    assert.ok(contract.paths['/api/v1/processes/{id}']);
+    assert.equal(contract.paths['/api/v1/admin/reviews'], undefined);
   } finally {
     child.kill();
   }

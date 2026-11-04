@@ -1,0 +1,1048 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/institutions": {
+      "get": {
+        "operationId": "listInstitutions",
+        "parameters": [
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 10000,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstitutionList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Listar instituições públicas verificadas",
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/api/v1/filters": {
+      "get": {
+        "operationId": "listFilters",
+        "parameters": [
+          {
+            "name": "requires_enem",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "true",
+                "false",
+                "unknown"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "selection_type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "modality",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "uf",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minLength": 2,
+              "maxLength": 2,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Filters"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Listar facetas dos processos publicados",
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/api/v1/processes": {
+      "get": {
+        "operationId": "searchProcesses",
+        "parameters": [
+          {
+            "name": "page_size",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 10000,
+              "type": "number"
+            }
+          },
+          {
+            "name": "sort",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "recent",
+                "deadline",
+                "course"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "open_only",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "true",
+                "false"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "selection_type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "requires_enem",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "true",
+                "false",
+                "unknown"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "modality",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 64,
+              "type": "string"
+            }
+          },
+          {
+            "name": "degree",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 32,
+              "type": "string"
+            }
+          },
+          {
+            "name": "city",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 150,
+              "type": "string"
+            }
+          },
+          {
+            "name": "uf",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minLength": 2,
+              "maxLength": 2,
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessList"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Pesquisar processos publicados",
+        "tags": [
+          "public"
+        ]
+      }
+    },
+    "/api/v1/processes/{id}": {
+      "get": {
+        "operationId": "getProcess",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessDetail"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Detalhar processo publicado",
+        "tags": [
+          "public"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Além do SiSU — API pública",
+    "description": "Catálogo público revisado; versão 1 do contrato REST.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "object",
+            "required": [
+              "code",
+              "message",
+              "status",
+              "requestId"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              },
+              "message": {
+                "type": "string"
+              },
+              "status": {
+                "type": "integer"
+              },
+              "requestId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        }
+      },
+      "PageMeta": {
+        "type": "object",
+        "required": [
+          "page",
+          "pageSize",
+          "total"
+        ],
+        "properties": {
+          "page": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "pageSize": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100
+          },
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "Institution": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "acronym",
+          "jurisdiction",
+          "verifiedAt",
+          "referenceUrl",
+          "campuses",
+          "monitoring"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "acronym": {
+            "type": "string"
+          },
+          "jurisdiction": {
+            "type": "string",
+            "enum": [
+              "FEDERAL",
+              "ESTADUAL"
+            ]
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "referenceUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "campuses": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Campus"
+            }
+          },
+          "monitoring": {
+            "$ref": "#/components/schemas/InstitutionMonitoring"
+          }
+        }
+      },
+      "Campus": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "city",
+          "state",
+          "timezone",
+          "verifiedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 2
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InstitutionMonitoring": {
+        "type": "object",
+        "required": [
+          "activeSourceCount",
+          "lastCheckedAt",
+          "lastSuccessAt"
+        ],
+        "properties": {
+          "activeSourceCount": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "lastCheckedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "lastSuccessAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "InstitutionList": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Institution"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PageMeta"
+          }
+        }
+      },
+      "FacetValue": {
+        "type": "object",
+        "required": [
+          "value",
+          "count"
+        ],
+        "properties": {
+          "value": {
+            "type": "string"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "Filters": {
+        "type": "object",
+        "required": [
+          "total",
+          "facets"
+        ],
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "facets": {
+            "type": "object",
+            "required": [
+              "uf",
+              "modality",
+              "selectionType",
+              "requiresEnem"
+            ],
+            "properties": {
+              "uf": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FacetValue"
+                }
+              },
+              "modality": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FacetValue"
+                }
+              },
+              "selectionType": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FacetValue"
+                }
+              },
+              "requiresEnem": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/FacetValue"
+                }
+              }
+            }
+          }
+        }
+      },
+      "ProcessInstitution": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "acronym"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "acronym": {
+            "type": "string"
+          }
+        }
+      },
+      "ProcessCard": {
+        "type": "object",
+        "required": [
+          "id",
+          "noticeCode",
+          "selectionType",
+          "requiresEnem",
+          "verifiedAt",
+          "officialNoticeUrl",
+          "institution",
+          "offeringCount",
+          "coursePreview",
+          "nextDeadlineAt",
+          "applicationStatus"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "noticeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "selectionType": {
+            "type": "string"
+          },
+          "requiresEnem": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "officialNoticeUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "institution": {
+            "$ref": "#/components/schemas/ProcessInstitution"
+          },
+          "offeringCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "coursePreview": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 3
+          },
+          "nextDeadlineAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "applicationStatus": {
+            "type": "string",
+            "enum": [
+              "PREVISTA",
+              "ABERTA",
+              "ENCERRADA",
+              "INDETERMINADA"
+            ]
+          }
+        }
+      },
+      "ProcessList": {
+        "type": "object",
+        "required": [
+          "data",
+          "meta"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProcessCard"
+            }
+          },
+          "meta": {
+            "$ref": "#/components/schemas/PageMeta"
+          }
+        }
+      },
+      "OfferingReservation": {
+        "type": "object",
+        "required": [
+          "id",
+          "category",
+          "seats"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "category": {
+            "type": "string"
+          },
+          "seats": {
+            "type": "integer",
+            "nullable": true
+          }
+        }
+      },
+      "DetailCampus": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "city",
+          "state",
+          "timezone",
+          "verifiedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "city": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "Offering": {
+        "type": "object",
+        "required": [
+          "id",
+          "courseName",
+          "degreeType",
+          "modality",
+          "shift",
+          "seats",
+          "campus",
+          "reservations"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "courseName": {
+            "type": "string"
+          },
+          "degreeType": {
+            "type": "string",
+            "nullable": true
+          },
+          "modality": {
+            "type": "string",
+            "nullable": true
+          },
+          "shift": {
+            "type": "string",
+            "nullable": true
+          },
+          "seats": {
+            "type": "integer",
+            "nullable": true
+          },
+          "campus": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DetailCampus"
+              }
+            ],
+            "nullable": true
+          },
+          "reservations": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/OfferingReservation"
+            }
+          }
+        }
+      },
+      "ApplicationWindow": {
+        "type": "object",
+        "required": [
+          "id",
+          "offeringId",
+          "label",
+          "applicationStatus",
+          "startDate",
+          "startTime",
+          "endDate",
+          "endTime",
+          "timezone",
+          "instructionsUrl"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "offeringId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "label": {
+            "type": "string",
+            "nullable": true
+          },
+          "applicationStatus": {
+            "type": "string",
+            "enum": [
+              "PREVISTA",
+              "ABERTA",
+              "ENCERRADA",
+              "INDETERMINADA"
+            ]
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "startTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date",
+            "nullable": true
+          },
+          "endTime": {
+            "type": "string",
+            "nullable": true
+          },
+          "timezone": {
+            "type": "string",
+            "nullable": true
+          },
+          "instructionsUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          }
+        }
+      },
+      "Requirement": {
+        "type": "object",
+        "required": [
+          "id",
+          "offeringId",
+          "reservationId",
+          "criterion",
+          "required",
+          "value"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "offeringId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "reservationId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "criterion": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "value": {
+            "description": "Valor estruturado revisado, ou null quando ausente",
+            "nullable": true
+          }
+        }
+      },
+      "Evidence": {
+        "type": "object",
+        "required": [
+          "fieldPath",
+          "pageOrSection",
+          "quote",
+          "checkedAt",
+          "documentUrl",
+          "documentIssuedAt"
+        ],
+        "properties": {
+          "fieldPath": {
+            "type": "string"
+          },
+          "pageOrSection": {
+            "type": "string",
+            "nullable": true
+          },
+          "quote": {
+            "type": "string"
+          },
+          "checkedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "documentUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "documentIssuedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "ProcessDetail": {
+        "type": "object",
+        "required": [
+          "id",
+          "noticeCode",
+          "noticeYear",
+          "selectionType",
+          "requiresEnem",
+          "tuitionFree",
+          "verifiedAt",
+          "applicationStatus",
+          "officialNoticeUrl",
+          "institution",
+          "offerings",
+          "windows",
+          "requirements",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "noticeCode": {
+            "type": "string",
+            "nullable": true
+          },
+          "noticeYear": {
+            "type": "integer",
+            "nullable": true
+          },
+          "selectionType": {
+            "type": "string"
+          },
+          "requiresEnem": {
+            "type": "boolean",
+            "nullable": true
+          },
+          "tuitionFree": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          },
+          "verifiedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "applicationStatus": {
+            "type": "string",
+            "enum": [
+              "PREVISTA",
+              "ABERTA",
+              "ENCERRADA",
+              "INDETERMINADA"
+            ]
+          },
+          "officialNoticeUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "institution": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ProcessInstitution"
+              }
+            ],
+            "properties": {
+              "jurisdiction": {
+                "type": "string",
+                "enum": [
+                  "FEDERAL",
+                  "ESTADUAL"
+                ]
+              }
+            },
+            "required": [
+              "jurisdiction"
+            ]
+          },
+          "offerings": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Offering"
+            }
+          },
+          "windows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationWindow"
+            }
+          },
+          "requirements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Requirement"
+            }
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Evidence"
+            }
+          }
+        }
+      }
+    }
+  }
+}

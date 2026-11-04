@@ -4,3 +4,4 @@ coverage/
 pnpm-lock.yaml
 docs/reference/
 apps/api/src/generated/prisma/
+apps/api/openapi/public-v1.json

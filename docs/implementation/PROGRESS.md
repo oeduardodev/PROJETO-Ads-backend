@@ -251,6 +251,17 @@
 - Validação: `pnpm install --frozen-lockfile`, `db:validate`, `format:check`, `lint`, `typecheck`, `test` com build (15/15), `test:e2e` (1/1), `test:integration` (19/19) e `git diff --check` PASS em banco e Redis locais. Uma execução intermediária da integração falhou apenas porque o request ID aleatório continha `6399`; a asserção agora verifica a mensagem pública e a suíte completa foi repetida verde. Repetir antes do commit após a aceitação do ADR.
 - Pendências: G1 só será avaliado ao fim do 029; ausência de aviso oficial de suspensão no schema atual, que não pode ser derivado apenas de datas. Nenhum push, deploy ou migration de produção.
 
+## Passo 029 — evidências
+
+- Estado antes do passo: backend em e471d89ec60bb85711181cd14677f3227f6e30b1; frontend em b426b7f5a95e76d123322e2e6a3a00ae0d54054f. Foram relidos o roteiro 029 e a arquitetura §§ 8, 9 e 12. A API pública já tinha os quatro endpoints de leitura, sem contrato OpenAPI nem client Angular gerado.
+- Decisão de repositórios separados mantida conforme ADR 0000. O frontend foi commitado como fa0248e555074b3fd322a69048ada63642a7f293 (feat(api): gerar client TypeScript do contrato público); este registro acompanha o commit backend do mesmo passo.
+- Artefatos: OpenAPI canônico NestJS em apps/api/openapi/public-v1.json, servido em /api/v1/openapi.json e /api/v1/docs; schemas públicos explícitos, sem rotas ou campos editoriais. Cliente TypeScript Angular gerado e versionado em apps/web/src/app/core/api/generated/, com contrato espelhado em contracts/public-v1.json. Guia de evolução compatível em docs/engineering/openapi.md e checks de geração nos dois CI.
+- O JSON canônico é ignorado pelo Prettier: sua formatação é controlada pelo gerador NestJS e verificada byte a byte por openapi:check.
+- Contrato protegido por testes de operação, parâmetros e campos essenciais; E2E consulta o JSON servido e confirma ausência de rota administrativa. O gerador do Angular foi executado duas vezes sem alterar hashes; o espelho frontend e o arquivo canônico tiveram SHA-256 idêntico.
+- Backend: pnpm install --frozen-lockfile, db:validate, format:check, lint, typecheck, test (17/17), test:e2e (1/1), openapi:check e git diff --check PASS. Frontend: pnpm install --frozen-lockfile, format:check, lint, typecheck, test (1/1), build, test:e2e (1/1), geração determinística e git diff --check PASS.
+- Gate G1: PostgreSQL local em 127.0.0.1:5433/alem_do_sisu recebeu as dez migrations versionadas; db:migrate:status confirmou schema atualizado. Seed local confirmou quatro instituições e um edital histórico em rascunho. O shell Angular existente compilou. G1 PASS. Nenhuma migration de produção, push ou deploy.
+- Pendências: conectar o client Angular às jornadas de busca nos passos posteriores; provedores e conectores continuam inativos até revisão de fonte e política. Próximo passo: 030.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
