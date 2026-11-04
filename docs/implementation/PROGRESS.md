@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F04 — Workers, fontes e descoberta incremental |
-| Passo | 032 — `feat(schedule): agendar recrawl por fonte` |
-| Estado | DONE local no HEAD após commit do 032; remotos continuam vazios, sem push |
+| Passo | 033 — `feat(fetch): criar cliente HTTP de coleta responsável` |
+| Estado | Pronto para commit local; nenhum push |
 | Data | 2026-11-04 (America/Sao_Paulo) |
-| Arquitetura consultada | §§ 4.2-4.3, 7.2 e 11.2 |
-| Roteiro consultado | Passo 032 e checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `8596f6e` - passo 031 |
+| Arquitetura consultada | Passo 032: §§ 4.2-4.3, 7.2 e 11.2; passo 033: §§ 4.2-4.3, 10.1 e 12.1 |
+| Roteiro consultado | Passo 033; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `0dece45` - passo 032 |
 | Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` - passo 029; sem alterações em 030-032 |
-| Commit atual backend | HEAD - passo 032; sem push |
+| Commit atual backend | HEAD - passo 033 após commit; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 033 — `feat(fetch): criar cliente HTTP de coleta responsável` |
+| Próximo passo | 034 — `feat(discovery): extrair links e URLs canônicas` |
 
 ## Passo 001 — evidências
 
@@ -287,6 +287,15 @@
 - Validação: `pnpm install --frozen-lockfile`, `db:validate`, `db:migrate:status` (10 migrations em dia no banco local), `format:check`, `lint`, `typecheck`, `test` (23/23), `test:integration` (24/24 com PostgreSQL/Redis locais), `test:e2e` (2/2), `openapi:check` e `git diff --check`: PASS. Os testes de integração cobrem fontes inelegíveis, prioridade/limite por host e duas instâncias concorrentes disputando o lock e a mesma janela.
 - Uma primeira tentativa de integração foi interrompida quando o WSL encerrou os containers; a infraestrutura local foi mantida ativa e a suíte completa foi repetida com sucesso. A repetição emitiu somente avisos de depreciação do cliente `pg`, sem falhas.
 - Pendências: os jobs `source.refresh` ainda não têm consumidores de coleta; clientes HTTP responsáveis entram no passo 033. A política de acesso continua exigindo revisão por fonte antes de marcar o domínio como autorizado. Nenhum dado foi publicado, nenhum push foi feito e G1 permanece PASS.
+
+## Passo 033 — evidências
+
+- Estado antes do passo: backend em `0dece45` após o passo 032, com o ADR 0018 e o progresso do início do passo ainda não commitados; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Foram relidos o passo 033 do roteiro e arquitetura §§ 4.2-4.3, 10.1 e 12.1.
+- ADR 0018 aceito pelo usuário: respeitar `Retry-After`, repetir com backoff exponencial e jitter até três tentativas; após esgotá-las, propagar a falha para o consumidor do job pausar a fonte para revisão. `403`, bloqueio de `robots.txt` e autenticação não são repetidos.
+- Artefatos: `apps/api/src/modules/crawling/http/responsible-http.client.ts` implementa HTTPS apenas, host exato autorizado, resolução DNS com rejeição de endereços não públicos e IP fixado na conexão, bloqueio de redirect cross-host, consulta e aplicação de `robots.txt`, User-Agent explícito, timeout, limite de bytes/MIME e backoff para rede, `429` e `5xx`. A permissão de coleta precisa estar revisada; não há integração a site oficial nem configuração que ative fonte.
+- Testes do passo: `test/responsible-http.test.mjs` cobre localhost, metadados cloud, DNS privado, IP literal, redirect interno e cross-host, robots, `Retry-After`, limite de bytes e permissão. Testes usam transporte e DNS injetados; nenhuma requisição externa foi feita.
+- Validação: `pnpm test` (31/31), `pnpm lint`, `pnpm typecheck`, `pnpm format:check`, build TypeScript e `git diff --check`: PASS. Sem alteração de schema/migration, banco ou contrato OpenAPI.
+- Pendência de integração: a pausa persistida da fonte após falha final será conectada ao consumidor de jobs no passo correspondente. Nenhuma fonte foi ativada, nenhum dado foi coletado/publicado e nenhum push foi feito.
 
 ## Pendências e decisões
 
