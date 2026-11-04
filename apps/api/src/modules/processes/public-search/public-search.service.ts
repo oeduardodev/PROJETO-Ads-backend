@@ -4,6 +4,7 @@ import { PrismaService } from '../../../database/prisma.service.js';
 import { Prisma } from '../../../generated/prisma/client.js';
 import { normalizeKey } from '../../institutions/normalization.js';
 import { publishedProcessWhere } from '../filters/published-query.js';
+import { officialHostSources, verifiedOfficialUrl } from '../public-detail/official-url.js';
 import { SearchQuery } from './search-query.js';
 import { isWindowOpen, nextConfirmedDeadline } from './window-time.js';
 
@@ -67,7 +68,15 @@ export class PublicSearchService {
         requiresEnem: true,
         referenceUrl: true,
         verifiedAt: true,
-        institution: { select: { id: true, name: true, acronym: true, normalizedName: true } },
+        institution: {
+          select: {
+            id: true,
+            name: true,
+            acronym: true,
+            normalizedName: true,
+            sources: officialHostSources,
+          },
+        },
         offerings: {
           where: offeringWhere(query),
           select: { id: true, courseName: true, normalizedCourseName: true },
@@ -86,6 +95,8 @@ export class PublicSearchService {
     });
     const nowMs = now.getTime();
     const candidates = rows.flatMap((row) => {
+      const officialNoticeUrl = verifiedOfficialUrl(row.referenceUrl, row.institution.sources);
+      if (!officialNoticeUrl) return [];
       const processTextMatches =
         query.q === undefined ||
         row.institution.normalizedName.includes(query.q) ||
@@ -112,7 +123,7 @@ export class PublicSearchService {
           selectionType: row.selectionType,
           requiresEnem: row.requiresEnem,
           verifiedAt: row.verifiedAt,
-          officialNoticeUrl: row.referenceUrl,
+          officialNoticeUrl,
           institution: {
             id: row.institution.id,
             name: row.institution.name,

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../../database/prisma.service.js';
 import { FilterQuery } from './filter-query.js';
 import { matchingOffering, publishedProcessWhere } from './published-query.js';
+import { officialHostSources, verifiedOfficialUrl } from '../public-detail/official-url.js';
 
 type FacetValue = { value: string; count: number };
 
@@ -25,6 +26,8 @@ export class FiltersService {
       select: {
         selectionType: true,
         requiresEnem: true,
+        referenceUrl: true,
+        institution: { select: { sources: officialHostSources } },
         offerings: {
           where: matchingOffering(query),
           select: { modality: true, campus: { select: { state: true, verifiedAt: true } } },
@@ -35,7 +38,10 @@ export class FiltersService {
     const modalities = new Map<string, number>();
     const types = new Map<string, number>();
     const enem = new Map<string, number>();
+    let total = 0;
     for (const process of processes) {
+      if (!verifiedOfficialUrl(process.referenceUrl, process.institution.sources)) continue;
+      total += 1;
       addValues(
         states,
         process.offerings.map((offering) =>
@@ -50,7 +56,7 @@ export class FiltersService {
       addValues(enem, [process.requiresEnem === null ? 'unknown' : String(process.requiresEnem)]);
     }
     return {
-      total: processes.length,
+      total,
       facets: {
         uf: facet(states),
         modality: facet(modalities),

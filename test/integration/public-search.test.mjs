@@ -69,6 +69,23 @@ test('published search handles accents, null ENEM, precise windows, sort and sta
         where: { acronym: 'UFPB' },
         data: { verifiedAt: new Date('2026-01-01T00:00:00.000Z') },
       });
+      const domain = await tx.allowedDomain.create({
+        data: {
+          institutionId: institution.id,
+          host: 'example.org',
+          evidenceUrl: 'https://example.org/test-only',
+          reviewedAt: now,
+        },
+      });
+      await tx.source.create({
+        data: {
+          institutionId: institution.id,
+          allowedDomainId: domain.id,
+          url: 'https://example.org/test-only',
+          kind: 'HTML_INDEX',
+          status: 'ACTIVE',
+        },
+      });
       const campus = await tx.campus.create({
         data: {
           institutionId: institution.id,

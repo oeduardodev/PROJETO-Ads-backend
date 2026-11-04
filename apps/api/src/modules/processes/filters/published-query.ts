@@ -1,5 +1,6 @@
 import { Prisma } from '../../../generated/prisma/client.js';
 import { FilterQuery } from './filter-query.js';
+import { reviewedActiveSource } from '../public-detail/official-url.js';
 
 export function matchingOffering(query: FilterQuery): Prisma.OfferingWhereInput {
   return {
@@ -21,7 +22,13 @@ export function publishedProcessWhere(query: FilterQuery): Prisma.SelectionProce
     selectionType: { not: null },
     verifiedAt: { not: null },
     reviewDecisions: { some: { decision: 'APPROVE' } },
-    institution: { is: { publicFlag: true, verifiedAt: { not: null } } },
+    institution: {
+      is: {
+        publicFlag: true,
+        verifiedAt: { not: null },
+        sources: { some: reviewedActiveSource },
+      },
+    },
     ...(query.selectionType !== undefined ? { selectionType: query.selectionType } : {}),
     ...(query.requiresEnem !== undefined ? { requiresEnem: query.requiresEnem } : {}),
     ...(Object.keys(offeringFilter).length ? { offerings: { some: offeringFilter } } : {}),

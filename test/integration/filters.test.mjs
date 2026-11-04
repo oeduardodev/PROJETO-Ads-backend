@@ -68,6 +68,23 @@ test('facets count distinct published processes under combined filters and hide 
           data: { verifiedAt },
         });
         institutions.set(acronym, institution);
+        const domain = await tx.allowedDomain.create({
+          data: {
+            institutionId: institution.id,
+            host: 'example.org',
+            evidenceUrl: 'https://example.org/test-only',
+            reviewedAt: verifiedAt,
+          },
+        });
+        await tx.source.create({
+          data: {
+            institutionId: institution.id,
+            allowedDomainId: domain.id,
+            url: 'https://example.org/test-only',
+            kind: 'HTML_INDEX',
+            status: 'ACTIVE',
+          },
+        });
       }
       const campuses = new Map();
       for (const [acronym, state] of [

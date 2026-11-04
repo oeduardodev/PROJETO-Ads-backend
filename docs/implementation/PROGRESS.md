@@ -14,15 +14,15 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F03 — API pública e contratos versionados |
-| Passo | 026 — `feat(api): pesquisar processos publicados` |
+| Passo | 027 — `feat(api): detalhar processo e ofertas` |
 | Estado | DONE local no HEAD; remotos continuam vazios sem push |
 | Data | 2026-11-03 (America/Sao_Paulo) |
-| Arquitetura consultada | Documento completo; para o passo 026, §§ 7–9 e 12 |
-| Roteiro consultado | Documento completo; passo 026 e checkpoint G1 no fim do 029 |
-| Commit anterior backend | `50a08f22384afa854391e7706a4b332d102653f3` — passo 025 |
-| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 026 |
-| Commit atual backend | HEAD — passo 026; sem push |
-| Próximo passo | 027 — detalhe público; G1 ainda pendente |
+| Arquitetura consultada | Documento completo; para o passo 027, §§ 7–9 e 12 |
+| Roteiro consultado | Documento completo; passo 027 e checkpoint G1 no fim do 029 |
+| Commit anterior backend | `0a874fe2f0f18566b581a0f394641d8f453eb6a8` — passo 026 |
+| Commit frontend | `b426b7f5a95e76d123322e2e6a3a00ae0d54054f` — passo 013; sem alteração no 027 |
+| Commit atual backend | HEAD — passo 027; sem push |
+| Próximo passo | 028 — estados de prazo; G1 ainda pendente |
 
 ## Passo 001 — evidências
 
@@ -235,6 +235,13 @@
 - Artefatos: `GET /api/v1/processes` com todos os parâmetros do roteiro, limites, normalização de diacríticos, ENEM trivalente, paginação e desempate estável por ID. Migration local `20261103193000_process_verified_at` registra verificação de processo e índice. Apenas processos publicados, revisados, com URL de referência, tipo e instituição pública verificada entram na resposta. Demonstração histórica continua em rascunho. Cálculo de janela usa fuso e rejeita horários ausentes ou ambíguos. Contrato e limitação documentados em `docs/engineering/public-search.md`.
 - Validação prescrita: `pnpm install --frozen-lockfile`, `db:validate`, `format:check`, `lint`, `typecheck`, `test` com build (12/12), `test:e2e` (1/1), `test:integration` (17/17) e `git diff --check` PASS. Banco e Redis locais; fixture sintética publicada existe somente dentro de transação revertida. Testes cobrem catálogo vazio, erro 400, acentos, ENEM `true`/`false`/`unknown`, janela completa, prazo parcial, três ordenações e páginas estáveis. A migration foi aplicada apenas ao banco descartável local `alem_do_sisu_step026`. A suíte também aceitou o novo índice de publicação como plano válido. Uma repetição falhou por comando local incorreto e outra por credencial de teste incorreta; a execução final com infraestrutura e configuração corretas ficou verde.
 - Pendências: medir latência e memória da ordenação sobre todos os candidatos antes de escala; validar URL oficial contra a fonte no fluxo editorial antes de qualquer publicação real; função geral de estados de prazo no 028. Houve aviso de depreciação de concorrência interna do `pg` na integração, sem falha. G1 segue pendente até 029; nenhum push, deploy ou migration de produção.
+
+## Passo 027 — evidências
+
+- Estado real antes do passo: backend limpo em `0a874fe2f0f18566b581a0f394641d8f453eb6a8`; frontend limpo em `b426b7f5a95e76d123322e2e6a3a00ae0d54054f`. Relidos roteiro 027 e arquitetura §§ 7–9 e 12. Havia listagem e facetas, sem detalhe nem verificação do host da URL principal. Usuário escolheu host exato de domínio revisado da instituição com fonte ativa; ADR 0014 aceito antes da implementação.
+- Artefatos: `GET /api/v1/processes/:id` retorna dados públicos de edital, instituição, ofertas, reservas, janelas, requisitos e evidências. UUID inválido recebe 400; rascunho, demonstração histórica ou URL principal sem fonte verificada recebem 404. Links secundários inválidos não aparecem. Lista e facetas aplicam a mesma validação de host para manter coerência. Dados privados de revisão, seletores e storage não entram no DTO. Contrato documentado em `docs/engineering/public-detail.md`.
+- Validação prescrita: `pnpm install --frozen-lockfile`, `db:validate`, `format:check`, `lint`, `typecheck`, `test` com build (12/12), `test:e2e` (1/1), `test:integration` (19/19) e `git diff --check` PASS. Fixture sintética publicada e links de teste foram criados apenas em transação revertida. Testes cobrem 404 para histórico/rascunho, 400 para ID malformado, URL principal em host externo, links secundários ocultos, oferta, prazo parcial sem hora presumida, reserva, requisito, evidência e remoção de lista/facetas quando a fonte é pausada. Não houve migration neste passo.
+- Pendências: validar editorialmente cada edital antes de qualquer publicação; implementar estado completo de prazos no 028 e contrato tipado no 029. Aviso de depreciação do `pg` observado na transação de integração, sem falha. Uma tentativa de integração encontrou a senha do volume local divergente do `.env`; a credencial do papel no banco de teste local foi sincronizada e a repetição completa passou. G1 segue pendente; nenhum push, deploy ou migration de produção.
 
 ## Pendências e decisões
 
