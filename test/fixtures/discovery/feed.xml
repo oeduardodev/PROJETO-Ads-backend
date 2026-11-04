@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Fixture sintética de feed</title>
+    <item>
+      <guid>item-old</guid>
+      <link>https://feed.example.edu.br/notices/old</link>
+      <title>Item anterior</title>
+    </item>
+    <item>
+      <guid>item-new</guid>
+      <link>/notices/new?utm_source=fixture&amp;id=2#section</link>
+      <title>Item novo</title>
+    </item>
+    <item>
+      <guid>item-outside</guid>
+      <link>https://outside.example.edu.br/notices/blocked</link>
+      <title>Host não autorizado</title>
+    </item>
+  </channel>
+</rss>

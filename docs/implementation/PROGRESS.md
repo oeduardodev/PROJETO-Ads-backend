@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F04 — Workers, fontes e descoberta incremental |
-| Passo | 034 — `feat(discovery): extrair links e URLs canônicas` |
-| Estado | Pronto para commit local; nenhum push |
+| Passo | 035 — `feat(discovery): ler feeds RSS e sitemaps` |
+| Estado | Pronto para commit local; migration aplicada somente no banco local; nenhum push |
 | Data | 2026-11-04 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 033: §§ 4.2-4.3, 10.1 e 12.1; passo 034: §§ 4.3, 5.1 e 7.2 |
-| Roteiro consultado | Passo 034; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `c94fe30` - passo 033 |
+| Arquitetura consultada | Passo 034: §§ 4.3, 5.1 e 7.2; preparação 035: §§ 4.2 e 7.2 |
+| Roteiro consultado | Passo 035; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `f72eb1b` - passo 034 |
 | Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` - passo 029; sem alterações em 030-032 |
-| Commit atual backend | HEAD - passo 034 após commit; sem push |
+| Commit atual backend | HEAD - passo 035 após commit local; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 035 — `feat(discovery): ler feeds RSS e sitemaps` |
+| Próximo passo | 036 — `feat(discovery): integrar provedor externo via adapter` |
 
 ## Passo 001 — evidências
 
@@ -305,6 +305,16 @@
 - Fixture sintético: links repetidos/relativos, parâmetros de tracking e host não permitido em `test/fixtures/discovery/links.html`; nenhum edital ou link oficial foi criado ou consultado.
 - Validação: `pnpm install --frozen-lockfile`, `pnpm test` (34/34), `pnpm lint`, `pnpm typecheck`, `pnpm format:check` e `git diff --check`: PASS. Sem migration, escrita em banco, integração com fonte ou alteração de OpenAPI.
 - Pendências: o parser ainda não é invocado pelo worker; a integração será feita no passo de consumo correspondente. Nenhum dado foi publicado e nenhum push foi feito.
+
+## Passo 035 — evidências
+
+- Estado antes do passo: backend em `f72eb1b` após o passo 034, com ADR 0019 e progresso preparatórios pendentes; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Foram relidos o passo 035 do roteiro e arquitetura §§ 4.2 e 7.2.
+- ADR 0019 aceito pelo usuário: cursor JSONB versionado e `strategyLastExecutedAt` próprios em `Source`; `lastCheckedAt` segue reservado ao agendamento/verificação da fonte. RSS registra chaves dos itens presentes no último feed; sitemap registra URLs canônicas presentes no último snapshot. A primeira execução emite todos os itens allowlisted; seguintes emitem apenas itens ausentes do cursor anterior. Cursor e timestamp são gravados juntos após processamento bem-sucedido.
+- Artefatos: `apps/api/src/modules/discovery/strategies/` implementa parsers RSS/Atom e sitemap/urlset/sitemapindex, canonicalização de URLs, allowlist de host exato e cursores versionados. `SourcesRepository` lê e grava cursor/data em atualização única, rejeitando cursor incompatível com `Source.kind`. Migration `20261104120000_discovery_strategy_cursor` adiciona os campos JSONB e timestamptz.
+- Fixtures RSS e sitemap sintéticas testam URLs incrementais, tracking, hosts não autorizados, XML inválido, entidades proibidas e cursor incompatível. Não houve consulta a feeds reais.
+- Validação: instalação congelada, `db:validate`, build, `pnpm test` (41/41), `pnpm lint`, `pnpm typecheck`, `pnpm format:check`, `git diff --check`, integração de fontes (1/1) e integração completa (24/24): PASS. A migration foi aplicada somente no PostgreSQL local `127.0.0.1:5433`; `db:migrate:status` confirmou 11 migrations atualizadas.
+- Uma primeira execução da integração completa teve timeout transitório no teste de inicialização da API (`filters.test.mjs`); o teste isolado passou e a repetição da suíte completa passou. Permaneceram somente avisos existentes de depreciação de `pg`.
+- Nenhum feed real foi consultado, nenhuma fonte ativada, nenhum dado publicado e nenhum push feito.
 
 ## Pendências e decisões
 

@@ -130,6 +130,8 @@ model Source {
   lastSuccessAt    DateTime?     @map("last_success_at") @db.Timestamptz(6)
   etag             String?       @db.VarChar(512)
   lastModified     String?       @map("last_modified") @db.VarChar(128)
+  discoveryCursor  Json?         @map("discovery_cursor") @db.JsonB
+  strategyLastExecutedAt DateTime? @map("strategy_last_executed_at") @db.Timestamptz(6)
   institution      Institution   @relation(fields: [institutionId], references: [id], onDelete: Restrict)
   allowedDomain    AllowedDomain @relation(fields: [allowedDomainId, institutionId], references: [id, institutionId], onDelete: Restrict)
   crawlRuns        CrawlRun[]

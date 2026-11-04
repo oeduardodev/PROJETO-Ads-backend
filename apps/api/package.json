@@ -21,6 +21,7 @@
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
     "bullmq": "6.5.4",
+    "fast-xml-parser": "5.2.5",
     "ioredis": "6.0.0",
     "parse5": "7.3.0",
     "pg": "8.23.1",

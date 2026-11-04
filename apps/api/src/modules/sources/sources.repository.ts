@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { SourceHealth, SourceKind, SourceStatus } from '../../generated/prisma/enums.js';
+import { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../database/prisma.service.js';
+import type { DiscoveryStrategyCursor } from '../discovery/strategies/strategy-cursor.js';
 import { normalizeAuthorizedHost, normalizeSourceUrl } from './source-url.js';
 
 @Injectable()
@@ -102,5 +104,34 @@ export class SourcesRepository {
       select: { id: true, allowedDomain: { select: { host: true } } },
     });
     return new Map(sources.map((source) => [source.id, source.allowedDomain.host]));
+  }
+
+  getStrategyState(sourceId: string) {
+    return this.database.source.findUniqueOrThrow({
+      where: { id: sourceId },
+      select: { kind: true, discoveryCursor: true, strategyLastExecutedAt: true },
+    });
+  }
+
+  async saveStrategyState(
+    sourceId: string,
+    cursor: DiscoveryStrategyCursor,
+    executedAt = new Date(),
+  ) {
+    if (!Number.isFinite(executedAt.getTime())) {
+      throw new Error('Strategy execution date must be valid');
+    }
+    const kind = cursor.strategy === 'RSS' ? SourceKind.RSS : SourceKind.SITEMAP;
+    const result = await this.database.source.updateMany({
+      where: { id: sourceId, kind },
+      data: {
+        discoveryCursor: cursor as unknown as Prisma.InputJsonValue,
+        strategyLastExecutedAt: executedAt,
+      },
+    });
+    if (result.count !== 1) {
+      throw new Error('Source not found or strategy cursor does not match source kind');
+    }
+    return this.getStrategyState(sourceId);
   }
 }

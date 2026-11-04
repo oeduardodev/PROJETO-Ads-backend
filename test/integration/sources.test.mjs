@@ -38,12 +38,27 @@ test('one institution can have multiple draft sources on an exact allowlisted ho
       frequencyMinutes: 720,
       priority: 20,
     });
+    const rssSource = await sources.create({
+      institutionId: ufpb.id,
+      url: 'https://www.prg.ufpb.br/editais/ingressantes/?integration_test=rss',
+      kind: SourceKind.RSS,
+    });
     assert.notEqual(first.id, second.id);
-    assert.equal((await sources.listByInstitution(ufpb.id)).length, 2);
+    assert.equal((await sources.listByInstitution(ufpb.id)).length, 3);
     assert.equal(first.status, 'DRAFT');
     assert.equal(first.health, 'UNKNOWN');
     assert.equal(domain.collectionAllowed, false);
     assert.equal(domain.reviewedAt, null);
+
+    const executedAt = new Date('2026-11-04T12:00:00.000Z');
+    const cursor = { version: 1, strategy: 'RSS', seenItemKeys: ['integration-test-item'] };
+    const strategyState = await sources.saveStrategyState(rssSource.id, cursor, executedAt);
+    assert.deepEqual(strategyState.discoveryCursor, cursor);
+    assert.equal(strategyState.strategyLastExecutedAt.toISOString(), executedAt.toISOString());
+    await assert.rejects(
+      sources.saveStrategyState(rssSource.id, { version: 1, strategy: 'SITEMAP', seenUrls: [] }),
+      /does not match source kind/u,
+    );
 
     await assert.rejects(
       sources.create({
