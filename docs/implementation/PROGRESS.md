@@ -262,6 +262,14 @@
 - Gate G1: PostgreSQL local em 127.0.0.1:5433/alem_do_sisu recebeu as dez migrations versionadas; db:migrate:status confirmou schema atualizado. Seed local confirmou quatro instituições e um edital histórico em rascunho. O shell Angular existente compilou. G1 PASS. Nenhuma migration de produção, push ou deploy.
 - Pendências: conectar o client Angular às jornadas de busca nos passos posteriores; provedores e conectores continuam inativos até revisão de fonte e política. Próximo passo: 030.
 
+## Passo 030 — evidências
+
+- Estado antes do passo: backend limpo em 7396e73; frontend limpo em fa0248e555074b3fd322a69048ada63642a7f293. Relidos roteiro 030 e arquitetura §§ 3, 4, 7 e 11. O bootstrap Nest independente já existia desde o passo 007, mas encerrava logo após a inicialização por não haver consumidor de fila.
+- Artefatos: WorkerRuntime mantém o contexto disponível até o encerramento e libera seu keepalive no hook OnApplicationShutdown. O bootstrap mantém Nest ApplicationContext, instala hooks de sinais e aceita mensagem IPC de shutdown para supervisores/teste Windows; não cria listener HTTP. Prisma desconecta no fechamento do contexto.
+- Validação: format:check, lint, db:validate, typecheck, test com build (17/17), test:e2e (2/2) e git diff --check PASS. O E2E iniciou o worker sem API, confirmou que a porta configurada recusou HTTP e solicitou shutdown gracioso. No Windows o teste usa IPC, pois SIGTERM encerra o processo filho de forma forçada; em outros sistemas usa SIGTERM.
+- Limite sequencial: ainda não existem filas nem jobs confirmados, então preservação/drain de job não é demonstrável neste passo. Cobrir idempotência, retry e encerramento de jobs depois da implementação BullMQ no 031. G1 segue PASS; nenhum push, deploy ou migration de produção.
+- Próximo passo: 031.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
