@@ -270,6 +270,14 @@
 - Limite sequencial: ainda não existem filas nem jobs confirmados, então preservação/drain de job não é demonstrável neste passo. Cobrir idempotência, retry e encerramento de jobs depois da implementação BullMQ no 031. G1 segue PASS; nenhum push, deploy ou migration de produção.
 - Próximo passo: 031.
 
+## Passo 031 — evidências
+
+- Estado antes do passo: backend limpo em 9220fc0860a4b8bf0c949ec5546adb84b0de668c; frontend limpo em fa0248e555074b3fd322a69048ada63642a7f293. Relidos roteiro 031 e arquitetura §§ 3, 4, 7.2 e 11. Usuário aceitou ADR 0016: o failed set persistido de cada fila é o dead-letter, sem cópia para uma fila central.
+- Artefatos: BullMQ 6.5.4 adicionado ao backend; módulo Jobs registra source.refresh, url.fetch, document.classify, document.extract, process.validate e process.recheck. Payloads contêm somente IDs/versões/hash. jobId estável por entidade, três tentativas, backoff exponencial com jitter 50%, completed retido por até sete dias/1.000 jobs e failed sem remoção automática. JobsService fecha filas no shutdown do Nest. Somente WorkerModule importa o módulo; a API pública não depende da fila.
+- ADR 0016 atualizado para ACEITO. msgpackr-extract é opcional e seu script de build foi explicitamente negado em pnpm-workspace.yaml; instalação congelada passou.
+- Validação: install --frozen-lockfile, db:validate, format:check, lint, typecheck, test com build (20/20), integração Redis direcionada (2/2: deduplicação após conclusão e três falhas até failed persistido) e E2E (2/2: API e worker), git diff --check PASS. Testes Redis executados somente no compose local; não houve migration nem escrita em produção.
+- Limite: ainda não há handlers de negócio para consumir essas seis filas; serão adicionados junto às estratégias e conectores dos próximos passos. Nenhuma fonte foi coletada, nenhum edital publicado e nenhum segredo de busca/IA foi ativado. G1 segue PASS; próximo passo 032.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)

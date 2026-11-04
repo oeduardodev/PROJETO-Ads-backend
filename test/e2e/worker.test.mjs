@@ -41,7 +41,7 @@ test('worker stays available without HTTP and closes its Nest context gracefully
     env: {
       ...process.env,
       DATABASE_URL: 'postgresql://test_user:test_password@127.0.0.1:5433/test_db',
-      REDIS_URL: 'redis://127.0.0.1:6380',
+      REDIS_URL: process.env.TEST_REDIS_URL || 'redis://127.0.0.1:6380',
       LOG_LEVEL: 'error',
       CORS_ORIGINS: 'http://127.0.0.1:4200',
       PORT: String(port),

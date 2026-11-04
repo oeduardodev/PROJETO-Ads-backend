@@ -92,3 +92,5 @@ jobs:
         run: node apps/api/dist/database/seed.js
       - name: PostgreSQL integration and constraints
         run: pnpm test:integration
+      - name: API and worker E2E
+        run: pnpm test:e2e
