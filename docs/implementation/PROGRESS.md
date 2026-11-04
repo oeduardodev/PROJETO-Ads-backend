@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F04 — Workers, fontes e descoberta incremental |
-| Passo | 033 — `feat(fetch): criar cliente HTTP de coleta responsável` |
+| Passo | 034 — `feat(discovery): extrair links e URLs canônicas` |
 | Estado | Pronto para commit local; nenhum push |
 | Data | 2026-11-04 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 032: §§ 4.2-4.3, 7.2 e 11.2; passo 033: §§ 4.2-4.3, 10.1 e 12.1 |
-| Roteiro consultado | Passo 033; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `0dece45` - passo 032 |
+| Arquitetura consultada | Passo 033: §§ 4.2-4.3, 10.1 e 12.1; passo 034: §§ 4.3, 5.1 e 7.2 |
+| Roteiro consultado | Passo 034; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `c94fe30` - passo 033 |
 | Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` - passo 029; sem alterações em 030-032 |
-| Commit atual backend | HEAD - passo 033 após commit; sem push |
+| Commit atual backend | HEAD - passo 034 após commit; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 034 — `feat(discovery): extrair links e URLs canônicas` |
+| Próximo passo | 035 — `feat(discovery): ler feeds RSS e sitemaps` |
 
 ## Passo 001 — evidências
 
@@ -296,6 +296,15 @@
 - Testes do passo: `test/responsible-http.test.mjs` cobre localhost, metadados cloud, DNS privado, IP literal, redirect interno e cross-host, robots, `Retry-After`, limite de bytes e permissão. Testes usam transporte e DNS injetados; nenhuma requisição externa foi feita.
 - Validação: `pnpm test` (31/31), `pnpm lint`, `pnpm typecheck`, `pnpm format:check`, build TypeScript e `git diff --check`: PASS. Sem alteração de schema/migration, banco ou contrato OpenAPI.
 - Pendência de integração: a pausa persistida da fonte após falha final será conectada ao consumidor de jobs no passo correspondente. Nenhuma fonte foi ativada, nenhum dado foi coletado/publicado e nenhum push foi feito.
+
+## Passo 034 — evidências
+
+- Estado antes do passo: backend limpo em `c94fe30` após o passo 033; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Foram relidos o passo 034 do roteiro e arquitetura §§ 4.3, 5.1 e 7.2.
+- Artefatos: `apps/api/src/modules/discovery/parsers/html-link.parser.ts` usa parse5 para ler âncoras, resolver links relativos, remover fragmentos e parâmetros de tracking conhecidos, ordenar query params e deduplicar URLs canônicas. Registra URL de origem e calcula score heurístico a partir do vocabulário de descoberta/exclusão; score é apenas prioridade, não prova de elegibilidade. Links fora da allowlist de hosts exatos e esquemas que não sejam HTTPS são ignorados.
+- Dependência: `parse5@7.3.0` declarada diretamente na API e lockfile atualizado.
+- Fixture sintético: links repetidos/relativos, parâmetros de tracking e host não permitido em `test/fixtures/discovery/links.html`; nenhum edital ou link oficial foi criado ou consultado.
+- Validação: `pnpm install --frozen-lockfile`, `pnpm test` (34/34), `pnpm lint`, `pnpm typecheck`, `pnpm format:check` e `git diff --check`: PASS. Sem migration, escrita em banco, integração com fonte ou alteração de OpenAPI.
+- Pendências: o parser ainda não é invocado pelo worker; a integração será feita no passo de consumo correspondente. Nenhum dado foi publicado e nenhum push foi feito.
 
 ## Pendências e decisões
 
