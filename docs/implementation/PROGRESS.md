@@ -410,6 +410,15 @@
 - Validação: `corepack pnpm test` (97/97), `corepack pnpm test:e2e` (2/2), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check`, `corepack pnpm --filter @alem-do-sisu/api exec prisma validate` e `git diff --check`: PASS. Os testes cobrem replay de cache por hash/tipo/versão, blob expirado, política inválida, retenção compartilhada, fronteira de vencimento, paginação, preservação de evidências e exclusão local idempotente.
 - Pendências: integração PostgreSQL da migration não executada porque `TEST_DATABASE_URL` não está configurada e o PostgreSQL local previamente verificado em `localhost:5433` recusou conexão. Migration criada mas não aplicada; job de cleanup e storage oficial dependem de revisão operacional posterior. Nenhum dado foi publicado; sem push ou deploy.
 
+## Passo 047 — concluído localmente; ADR 0028 aceito
+
+- Estado observado: backend limpo em `cc8cd4a` após o passo 046; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Relidos o roteiro 047 e arquitetura §§ 3.1, 4.2, 5.2, 7.2, 11.2 e 12.1.
+- O usuário aceitou o limite do ADR 0028: replay offline da composição existente sem afirmar que valida consumo BullMQ. O `WorkerModule` atual não tem consumidores; esse trabalho funcional permanece fora do passo 047.
+- Artefato: `test/e2e/ingestion.test.mjs` compõe `ResponsibleHttpClient` com transporte de fixtures, fetch tipado, `DocumentsRepository` e `FixtureLocalStorage` em diretório temporário, parsers HTML/PDF e cache versionado com adapters em memória. Reexecutar as mesmas fixtures preserva IDs/versões e hashes; o cache evita repetir os parsers. O transporte responde apenas hosts/rotas fixture, sem acesso à rede real.
+- Fixtures existentes `long-menu.v1.html` e `table-schedule.v1.pdf` são sintéticas. A métrica por categoria registrou `fetch.MIME_MISMATCH` e `pdf.PARSE_FAILED` em entradas de erro controladas; o caminho válido retornou texto para ambos os formatos e SHA-256 determinístico.
+- Validação: `corepack pnpm test:e2e` (3/3), `corepack pnpm test` (97/97), `corepack pnpm lint`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem alteração de worker ou migration neste passo.
+- Pendências: consumidores BullMQ e integração real com PostgreSQL/Redis continuam em passos funcionais posteriores. Nenhuma fonte oficial foi acessada, migration aplicada ou dado publicado; sem push ou deploy.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
