@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F05 — Documentos, parsing e evidências |
-| Passo | 041 — `feat(documents): baixar e tipificar artefatos com segurança` |
-| Estado | Passo 041 implementado; validação verde; pronto para commit local |
+| Passo | 042 — `feat(documents): extrair texto e paginação de PDF` |
+| Estado | Passo 042 concluído; validação verde; registrado neste commit local |
 | Data | 2026-11-05 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 041: §§ 4, 5, 6 e 7 |
-| Roteiro consultado | Passo 041; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `936324d` — passo 040 |
-| Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` - passo 029; sem alterações em 030-032 |
-| Commit atual backend | `936324d` — passo 040; alterações 041 validadas localmente; sem push |
+| Arquitetura consultada | Passo 042: §§ 5.2, 6, 7.2 e 10.1 |
+| Roteiro consultado | Passo 042; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `4253cdc` — passo 041 |
+| Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` — passo 029; sem alterações em 030–042 |
+| Commit atual backend | Este commit do passo 042; base `4253cdc`; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 042 — extrair texto e paginação de PDF |
+| Próximo passo | 043 — normalizar HTML e seções |
 
 ## Passo 001 — evidências
 
@@ -367,6 +367,14 @@
 - Artefatos: `secure-artifact-fetcher.ts` exige `ResponsibleHttpClient`, URL HTTPS pública, resposta completa HTTP 200 e limite explícito; identifica HTML/PDF pela assinatura/conteúdo, compara MIME e extensão, e produz SHA-256, tamanho, URL de origem, captura, ETag e Last-Modified. Erros tipados retêm URL/status/código sem incluir corpo. `MAX_PDF_BYTES` tem default de 10 MiB e validação positiva; `.env.example` registra o default.
 - Validação: `corepack pnpm test` (71/71, incluindo HTML falso sob `.pdf`, bytes acima do limite, bloqueio, tipo desconhecido e metadados); `corepack pnpm test:e2e` (2/2); `node --test --test-concurrency=1 test/integration/documents.test.mjs` (1/1 em PostgreSQL local); `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. O teste de storage escreveu apenas fixture temporária local. Sem migration.
 - Pendências: o worker ainda não consome o fetcher, nenhuma fonte foi ativada e nenhum acesso de rede ocorreu; snapshots oficiais e storage de produção continuam bloqueados pela revisão humana pendente. Nenhum dado publicado, push ou deploy.
+
+## Passo 042 — evidências
+
+- Estado observado antes da implementação: backend em `4253cdc`, com apenas a atualização de estado do `PROGRESS.md` pendente; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Relidos o roteiro 042 e a arquitetura §§ 5.2, 6, 7.2 e 10.1.
+- ADR 0024 aceito pelo usuário: PDF.js direto. `pdfjs-dist` 6.5.438 foi fixado no lockfile, e o mínimo de Node do backend foi ajustado para 22.13 conforme requisito do pacote.
+- Artefatos: `pdf-text.parser.ts` recebe bytes e limites explícitos, usa recursos locais do pacote e retorna página física, linhas, segmentos com coordenadas, candidatos conservadores a título e métricas objetivas de camada de texto. Erros tipados não incluem bytes nem conteúdo do PDF. A fixture sintética gerada por script contém tabela, cronograma, anexo e página sem texto; nenhuma fonte real foi acessada.
+- Validação: `corepack pnpm test` (74/74, incluindo fixture e limites), `corepack pnpm test:e2e` (2/2), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem migration ou teste de banco para este parser isolado.
+- Pendências: ligação ao worker e isolamento de tempo/memória, OCR, corpus de PDFs autorizados para layouts complexos e política de retenção/storage de snapshots oficiais. Nenhum PDF oficial armazenado, dado publicado, push ou deploy.
 
 ## Pendências e decisões
 
