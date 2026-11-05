@@ -1,20 +1,11 @@
 import { SourceKind, SourceStatus } from '../../../generated/prisma/enums.js';
 import type { DiscoveredLinkCandidate } from '../parsers/html-link.parser.js';
 import { parseHtmlLinkCandidates } from '../parsers/html-link.parser.js';
+import { IFPB_CONNECTOR, parseIfpbEditaisHtml } from './ifpb.connector.js';
+import { parseUepbIndexHtml, UEPB_CONNECTOR } from './uepb.connector.js';
+import type { HtmlInstitutionConnector, PilotInstitutionCode } from './connector.types.js';
 
-export type PilotInstitutionCode = 'UFPB' | 'UFCG';
-
-export interface HtmlInstitutionConnector {
-  institutionCode: PilotInstitutionCode;
-  sourceUrl: string;
-  exactHost: string;
-  sourceKind: typeof SourceKind.HTML_INDEX;
-  selector: 'a[href]';
-  frequencyMinutes: number;
-  sourceStatus: typeof SourceStatus.DRAFT;
-  collectionAllowed: false;
-  permissionStatus: 'PENDING_REVIEW';
-}
+export type { HtmlInstitutionConnector, PilotInstitutionCode } from './connector.types.js';
 
 /**
  * Offline connector definitions only. Source policy and terms are pending review, so these
@@ -31,6 +22,7 @@ export const PILOT_HTML_CONNECTORS = [
     sourceStatus: SourceStatus.DRAFT,
     collectionAllowed: false,
     permissionStatus: 'PENDING_REVIEW',
+    accessReview: 'TERMS_PENDING',
   },
   {
     institutionCode: 'UFCG',
@@ -42,7 +34,10 @@ export const PILOT_HTML_CONNECTORS = [
     sourceStatus: SourceStatus.DRAFT,
     collectionAllowed: false,
     permissionStatus: 'PENDING_REVIEW',
+    accessReview: 'LICENSE_RETENTION_PENDING',
   },
+  UEPB_CONNECTOR,
+  IFPB_CONNECTOR,
 ] as const satisfies readonly HtmlInstitutionConnector[];
 
 export function getPilotHtmlConnector(code: PilotInstitutionCode): HtmlInstitutionConnector {
@@ -57,13 +52,57 @@ export function parseInstitutionIndexHtml(
   html: string,
 ): DiscoveredLinkCandidate[] {
   const connector = getPilotHtmlConnector(code);
+  if (code === 'UEPB') return parseUepbIndexHtml(html);
+  if (code === 'IFPB') return parseIfpbEditaisHtml(html);
   const sourceHost = new URL(connector.sourceUrl).hostname.toLowerCase();
-  if (sourceHost !== connector.exactHost) {
-    throw new Error(`Connector source must use its exact host: ${connector.exactHost}`);
-  }
-  if (connector.selector !== 'a[href]') {
-    throw new Error(`Unsupported connector selector: ${connector.selector}`);
+  if (sourceHost !== connector.exactHost || connector.selector !== 'a[href]') {
+    throw new Error(`Invalid HTML connector configuration for ${code}`);
   }
 
   return parseHtmlLinkCandidates(html, connector.sourceUrl, [connector.exactHost]);
+}
+
+export type ConnectorRunStatus = 'SUCCEEDED' | 'FAILED';
+
+export interface ConnectorRunResult {
+  institutionCode: PilotInstitutionCode;
+  sourceUrl: string;
+  status: ConnectorRunStatus;
+  lastCheckedAt: Date;
+  lastSuccessAt?: Date;
+  metrics: { candidatesDiscovered: number };
+  candidates: DiscoveredLinkCandidate[];
+  failureCode?: 'CONNECTOR_PARSE_FAILED';
+}
+
+/** Offline run summary for metrics and source traceability; does not persist or fetch. */
+export function executeInstitutionConnector(
+  code: PilotInstitutionCode,
+  html: string,
+  checkedAt = new Date(),
+): ConnectorRunResult {
+  if (!Number.isFinite(checkedAt.getTime())) throw new Error('Connector check date must be valid');
+  const connector = getPilotHtmlConnector(code);
+  try {
+    const candidates = parseInstitutionIndexHtml(code, html);
+    return {
+      institutionCode: code,
+      sourceUrl: connector.sourceUrl,
+      status: 'SUCCEEDED',
+      lastCheckedAt: checkedAt,
+      lastSuccessAt: checkedAt,
+      metrics: { candidatesDiscovered: candidates.length },
+      candidates,
+    };
+  } catch {
+    return {
+      institutionCode: code,
+      sourceUrl: connector.sourceUrl,
+      status: 'FAILED',
+      lastCheckedAt: checkedAt,
+      metrics: { candidatesDiscovered: 0 },
+      candidates: [],
+      failureCode: 'CONNECTOR_PARSE_FAILED',
+    };
+  }
 }

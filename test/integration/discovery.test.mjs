@@ -87,6 +87,40 @@ test('repeated canonical URL creates one candidate with per-run provenance', asy
     assert.equal(completed.status, 'SUCCEEDED');
     assert.equal(failed.success, false);
     assert.equal(failed.errorCode, 'RATE_LIMITED');
+
+    const sourceAfterSuccess = await database.source.findUniqueOrThrow({
+      where: { id: sourceA.id },
+      select: { lastCheckedAt: true, lastSuccessAt: true },
+    });
+    assert.equal(
+      sourceAfterSuccess.lastCheckedAt.toISOString(),
+      completed.finishedAt.toISOString(),
+    );
+    assert.equal(
+      sourceAfterSuccess.lastSuccessAt.toISOString(),
+      completed.finishedAt.toISOString(),
+    );
+    const sourceAfterFailure = await database.source.findUniqueOrThrow({
+      where: { id: sourceB.id },
+      select: { lastCheckedAt: true, lastSuccessAt: true },
+    });
+    assert.equal(sourceAfterFailure.lastCheckedAt.toISOString(), failed.finishedAt.toISOString());
+    assert.equal(sourceAfterFailure.lastSuccessAt, null);
+
+    const retry = await runs.createRecord(sourceA.id, 2);
+    const failedAfterSuccess = await runs.finishFailure(retry.id, CrawlErrorCode.NETWORK);
+    const sourceAfterRetryFailure = await database.source.findUniqueOrThrow({
+      where: { id: sourceA.id },
+      select: { lastCheckedAt: true, lastSuccessAt: true },
+    });
+    assert.equal(
+      sourceAfterRetryFailure.lastCheckedAt.toISOString(),
+      failedAfterSuccess.finishedAt.toISOString(),
+    );
+    assert.equal(
+      sourceAfterRetryFailure.lastSuccessAt.toISOString(),
+      completed.finishedAt.toISOString(),
+    );
     await assert.rejects(runs.finishSuccess(runA.id, 200), /not running/);
   } finally {
     await database.discoveryObservation.deleteMany({

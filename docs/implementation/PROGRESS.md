@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F04 — Workers, fontes e descoberta incremental |
-| Passo | 038 — `feat(connectors): integrar fontes da UFPB e UFCG` |
-| Estado | Passo 038 implementado offline; validação verde; pronto para commit local |
+| Passo | 039 — `feat(connectors): integrar fontes da UEPB e IFPB` |
+| Estado | Passo 039 implementado offline; validação verde; pronto para commit local |
 | Data | 2026-11-05 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 038: §§ 4.1–4.3 e 10.1; política de fontes |
-| Roteiro consultado | Passo 038; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `8192885` - passo 037 |
+| Arquitetura consultada | Passo 039: §§ 4.1–4.3 e 10.1; política por fonte |
+| Roteiro consultado | Passo 039; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `78b5f9d` — passo 038 |
 | Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` - passo 029; sem alterações em 030-032 |
-| Commit atual backend | `8192885` - passo 037; sem push |
+| Commit atual backend | `78b5f9d` — passo 038; alterações 039 validadas localmente; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 039 — integrar fontes da UEPB e IFPB |
+| Próximo passo | 040 — replay e regressão offline de fontes |
 
 ## Passo 001 — evidências
 
@@ -343,6 +343,14 @@
 - Fixtures v1 sintéticas por instituição contêm somente URLs oficiais já listadas em `test/fixtures/institutions/candidate-manifest.csv`; não são snapshots nem cópias de conteúdo. Testes confirmam configuração contra a matriz, geração local de candidatos, exatidão de host e ausência de URLs fora do manifesto.
 - Validação: `corepack pnpm test` (57/57), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem alterações de schema/migration, banco, API pública ou OpenAPI.
 - Pendências: não ativar ou agendar UFPB/UFCG até revisão humana de política/licença/retenção; nenhum edital ou candidato foi publicado e nenhum push foi feito.
+
+## Passo 039 — evidências
+
+- Estado observado antes do passo: backend limpo em `78b5f9d` após o passo 038; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Relidos roteiro 039 e arquitetura §§ 4.1–4.3 e 10.1; a regra de descarte por texto âncora explícito segue registrada no ADR 0021.
+- Política das fontes: UEPB (`uepb.edu.br`) permanece manual apenas após robots 403; IFPB (`estudante.ifpb.edu.br`) aguarda revisão de termos. UFPB e UFCG mantêm as pendências já documentadas. Os quatro conectores estão em `DRAFT`, `collectionAllowed=false` e `PENDING_REVIEW`; nenhum acesso de rede foi executado nem fonte ativada.
+- Artefatos: conectores UEPB/IFPB isolados em arquivos próprios; fixtures sintéticas versionadas usam somente URLs oficiais já presentes no manifesto revisado. Execução offline informa status, contagem de candidatos, origem, `lastCheckedAt` e `lastSuccessAt` quando há sucesso. `CrawlRunsRepository` grava as datas de verificação/transação de modo atômico; falhas preservam o último sucesso.
+- Validação: `corepack pnpm test` (59/59), `node --test test/integration/discovery.test.mjs` (1/1 no PostgreSQL local), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. A integração inicialmente não alcançou o PostgreSQL desligado; após iniciar o contêiner local já existente, repetiu e passou. Nenhuma migration foi aplicada.
+- Pendências: revisão humana dos termos/licença/retenção por host; UEPB continua proibida para coleta automatizada até esclarecer o 403. Conectores não agendam jobs e não publicam candidatos. Nenhum push foi feito.
 
 ## Pendências e decisões
 

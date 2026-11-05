@@ -37,6 +37,16 @@ Não foram enviados e-mails nem foi solicitado acesso às instituições. Os con
 
 Os adapters em `apps/api/src/modules/discovery/connectors/` usam as duas URLs e hosts exatos desta matriz, mas permanecem em `DRAFT` com `collectionAllowed=false` e `PENDING_REVIEW`. O seletor `a[href]` aciona o parser HTML genérico apenas sobre HTML fornecido localmente; não há fetch, agendamento ou ativação. Fixtures versionadas são harnesses sintéticos com URLs já registradas no manifesto/corpus, não snapshots nem transcrições dos sites. UFPB continua sem allowlist para `drive.ufpb.br`; links desse host ficam excluídos até revisão própria. UFCG mantém a pendência de licença/retenção.
 
+# Passo 039 — adapters offline UEPB/IFPB
+
+Os quatro conectores de piloto (`UFPB`, `UFCG`, `UEPB`, `IFPB`) são configurações offline e permanecem `DRAFT`, com `collectionAllowed=false` e `PENDING_REVIEW`. Cada configuração fixa URL e host exatos da matriz. Os adapters UEPB e IFPB estão isolados; processam apenas HTML sintético/caller-supplied e não fazem requisições.
+
+- UEPB: `uepb.edu.br/robots.txt` respondeu 403 na pesquisa registrada; manter manual-only e não tentar crawler até esclarecimento da política de acesso.
+- IFPB: `estudante.ifpb.edu.br/editais/` mistura categorias; revisar os termos do host e conservar candidatos ambíguos para classificação/revisão.
+- As fixtures `index.v1.html` são harnesses sintéticos e contêm somente links já registrados no manifesto; não são snapshots, conteúdo copiado nem fonte de publicação.
+- Resultados de execução devem registrar status, candidatos, URL de origem, verificação mais recente e último sucesso. Falha atualiza somente a verificação; não apaga o último sucesso.
+- Descarte heurístico requer texto âncora explicitamente identificando SiSU regular/SiSU+, pós-graduação ou curso técnico integrado/de nível médio (ADR 0021). Termo ou URL isolados não bastam.
+
 ## Pendências antes da automação
 
 - Esclarecer o 403 em `uepb.edu.br/robots.txt` e os termos específicos de cada host.

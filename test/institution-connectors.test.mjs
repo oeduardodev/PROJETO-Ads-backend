@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
+  executeInstitutionConnector,
   getPilotHtmlConnector,
   parseInstitutionIndexHtml,
   PILOT_HTML_CONNECTORS,
@@ -33,10 +34,10 @@ const manifestUrls = new Map(
   ),
 );
 
-test('UFPB and UFCG connector configs match reviewed URLs and remain disabled pending source review', () => {
+test('all four connector configs match reviewed URLs and remain disabled pending source review', () => {
   assert.deepEqual(
     PILOT_HTML_CONNECTORS.map((connector) => connector.institutionCode),
-    ['UFPB', 'UFCG'],
+    ['UFPB', 'UFCG', 'UEPB', 'IFPB'],
   );
 
   for (const connector of PILOT_HTML_CONNECTORS) {
@@ -51,6 +52,9 @@ test('UFPB and UFCG connector configs match reviewed URLs and remain disabled pe
     assert.equal(connector.collectionAllowed, false);
     assert.equal(connector.permissionStatus, 'PENDING_REVIEW');
   }
+  assert.equal(getPilotHtmlConnector('UEPB').accessReview, 'ROBOTS_403_MANUAL_ONLY');
+  assert.equal(getPilotHtmlConnector('IFPB').accessReview, 'TERMS_PENDING');
+  assert.equal(getPilotHtmlConnector('UFCG').accessReview, 'LICENSE_RETENTION_PENDING');
 });
 
 test('versioned UFPB fixture yields only reviewed URLs on the exact configured host', () => {
@@ -106,6 +110,54 @@ test('versioned UFCG fixture yields only reviewed URLs on its exact configured h
   );
 });
 
+test('fragile UEPB and IFPB fixtures remain separate and trace only reviewed URLs', () => {
+  for (const code of ['UEPB', 'IFPB']) {
+    const html = readFileSync(
+      new URL(`./fixtures/institutions/${code.toLowerCase()}/index.v1.html`, import.meta.url),
+      'utf8',
+    );
+    const connector = getPilotHtmlConnector(code);
+    const candidates = parseInstitutionIndexHtml(code, html);
+    const knownUrls = manifestUrls.get(code);
+
+    assert.equal(candidates.length, 4);
+    assert.ok(
+      candidates.every(
+        (candidate) => new URL(candidate.canonicalUrl).hostname === connector.exactHost,
+      ),
+    );
+    assert.ok(candidates.every((candidate) => knownUrls.has(candidate.canonicalUrl)));
+    assert.ok(candidates.every((candidate) => candidate.sourceUrl === connector.sourceUrl));
+  }
+});
+
 test('unsupported institution codes are rejected without network access', () => {
-  assert.throws(() => getPilotHtmlConnector('UEPB'), /No HTML connector configured/u);
+  assert.throws(() => getPilotHtmlConnector('OTHER'), /No HTML connector configured/u);
+});
+
+test('offline connector runs report source trace, success/failure metrics, and last-check markers', () => {
+  const checkedAt = new Date('2026-11-05T12:00:00.000Z');
+  for (const code of ['UFPB', 'UFCG', 'UEPB', 'IFPB']) {
+    const html = readFileSync(
+      new URL(`./fixtures/institutions/${code.toLowerCase()}/index.v1.html`, import.meta.url),
+      'utf8',
+    );
+    const succeeded = executeInstitutionConnector(code, html, checkedAt);
+    assert.equal(succeeded.status, 'SUCCEEDED');
+    assert.equal(succeeded.sourceUrl, getPilotHtmlConnector(code).sourceUrl);
+    assert.equal(succeeded.metrics.candidatesDiscovered, succeeded.candidates.length);
+    assert.equal(succeeded.lastCheckedAt.toISOString(), checkedAt.toISOString());
+    assert.equal(succeeded.lastSuccessAt.toISOString(), checkedAt.toISOString());
+    assert.ok(
+      succeeded.candidates.every((candidate) => candidate.sourceUrl === succeeded.sourceUrl),
+    );
+
+    const failed = executeInstitutionConnector(code, null, checkedAt);
+    assert.equal(failed.status, 'FAILED');
+    assert.equal(failed.sourceUrl, getPilotHtmlConnector(code).sourceUrl);
+    assert.equal(failed.failureCode, 'CONNECTOR_PARSE_FAILED');
+    assert.equal(failed.metrics.candidatesDiscovered, 0);
+    assert.equal(failed.lastCheckedAt.toISOString(), checkedAt.toISOString());
+    assert.equal('lastSuccessAt' in failed, false);
+  }
 });

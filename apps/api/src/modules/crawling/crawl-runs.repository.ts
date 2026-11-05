@@ -22,31 +22,55 @@ export class CrawlRunsRepository {
   }
 
   async finishSuccess(id: string, httpStatus?: number) {
-    const result = await this.database.crawlRun.updateMany({
-      where: { id, status: CrawlRunStatus.RUNNING },
-      data: {
-        status: CrawlRunStatus.SUCCEEDED,
-        finishedAt: new Date(),
-        success: true,
-        httpStatus: validHttpStatus(httpStatus),
-      },
+    const finishedAt = new Date();
+    const status = validHttpStatus(httpStatus);
+    return this.database.$transaction(async (transaction) => {
+      const run = await transaction.crawlRun.findUniqueOrThrow({
+        where: { id },
+        select: { sourceId: true },
+      });
+      const result = await transaction.crawlRun.updateMany({
+        where: { id, status: CrawlRunStatus.RUNNING },
+        data: {
+          status: CrawlRunStatus.SUCCEEDED,
+          finishedAt,
+          success: true,
+          httpStatus: status,
+        },
+      });
+      if (result.count !== 1) throw new Error('Crawl run was not running');
+      await transaction.source.update({
+        where: { id: run.sourceId },
+        data: { lastCheckedAt: finishedAt, lastSuccessAt: finishedAt },
+      });
+      return transaction.crawlRun.findUniqueOrThrow({ where: { id } });
     });
-    if (result.count !== 1) throw new Error('Crawl run was not running');
-    return this.database.crawlRun.findUniqueOrThrow({ where: { id } });
   }
 
   async finishFailure(id: string, errorCode: CrawlErrorCode, httpStatus?: number) {
-    const result = await this.database.crawlRun.updateMany({
-      where: { id, status: CrawlRunStatus.RUNNING },
-      data: {
-        status: CrawlRunStatus.FAILED,
-        finishedAt: new Date(),
-        success: false,
-        errorCode,
-        httpStatus: validHttpStatus(httpStatus),
-      },
+    const finishedAt = new Date();
+    const status = validHttpStatus(httpStatus);
+    return this.database.$transaction(async (transaction) => {
+      const run = await transaction.crawlRun.findUniqueOrThrow({
+        where: { id },
+        select: { sourceId: true },
+      });
+      const result = await transaction.crawlRun.updateMany({
+        where: { id, status: CrawlRunStatus.RUNNING },
+        data: {
+          status: CrawlRunStatus.FAILED,
+          finishedAt,
+          success: false,
+          errorCode,
+          httpStatus: status,
+        },
+      });
+      if (result.count !== 1) throw new Error('Crawl run was not running');
+      await transaction.source.update({
+        where: { id: run.sourceId },
+        data: { lastCheckedAt: finishedAt },
+      });
+      return transaction.crawlRun.findUniqueOrThrow({ where: { id } });
     });
-    if (result.count !== 1) throw new Error('Crawl run was not running');
-    return this.database.crawlRun.findUniqueOrThrow({ where: { id } });
   }
 }
