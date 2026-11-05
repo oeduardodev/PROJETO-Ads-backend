@@ -1,6 +1,5 @@
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
-import { getDocument, PasswordException, VerbosityLevel } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { PasswordException } from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { openLocalPdf } from './pdfjs-local.js';
 
 export interface PdfTextSegment {
   text: string;
@@ -71,12 +70,6 @@ export class PdfParseError extends Error {
     super(`PDF parse failed (${failureCode}): ${message}`);
     this.name = 'PdfParseError';
   }
-}
-
-const packageDirectory = dirname(fileURLToPath(import.meta.resolve('pdfjs-dist/package.json')));
-
-function assetDirectory(name: string): string {
-  return `${join(packageDirectory, name).replaceAll('\\', '/')}/`;
 }
 
 function validateLimits(limits: PdfParseLimits): void {
@@ -152,17 +145,7 @@ export async function parsePdfText(
     throw new PdfParseError('BYTE_LIMIT', 'The PDF exceeds the byte limit');
   }
 
-  const task = getDocument({
-    data: new Uint8Array(bytes),
-    cMapUrl: assetDirectory('cmaps'),
-    cMapPacked: true,
-    standardFontDataUrl: assetDirectory('standard_fonts'),
-    wasmUrl: assetDirectory('wasm'),
-    useSystemFonts: false,
-    useWorkerFetch: false,
-    stopAtErrors: true,
-    verbosity: VerbosityLevel.ERRORS,
-  });
+  const task = openLocalPdf(bytes);
   try {
     const document = await task.promise;
     if (document.numPages > limits.maxPages) {

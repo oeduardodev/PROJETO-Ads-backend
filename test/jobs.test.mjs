@@ -24,13 +24,19 @@ function serviceWithRecordedCalls() {
   return { service: new JobsService(queues), calls };
 }
 
-test('all six job producers create stable IDs from persisted record identity', async () => {
+test('all seven job producers create stable IDs from persisted record identity', async () => {
   const { service, calls } = serviceWithRecordedCalls();
   const dueAt = '2026-11-04T15:00:00-03:00';
   await service.enqueueSourceRefresh({ sourceId, scheduleVersion: 2 }, 101);
   await service.enqueueUrlFetch(sourceId);
   await service.enqueueDocumentClassify(documentId, 'A'.repeat(64));
   await service.enqueueDocumentExtract(documentId, 3);
+  await service.enqueueDocumentOcr({
+    documentId,
+    sha256: 'B'.repeat(64),
+    pageNumber: 2,
+    pipelineVersion: 1,
+  });
   await service.enqueueProcessValidate(processId, 4);
   await service.enqueueProcessRecheck(processId, dueAt);
 
@@ -45,13 +51,15 @@ test('all six job producers create stable IDs from persisted record identity', a
       'url-fetch-' + sourceId,
       'document-classify-' + documentId + '-' + 'a'.repeat(64),
       'document-extract-' + documentId + '-v3',
+      `document-ocr-${documentId}-${'b'.repeat(64)}-p2-v1`,
       'process-validate-' + processId + '-r4',
       'process-recheck-' + processId + '-' + Date.parse(dueAt),
     ],
   );
   assert.equal(calls[0].options.priority, 101);
   assert.equal(calls[2].data.sha256, 'a'.repeat(64));
-  assert.equal(calls[5].data.dueAt, '2026-11-04T18:00:00.000Z');
+  assert.equal(calls[4].data.sha256, 'b'.repeat(64));
+  assert.equal(calls[6].data.dueAt, '2026-11-04T18:00:00.000Z');
 });
 
 test('queues retry with jitter and retain final failures for manual retry', () => {
@@ -78,6 +86,21 @@ test('job payload identity rejects malformed IDs, versions, hashes, and due date
   assert.throws(
     () => service.enqueueDocumentClassify(documentId, 'not-a-hash'),
     /sha256 must contain 64 hexadecimal characters/u,
+  );
+  assert.throws(
+    () =>
+      service.enqueueDocumentOcr({ documentId, sha256: 'bad', pageNumber: 1, pipelineVersion: 1 }),
+    /sha256 must contain 64 hexadecimal characters/u,
+  );
+  assert.throws(
+    () =>
+      service.enqueueDocumentOcr({
+        documentId,
+        sha256: 'a'.repeat(64),
+        pageNumber: 0,
+        pipelineVersion: 1,
+      }),
+    /pageNumber must be a positive safe integer/u,
   );
   assert.throws(
     () => service.enqueueProcessRecheck(processId, 'tomorrow'),

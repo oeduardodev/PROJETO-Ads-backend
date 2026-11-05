@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F05 — Documentos, parsing e evidências |
-| Passo | 043 — `feat(documents): normalizar HTML e seções` |
-| Estado | Passo 043 concluído; validação verde; registrado neste commit local |
+| Passo | 044 — `feat(documents): adicionar OCR como fallback sob demanda` |
+| Estado | Passo 043 concluído em `700bec3`; passo 044 aguarda decisão do ADR 0025 |
 | Data | 2026-11-05 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 043: §§ 4.2, 5.2, 7.2 e 10.1 |
-| Roteiro consultado | Passo 043; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `7aa52cc` — passo 042 |
-| Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` — passo 029; sem alterações em 030–043 |
-| Commit atual backend | Este commit do passo 043; base `7aa52cc`; sem push |
+| Arquitetura consultada | Passo 044: §§ 5.2, 7.2 e 10.1 |
+| Roteiro consultado | Passo 044; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `700bec3` — passo 043 |
+| Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` — passo 029; sem alterações em 030–044 |
+| Commit atual backend | `700bec3` — passo 043; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 044 — adicionar OCR como fallback sob demanda |
+| Próximo passo | 044 — decidir ADR 0025 antes de implementar OCR |
 
 ## Passo 001 — evidências
 
@@ -383,6 +383,15 @@
 - Fixture: `long-menu.v1.html` é sintética, com 30 entradas de menu, links internos e entre hosts autorizados, links não revisados e URL insegura. Não contém edital real nem é publicada.
 - Validação: `corepack pnpm test` (76/76, incluindo menu grande, contexto, tabela, anexos e allowlist); `corepack pnpm test:e2e` (2/2); `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem migration ou teste de banco para o parser isolado.
 - Pendências: decodificação de charset, conteúdo renderizado por JavaScript e layouts específicos exigem avaliação por fonte quando o fluxo for integrado. Nenhum download, snapshot oficial, dado publicado, push ou deploy.
+
+## Passo 044 — concluído localmente
+
+- Estado observado antes do passo: backend em `700bec3` após o passo 043, com a atualização deste `PROGRESS.md` pendente; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Relidos o roteiro 044 e arquitetura §§ 5.2, 7.2 e 10.1.
+- ADR 0025 aceito conforme escolha do usuário: Tesseract.js local com modelo português empacotado, fila BullMQ dedicada `document.ocr`, limiar de 40 caracteres úteis, limite configurável de 5 páginas por documento e orçamento global diário UTC, padrão zero. IDs determinísticos e reserva Redis atômica impedem cobrança duplicada da mesma identidade.
+- Implementação: PDF.js seleciona páginas com imagem e camada de texto insuficiente; o recognizer renderiza a 2x e aplica limite de 18 milhões de pixels e timeout de 60 s. Usa `tesseract.js` 7.0.0 e `@tesseract.js-data/por` 1.0.0 local, sem URL/CDN. Jobs contêm só documentId, hash, página e versão. Orçamento e limite ficam no config do worker e no `.env.example`.
+- Fixtures: `scanned-text.v1.pdf` e `scanned-six-pages.v1.pdf` são imagens sintéticas geradas localmente; nenhuma fonte oficial ou PDF real foi acessado.
+- Validação: `corepack pnpm test` passou com 82/82; `corepack pnpm test:e2e` passou com 2/2 na repetição (a primeira execução excedeu o timeout de inicialização de 10 s da API, sem falha no worker); `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. O teste OCR reconheceu texto da imagem sintética; PDF com texto e página em branco sem imagem não produziu candidatos; orçamento zero não enfileirou jobs. Sem migration.
+- Pendências: o passo 047 integrará o consumidor da fila com fetch/extração e persistência do resultado; quota continua zero e a fila não está ativada para fontes oficiais. O PDF.js roda no processo do worker, limitado por bytes, páginas, pixels e timeout; produção ainda depende do limite de memória do container. Nenhum dado foi publicado; sem push, deploy ou migração de produção.
 
 ## Pendências e decisões
 

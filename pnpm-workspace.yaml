@@ -6,3 +6,4 @@ allowBuilds:
   '@scarf/scarf': false
   msgpackr-extract: false
   prisma: true
+  tesseract.js: false

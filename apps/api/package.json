@@ -14,12 +14,14 @@
   },
   "dependencies": {
     "@js-temporal/polyfill": "0.5.1",
+    "@napi-rs/canvas": "1.1.0",
     "@nestjs/common": "12.3.2",
     "@nestjs/core": "12.3.2",
     "@nestjs/platform-express": "12.3.2",
     "@nestjs/swagger": "12.1.0",
     "@prisma/adapter-pg": "7.10.1",
     "@prisma/client": "7.10.1",
+    "@tesseract.js-data/por": "1.0.0",
     "bullmq": "6.5.4",
     "fast-xml-parser": "5.2.5",
     "ioredis": "6.0.0",
@@ -27,7 +29,8 @@
     "pdfjs-dist": "6.5.438",
     "pg": "8.23.1",
     "reflect-metadata": "0.2.2",
-    "rxjs": "7.8.2"
+    "rxjs": "7.8.2",
+    "tesseract.js": "7.0.0"
   },
   "devDependencies": {
     "@types/node": "24.19.2",

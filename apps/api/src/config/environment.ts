@@ -14,9 +14,13 @@ export interface WorkerConfig extends BaseConfig {
   crawlConcurrency: number;
   searchDailyQuotaPerHost: number;
   maxPdfBytes: number;
+  ocrDailyPageBudget: number;
+  ocrMaxPagesPerDocument: number;
 }
 
 export const DEFAULT_MAX_PDF_BYTES = 10 * 1024 * 1024;
+export const DEFAULT_OCR_DAILY_PAGE_BUDGET = 0;
+export const DEFAULT_OCR_MAX_PAGES_PER_DOCUMENT = 5;
 
 export class ConfigurationError extends Error {
   constructor(message: string) {
@@ -121,5 +125,30 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
   ) {
     throw new ConfigurationError('MAX_PDF_BYTES must be a positive safe integer');
   }
-  return { ...base, crawlConcurrency, searchDailyQuotaPerHost, maxPdfBytes };
+  const rawOcrDailyPageBudget =
+    env.OCR_DAILY_PAGE_BUDGET?.trim() || String(DEFAULT_OCR_DAILY_PAGE_BUDGET);
+  if (!/^(0|[1-9]\d*)$/u.test(rawOcrDailyPageBudget)) {
+    throw new ConfigurationError('OCR_DAILY_PAGE_BUDGET must be a non-negative safe integer');
+  }
+  const ocrDailyPageBudget = Number(rawOcrDailyPageBudget);
+  if (!Number.isSafeInteger(ocrDailyPageBudget) || ocrDailyPageBudget < 0) {
+    throw new ConfigurationError('OCR_DAILY_PAGE_BUDGET must be a non-negative safe integer');
+  }
+  const rawOcrMaxPages =
+    env.OCR_MAX_PAGES_PER_DOCUMENT?.trim() || String(DEFAULT_OCR_MAX_PAGES_PER_DOCUMENT);
+  if (!/^[1-9]\d*$/u.test(rawOcrMaxPages)) {
+    throw new ConfigurationError('OCR_MAX_PAGES_PER_DOCUMENT must be a positive safe integer');
+  }
+  const ocrMaxPagesPerDocument = Number(rawOcrMaxPages);
+  if (!Number.isSafeInteger(ocrMaxPagesPerDocument) || ocrMaxPagesPerDocument < 1) {
+    throw new ConfigurationError('OCR_MAX_PAGES_PER_DOCUMENT must be a positive safe integer');
+  }
+  return {
+    ...base,
+    crawlConcurrency,
+    searchDailyQuotaPerHost,
+    maxPdfBytes,
+    ocrDailyPageBudget,
+    ocrMaxPagesPerDocument,
+  };
 }

@@ -73,6 +73,20 @@ export class JobsService implements OnApplicationShutdown {
     );
   }
 
+  enqueueDocumentOcr(data: JobPayloads['document.ocr']) {
+    const documentId = uuid(data.documentId, 'documentId');
+    if (!SHA256.test(data.sha256))
+      throw new TypeError('sha256 must contain 64 hexadecimal characters');
+    const sha256 = data.sha256.toLowerCase();
+    const pageNumber = positiveInteger(data.pageNumber, 'pageNumber');
+    const pipelineVersion = positiveInteger(data.pipelineVersion, 'pipelineVersion');
+    return this.add(
+      'document.ocr',
+      { documentId, sha256, pageNumber, pipelineVersion },
+      `document-ocr-${documentId}-${sha256}-p${pageNumber}-v${pipelineVersion}`,
+    );
+  }
+
   enqueueProcessValidate(processId: string, revision: number) {
     const normalizedId = uuid(processId, 'processId');
     const processRevision = positiveInteger(revision, 'revision');

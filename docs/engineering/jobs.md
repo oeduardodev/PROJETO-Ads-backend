@@ -1,6 +1,6 @@
 # Filas de jobs
 
-O worker registra seis filas BullMQ com PostgreSQL como sistema de registro e
+O worker registra sete filas BullMQ com PostgreSQL como sistema de registro e
 Redis apenas como transporte durável:
 
 | Fila | Payload mínimo | Chave de job |
@@ -9,6 +9,7 @@ Redis apenas como transporte durável:
 | url.fetch | candidateUrlId | candidata |
 | document.classify | documentId, sha256 | documento + hash |
 | document.extract | documentId, schemaVersion | documento + schema |
+| document.ocr | documentId, sha256, pageNumber, pipelineVersion | documento + hash + página + versão OCR |
 | process.validate | processId, revision | processo + revisão |
 | process.recheck | processId, dueAt | processo + instante UTC |
 

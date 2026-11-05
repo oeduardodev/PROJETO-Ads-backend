@@ -6,6 +6,7 @@ export const JOB_QUEUE_NAMES = [
   'url.fetch',
   'document.classify',
   'document.extract',
+  'document.ocr',
   'process.validate',
   'process.recheck',
 ] as const;
@@ -17,6 +18,12 @@ export interface JobPayloads {
   'url.fetch': { candidateUrlId: string };
   'document.classify': { documentId: string; sha256: string };
   'document.extract': { documentId: string; schemaVersion: number };
+  'document.ocr': {
+    documentId: string;
+    sha256: string;
+    pageNumber: number;
+    pipelineVersion: number;
+  };
   'process.validate': { processId: string; revision: number };
   'process.recheck': { processId: string; dueAt: string };
 }
