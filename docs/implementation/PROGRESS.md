@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F05 — Documentos, parsing e evidências |
-| Passo | 042 — `feat(documents): extrair texto e paginação de PDF` |
-| Estado | Passo 042 concluído; validação verde; registrado neste commit local |
+| Passo | 043 — `feat(documents): normalizar HTML e seções` |
+| Estado | Passo 043 concluído; validação verde; registrado neste commit local |
 | Data | 2026-11-05 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 042: §§ 5.2, 6, 7.2 e 10.1 |
-| Roteiro consultado | Passo 042; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `4253cdc` — passo 041 |
-| Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` — passo 029; sem alterações em 030–042 |
-| Commit atual backend | Este commit do passo 042; base `4253cdc`; sem push |
+| Arquitetura consultada | Passo 043: §§ 4.2, 5.2, 7.2 e 10.1 |
+| Roteiro consultado | Passo 043; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `7aa52cc` — passo 042 |
+| Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` — passo 029; sem alterações em 030–043 |
+| Commit atual backend | Este commit do passo 043; base `7aa52cc`; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 043 — normalizar HTML e seções |
+| Próximo passo | 044 — adicionar OCR como fallback sob demanda |
 
 ## Passo 001 — evidências
 
@@ -375,6 +375,14 @@
 - Artefatos: `pdf-text.parser.ts` recebe bytes e limites explícitos, usa recursos locais do pacote e retorna página física, linhas, segmentos com coordenadas, candidatos conservadores a título e métricas objetivas de camada de texto. Erros tipados não incluem bytes nem conteúdo do PDF. A fixture sintética gerada por script contém tabela, cronograma, anexo e página sem texto; nenhuma fonte real foi acessada.
 - Validação: `corepack pnpm test` (74/74, incluindo fixture e limites), `corepack pnpm test:e2e` (2/2), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem migration ou teste de banco para este parser isolado.
 - Pendências: ligação ao worker e isolamento de tempo/memória, OCR, corpus de PDFs autorizados para layouts complexos e política de retenção/storage de snapshots oficiais. Nenhum PDF oficial armazenado, dado publicado, push ou deploy.
+
+## Passo 043 — evidências
+
+- Estado observado antes do passo: backend limpo em `7aa52cc` após o passo 042; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Lidos o roteiro 043 e a arquitetura §§ 4.2, 5.2, 7.2 e 10.1.
+- Escopo: normalizador puro com `parse5` existente, seleção de região substantiva, remoção de navegação/rodapé do site, preservação de cabeçalho e contexto editorial do artigo, títulos, seções, tabela e rótulos de links. URLs de documentos só entram como candidatas se usarem HTTPS e host exato fornecido; `<base>` não substitui a URL de origem. Política pública do ADR 0014 continua exigindo fonte ativa e revisão humana.
+- Fixture: `long-menu.v1.html` é sintética, com 30 entradas de menu, links internos e entre hosts autorizados, links não revisados e URL insegura. Não contém edital real nem é publicada.
+- Validação: `corepack pnpm test` (76/76, incluindo menu grande, contexto, tabela, anexos e allowlist); `corepack pnpm test:e2e` (2/2); `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem migration ou teste de banco para o parser isolado.
+- Pendências: decodificação de charset, conteúdo renderizado por JavaScript e layouts específicos exigem avaliação por fonte quando o fluxo for integrado. Nenhum download, snapshot oficial, dado publicado, push ou deploy.
 
 ## Pendências e decisões
 
