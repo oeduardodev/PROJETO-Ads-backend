@@ -13,7 +13,10 @@ export interface ApiConfig extends BaseConfig {
 export interface WorkerConfig extends BaseConfig {
   crawlConcurrency: number;
   searchDailyQuotaPerHost: number;
+  maxPdfBytes: number;
 }
+
+export const DEFAULT_MAX_PDF_BYTES = 10 * 1024 * 1024;
 
 export class ConfigurationError extends Error {
   constructor(message: string) {
@@ -109,5 +112,14 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
   if (!Number.isSafeInteger(searchDailyQuotaPerHost) || searchDailyQuotaPerHost < 0) {
     throw new ConfigurationError('SEARCH_DAILY_QUOTA_PER_HOST must be a non-negative safe integer');
   }
-  return { ...base, crawlConcurrency, searchDailyQuotaPerHost };
+  const rawMaxPdfBytes = env.MAX_PDF_BYTES?.trim() || String(DEFAULT_MAX_PDF_BYTES);
+  const maxPdfBytes = Number(rawMaxPdfBytes);
+  if (
+    !/^(0|[1-9]\d*)$/u.test(rawMaxPdfBytes) ||
+    !Number.isSafeInteger(maxPdfBytes) ||
+    maxPdfBytes < 1
+  ) {
+    throw new ConfigurationError('MAX_PDF_BYTES must be a positive safe integer');
+  }
+  return { ...base, crawlConcurrency, searchDailyQuotaPerHost, maxPdfBytes };
 }

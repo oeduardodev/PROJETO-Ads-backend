@@ -309,6 +309,8 @@ export class ResponsibleHttpClient {
         'text/html',
         'application/xhtml+xml',
         'application/pdf',
+        'application/octet-stream',
+        'binary/octet-stream',
         'text/plain',
         'application/xml',
         'text/xml',

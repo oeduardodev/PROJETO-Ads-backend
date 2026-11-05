@@ -32,6 +32,8 @@ test('worker requires Redis while search and AI keys remain deferred', () => {
   assert.equal(loadWorkerConfig(valid).redisUrl, valid.REDIS_URL);
   assert.equal(loadWorkerConfig(valid).crawlConcurrency, 1);
   assert.equal(loadWorkerConfig(valid).searchDailyQuotaPerHost, 0);
+  assert.equal(loadWorkerConfig(valid).maxPdfBytes, 10 * 1024 * 1024);
+  assert.equal(loadWorkerConfig({ ...valid, MAX_PDF_BYTES: '2048' }).maxPdfBytes, 2048);
   assert.equal(loadWorkerConfig({ ...valid, CRAWL_CONCURRENCY: '4' }).crawlConcurrency, 4);
   assert.equal(
     loadWorkerConfig({ ...valid, SEARCH_DAILY_QUOTA_PER_HOST: '7' }).searchDailyQuotaPerHost,
@@ -41,6 +43,12 @@ test('worker requires Redis while search and AI keys remain deferred', () => {
     () => loadWorkerConfig({ ...valid, CRAWL_CONCURRENCY: '0' }),
     /CRAWL_CONCURRENCY must be a positive safe integer/,
   );
+  for (const size of ['0', '-1', '1.5', '1e2', '9007199254740992']) {
+    assert.throws(
+      () => loadWorkerConfig({ ...valid, MAX_PDF_BYTES: size }),
+      /MAX_PDF_BYTES must be a positive safe integer/,
+    );
+  }
   for (const quota of ['-1', '1.5', '1e2', '9007199254740992']) {
     assert.throws(
       () => loadWorkerConfig({ ...valid, SEARCH_DAILY_QUOTA_PER_HOST: quota }),
