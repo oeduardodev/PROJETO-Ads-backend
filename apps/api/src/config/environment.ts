@@ -12,6 +12,7 @@ export interface ApiConfig extends BaseConfig {
 
 export interface WorkerConfig extends BaseConfig {
   crawlConcurrency: number;
+  searchDailyQuotaPerHost: number;
 }
 
 export class ConfigurationError extends Error {
@@ -100,5 +101,13 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
   if (!Number.isSafeInteger(crawlConcurrency) || crawlConcurrency < 1) {
     throw new ConfigurationError('CRAWL_CONCURRENCY must be a positive safe integer');
   }
-  return { ...base, crawlConcurrency };
+  const rawSearchDailyQuota = env.SEARCH_DAILY_QUOTA_PER_HOST?.trim() || '0';
+  if (!/^(0|[1-9]\d*)$/u.test(rawSearchDailyQuota)) {
+    throw new ConfigurationError('SEARCH_DAILY_QUOTA_PER_HOST must be a non-negative safe integer');
+  }
+  const searchDailyQuotaPerHost = Number(rawSearchDailyQuota);
+  if (!Number.isSafeInteger(searchDailyQuotaPerHost) || searchDailyQuotaPerHost < 0) {
+    throw new ConfigurationError('SEARCH_DAILY_QUOTA_PER_HOST must be a non-negative safe integer');
+  }
+  return { ...base, crawlConcurrency, searchDailyQuotaPerHost };
 }

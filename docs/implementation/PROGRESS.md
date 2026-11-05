@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F04 — Workers, fontes e descoberta incremental |
-| Passo | 035 — `feat(discovery): ler feeds RSS e sitemaps` |
-| Estado | Pronto para commit local; migration aplicada somente no banco local; nenhum push |
-| Data | 2026-11-04 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 034: §§ 4.3, 5.1 e 7.2; preparação 035: §§ 4.2 e 7.2 |
-| Roteiro consultado | Passo 035; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `f72eb1b` - passo 034 |
+| Passo | 036 — `feat(discovery): integrar provedor externo via adapter` |
+| Estado | Passo 036 implementado; validação verde; pronto para commit local |
+| Data | 2026-11-05 (America/Sao_Paulo) |
+| Arquitetura consultada | Passo 036: §§ 4.1, 7.2 e 15.3 |
+| Roteiro consultado | Passo 036; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `f4b288f` - passo 035 |
 | Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` - passo 029; sem alterações em 030-032 |
-| Commit atual backend | HEAD - passo 035 após commit local; sem push |
+| Commit atual backend | `f4b288f` - passo 035; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 036 — `feat(discovery): integrar provedor externo via adapter` |
+| Próximo passo | 037 — classificar relevância por heurísticas |
 
 ## Passo 001 — evidências
 
@@ -315,6 +315,16 @@
 - Validação: instalação congelada, `db:validate`, build, `pnpm test` (41/41), `pnpm lint`, `pnpm typecheck`, `pnpm format:check`, `git diff --check`, integração de fontes (1/1) e integração completa (24/24): PASS. A migration foi aplicada somente no PostgreSQL local `127.0.0.1:5433`; `db:migrate:status` confirmou 11 migrations atualizadas.
 - Uma primeira execução da integração completa teve timeout transitório no teste de inicialização da API (`filters.test.mjs`); o teste isolado passou e a repetição da suíte completa passou. Permaneceram somente avisos existentes de depreciação de `pg`.
 - Nenhum feed real foi consultado, nenhuma fonte ativada, nenhum dado publicado e nenhum push feito.
+
+## Passo 036 — evidências
+
+- Estado observado ao iniciar: backend em `f4b288f` (passo 035), com apenas ADR 0020 e progresso preparatórios pendentes; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Reexaminados ambos os repositórios, o passo 036 do roteiro e arquitetura §§ 4.1, 7.2 e 15.3.
+- ADR 0020 aceito após decisão do usuário: quota diária UTC no Redis por host DNS exato; `SEARCH_DAILY_QUOTA_PER_HOST=0` por padrão; uma tentativa admitida consome quota mesmo se o provedor falhar; sem provedor/conector ativo, chave externa não é exigida. Redis indisponível fecha a busca externa e aciona fallback.
+- Artefatos: adapter `SearchProvider` e construtor `site:<host> <termos>`; serviço aplica quota, usa fallback fornecido pelo consumidor e filtra resultados externos e de fallback para URLs HTTPS do host exato. Implementação Redis usa operação Lua atômica `INCR`/`EXPIREAT` em chave por data UTC e host. `SearchProvidersModule` é registrado somente no worker. Nenhum provedor comercial foi configurado.
+- Configuração: `SEARCH_DAILY_QUOTA_PER_HOST` é inteiro seguro não negativo, default zero no worker e `.env.example`; busca só opera com provider injetado e quota positiva. Segredos de busca seguem adiados até ativação de conector.
+- Testes prescritos adicionados em `test/search-provider.test.mjs`: consulta/host autorizado, normalização de termos, URLs inseguras e hosts diferentes, deduplicação, quota zero/exaurida, falha de Redis/provedor, isolamento por host/data UTC e expiração atômica. Provider e Redis são mocks; nenhuma chamada paga ou externa ocorre.
+- Validação: `corepack pnpm test` (49/49), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem migration, alteração OpenAPI, integração com fonte, publicação ou escrita em banco.
+- Pendências: nenhum provedor real foi escolhido/ativado; consumidor de jobs deve fornecer o fallback das estratégias oficiais HTML/RSS/sitemap quando a descoberta for conectada. Nenhum dado foi coletado/publicado e nenhum push foi feito.
 
 ## Pendências e decisões
 
