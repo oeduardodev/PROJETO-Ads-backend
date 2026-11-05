@@ -15,7 +15,7 @@ test('resolves relative links, deduplicates canonical tracking variants, and ret
     [
       'https://source.example.edu.br/edital?id=42',
       'https://source.example.edu.br/vestibular/transferencia-externa?campus=joao-pessoa',
-      'https://source.example.edu.br/tecnico-integrado',
+      'https://source.example.edu.br/sisu',
     ],
   );
   assert.equal(candidates[0].sourceUrl, sourceUrl);
@@ -26,6 +26,18 @@ test('resolves relative links, deduplicates canonical tracking variants, and ret
   assert.equal(candidates[0].relevanceScore, 0.5);
   assert.equal(candidates[1].relevanceScore, 0.25);
   assert.equal(candidates[2].relevanceScore, 0);
+  assert.equal(
+    candidates.some((candidate) => candidate.canonicalUrl.includes('tecnico-integrado')),
+    false,
+  );
+  assert.equal(
+    candidates.some((candidate) => candidate.canonicalUrl.endsWith('/sisu-regular')),
+    false,
+  );
+  assert.equal(
+    candidates.some((candidate) => candidate.canonicalUrl.endsWith('/pos-graduacao')),
+    false,
+  );
 });
 
 test('requires an authorized exact source host and never follows a non-allowlisted host', () => {

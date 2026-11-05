@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F04 — Workers, fontes e descoberta incremental |
-| Passo | 036 — `feat(discovery): integrar provedor externo via adapter` |
-| Estado | Passo 036 implementado; validação verde; pronto para commit local |
+| Passo | 037 — `feat(discovery): classificar relevância por heurísticas` |
+| Estado | Passo 037 implementado; validação verde; pronto para commit local |
 | Data | 2026-11-05 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 036: §§ 4.1, 7.2 e 15.3 |
-| Roteiro consultado | Passo 036; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `f4b288f` - passo 035 |
+| Arquitetura consultada | Passo 037: § 4.3; glossário e corpus histórico |
+| Roteiro consultado | Passos 036–037; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `91df9b5` - passo 036 |
 | Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` - passo 029; sem alterações em 030-032 |
-| Commit atual backend | `f4b288f` - passo 035; sem push |
+| Commit atual backend | `91df9b5` - passo 036; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 037 — classificar relevância por heurísticas |
+| Próximo passo | 038 — integrar fontes oficiais da UFPB e UFCG |
 
 ## Passo 001 — evidências
 
@@ -325,6 +325,15 @@
 - Testes prescritos adicionados em `test/search-provider.test.mjs`: consulta/host autorizado, normalização de termos, URLs inseguras e hosts diferentes, deduplicação, quota zero/exaurida, falha de Redis/provedor, isolamento por host/data UTC e expiração atômica. Provider e Redis são mocks; nenhuma chamada paga ou externa ocorre.
 - Validação: `corepack pnpm test` (49/49), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem migration, alteração OpenAPI, integração com fonte, publicação ou escrita em banco.
 - Pendências: nenhum provedor real foi escolhido/ativado; consumidor de jobs deve fornecer o fallback das estratégias oficiais HTML/RSS/sitemap quando a descoberta for conectada. Nenhum dado foi coletado/publicado e nenhum push foi feito.
+
+## Passo 037 — evidências
+
+- Estado observado ao iniciar: backend em `91df9b5` após o passo 036, com ADR 0021 e progresso preparatórios pendentes; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Foram relidos o passo 037, arquitetura § 4.3, glossário de domínio e rótulos do corpus.
+- ADR 0021 aceito após decisão do usuário: descarte só por texto âncora que identifique explicitamente SiSU regular/SiSU+, seleção de pós-graduação ou curso técnico integrado/de nível médio. Menções isoladas, URL sem texto conclusivo e sinais conflitantes permanecem candidatos; URL e palavras seed podem apenas priorizar. A heurística não prova elegibilidade ou publicação.
+- Artefatos: `apps/api/src/modules/discovery/relevance/relevance.classifier.ts` normaliza acentos/URLs, pontua sinais positivos e negativos, devolve decisão e motivos de exclusão. `html-link.parser.ts` usa a classificação e remove somente descartes explícitos; links incertos seguem para revisão. Sem schema/migration.
+- Validação com corpus: teste lê `docs/research/golden-dataset.csv` e cobre UFPB-12 histórico, IFPB-15 ENEM próprio fora do SiSU, UFPB-06 seleção específica, UFPB-05/07 e UFCG-05 negativos que não podem ser descartados por URL isolada, e UFCG-02 `PENDING_REVIEW`. Fixture sintética cobre âncoras explícitas de SiSU regular, pós-graduação e curso técnico, além de menção isolada e sinais contraditórios. Nenhum edital/link oficial foi criado ou consultado.
+- Validação: `corepack pnpm test` (53/53), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem chamadas externas, banco, migration ou alteração OpenAPI.
+- Pendências: conectores oficiais da UFPB/UFCG seguem para o passo 038; candidatos priorizados ou mantidos não se tornam elegíveis nem públicos sem revisão humana. Nenhum dado foi publicado e nenhum push foi feito.
 
 ## Pendências e decisões
 

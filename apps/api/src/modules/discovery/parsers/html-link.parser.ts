@@ -1,5 +1,6 @@
 import { parse } from 'parse5';
 import { normalizeAuthorizedHost, normalizeSourceUrl } from '../../sources/source-url.js';
+import { assessDiscoveryRelevance } from '../relevance/relevance.classifier.js';
 
 export interface DiscoveredLinkCandidate {
   canonicalUrl: string;
@@ -30,40 +31,6 @@ const TRACKING_PARAMETERS = new Set([
   '_ga',
 ]);
 
-const POSITIVE_TERMS = [
-  'vestibular proprio',
-  'processo seletivo especifico',
-  'ingresso por historico',
-  'vagas remanescentes',
-  'selecao independente pelo enem',
-  'transferencia externa',
-  'reingresso',
-  'portador de diploma',
-  'licenciatura',
-  'bacharelado',
-  'tecnologo',
-];
-
-const EXCLUSION_TERMS = [
-  'ensino medio',
-  'tecnico integrado',
-  'especializacao',
-  'mestrado',
-  'doutorado',
-  'sisu regular',
-  'prouni',
-  'fies',
-];
-
-function normalizeText(value: string): string {
-  return value
-    .normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLocaleLowerCase('pt-BR')
-    .replace(/\s+/gu, ' ')
-    .trim();
-}
-
 function anchorText(node: HtmlNode): string {
   const pieces: string[] = [];
   const visit = (current: HtmlNode): void => {
@@ -72,13 +39,6 @@ function anchorText(node: HtmlNode): string {
   };
   visit(node);
   return pieces.join(' ').replace(/\s+/gu, ' ').trim();
-}
-
-function scoreCandidate(text: string, url: string): number {
-  const haystack = normalizeText(`${text} ${url}`);
-  const positiveHits = POSITIVE_TERMS.filter((term) => haystack.includes(term)).length;
-  const exclusionHits = EXCLUSION_TERMS.filter((term) => haystack.includes(term)).length;
-  return Math.max(0, Math.min(1, positiveHits * 0.25 - exclusionHits * 0.25));
 }
 
 function canonicalizeLink(
@@ -140,17 +100,23 @@ export function parseHtmlLinkCandidates(
         const canonicalUrl = canonicalizeLink(href, baseUrl, allowedHosts);
         if (canonicalUrl) {
           const text = anchorText(node);
-          const previous = candidates.get(canonicalUrl);
-          const relevanceScore = scoreCandidate(text, canonicalUrl);
-          if (!previous) {
-            candidates.set(canonicalUrl, {
-              canonicalUrl,
-              sourceUrl: normalizedSource,
-              anchorText: text,
-              relevanceScore,
-            });
-          } else if (relevanceScore > previous.relevanceScore) {
-            candidates.set(canonicalUrl, { ...previous, anchorText: text, relevanceScore });
+          const relevance = assessDiscoveryRelevance(text, canonicalUrl);
+          if (relevance.decision !== 'DISCARD') {
+            const previous = candidates.get(canonicalUrl);
+            if (!previous) {
+              candidates.set(canonicalUrl, {
+                canonicalUrl,
+                sourceUrl: normalizedSource,
+                anchorText: text,
+                relevanceScore: relevance.score,
+              });
+            } else if (relevance.score > previous.relevanceScore) {
+              candidates.set(canonicalUrl, {
+                ...previous,
+                anchorText: text,
+                relevanceScore: relevance.score,
+              });
+            }
           }
         }
       }
