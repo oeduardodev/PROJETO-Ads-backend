@@ -401,6 +401,15 @@
 - Validação: `corepack pnpm test` (85/85), `corepack pnpm test:e2e` (2/2 na repetição), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check`, `prisma validate` e `git diff --check`: PASS. O teste local confirmou versões 1 e 2 com hashes/bytes distintos e o vínculo antigo preso à versão 1.
 - Pendência operacional: o teste de integração PostgreSQL não pôde ser executado porque `TEST_DATABASE_URL` não está configurada; a URL local do `.env` aponta para 5433, que recusou conexão. Nenhum banco foi criado ou alterado e a migration não foi aplicada. Sem migration de produção, push ou deploy.
 
+## Passo 046 — concluído localmente; ADR 0027 aceito
+
+- Estado observado antes do passo: backend em `40da0f6` após o passo 045, com apenas o progresso e ADR 0027 pendentes; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Relidos o roteiro 046 e arquitetura §§ 4.2, 5.2 e 10.1 antes da implementação.
+- O usuário aceitou o ADR 0027: cache estruturado por SHA-256/tipo/versão e retenção opt-in revisada por fonte; sem prazo revisado não há cleanup. Blobs compartilhados e cache só expiram quando todas as origens são elegíveis, preservando documentos, relações e evidências.
+- Implementação: `DocumentParseCache` persiste JSON por hash/tipo/versão e os parsers HTML/PDF expõem versões explícitas. `ParserCacheRepository.getOrCompute` reutiliza a saída, exige blob não expirado e valida chave/JSON. `SnapshotRetentionRepository` exige política revisada para todas as associações, calcula o maior vencimento desde a data mais recente de captura/revisão, pagina por cursor SHA-256, apaga bytes/cache e marca o blob sem apagar documentos, relações ou evidências. `SourcesRepository.setSnapshotRetentionPolicy` só habilita prazo positivo com revisão válida. O storage local de fixture permite exclusão idempotente; ADR 0008 continua bloqueando snapshots oficiais.
+- Documentação: ADR 0027 aceito e `docs/ops/retention.md` registra critérios, limite operacional e ausência de agendamento/provedor de produção.
+- Validação: `corepack pnpm test` (97/97), `corepack pnpm test:e2e` (2/2), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check`, `corepack pnpm --filter @alem-do-sisu/api exec prisma validate` e `git diff --check`: PASS. Os testes cobrem replay de cache por hash/tipo/versão, blob expirado, política inválida, retenção compartilhada, fronteira de vencimento, paginação, preservação de evidências e exclusão local idempotente.
+- Pendências: integração PostgreSQL da migration não executada porque `TEST_DATABASE_URL` não está configurada e o PostgreSQL local previamente verificado em `localhost:5433` recusou conexão. Migration criada mas não aplicada; job de cleanup e storage oficial dependem de revisão operacional posterior. Nenhum dado foi publicado; sem push ou deploy.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)

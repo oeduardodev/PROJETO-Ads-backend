@@ -1,6 +1,8 @@
 import { parse } from 'parse5';
 import { normalizeAuthorizedHost, normalizeSourceUrl } from '../../../sources/source-url.js';
 
+export const HTML_DOCUMENT_PARSER_VERSION = 1;
+
 interface HtmlNode {
   nodeName: string;
   tagName?: string;

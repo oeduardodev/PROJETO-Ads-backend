@@ -97,6 +97,38 @@ export class SourcesRepository {
     });
   }
 
+  setSnapshotRetentionPolicy(
+    sourceId: string,
+    snapshotRetentionDays: number | null,
+    retentionReviewedAt: Date | null,
+    now = new Date(),
+  ) {
+    if (!Number.isFinite(now.getTime())) throw new Error('now must be a valid date');
+    if (snapshotRetentionDays === null && retentionReviewedAt === null) {
+      return this.database.source.update({
+        where: { id: sourceId },
+        data: { snapshotRetentionDays: null, retentionReviewedAt: null },
+      });
+    }
+    if (
+      !Number.isSafeInteger(snapshotRetentionDays) ||
+      snapshotRetentionDays === null ||
+      snapshotRetentionDays < 1
+    ) {
+      throw new Error('Snapshot retention requires a positive number of days');
+    }
+    if (!retentionReviewedAt || !Number.isFinite(retentionReviewedAt.getTime())) {
+      throw new Error('Snapshot retention requires a valid review date');
+    }
+    if (retentionReviewedAt.getTime() > now.getTime()) {
+      throw new Error('Snapshot retention review date cannot be in the future');
+    }
+    return this.database.source.update({
+      where: { id: sourceId },
+      data: { snapshotRetentionDays, retentionReviewedAt },
+    });
+  }
+
   async mapHostsBySourceIds(sourceIds: string[]): Promise<Map<string, string>> {
     if (sourceIds.length === 0) return new Map();
     const sources = await this.database.source.findMany({

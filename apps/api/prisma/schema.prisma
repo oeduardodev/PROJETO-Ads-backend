@@ -25,6 +25,12 @@ enum DocumentRelationType {
   RELATED
 }
 
+enum DocumentParserKind {
+  HTML_DOCUMENT
+  PDF_TEXT
+  OCR
+}
+
 enum SourceStatus {
   DRAFT
   ACTIVE
@@ -139,6 +145,8 @@ model Source {
   lastModified     String?       @map("last_modified") @db.VarChar(128)
   discoveryCursor  Json?         @map("discovery_cursor") @db.JsonB
   strategyLastExecutedAt DateTime? @map("strategy_last_executed_at") @db.Timestamptz(6)
+  snapshotRetentionDays Int?      @map("snapshot_retention_days")
+  retentionReviewedAt DateTime? @map("retention_reviewed_at") @db.Timestamptz(6)
   institution      Institution   @relation(fields: [institutionId], references: [id], onDelete: Restrict)
   allowedDomain    AllowedDomain @relation(fields: [allowedDomainId, institutionId], references: [id, institutionId], onDelete: Restrict)
   crawlRuns        CrawlRun[]
@@ -203,10 +211,25 @@ model DocumentBlob {
   storageKey  String     @map("storage_key") @db.Text
   byteLength  Int        @map("byte_length")
   createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiredAt   DateTime?  @map("expired_at") @db.Timestamptz(6)
   documents   Document[]
+  parserCache DocumentParseCache[]
 
   @@unique([sha256, storageKey], map: "document_blobs_hash_storage_key")
   @@map("document_blobs")
+}
+
+model DocumentParseCache {
+  sha256        String             @db.Char(64)
+  parserKind    DocumentParserKind @map("parser_kind")
+  parserVersion Int                @map("parser_version")
+  resultJson    Json               @map("result_json") @db.JsonB
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  blob          DocumentBlob       @relation(fields: [sha256], references: [sha256], onDelete: Restrict)
+
+  @@id([sha256, parserKind, parserVersion], map: "document_parse_cache_pkey")
+  @@index([createdAt], map: "document_parse_cache_created_idx")
+  @@map("document_parse_cache")
 }
 
 model Document {

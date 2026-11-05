@@ -59,3 +59,51 @@ test('does not persist an invalid execution date', async () => {
   );
   assert.equal(calls.length, 0);
 });
+
+test('only enables snapshot retention with a positive duration and an explicit past review date', async () => {
+  const calls = [];
+  const sources = new SourcesRepository({
+    source: {
+      update: async (input) => {
+        calls.push(input);
+        return input;
+      },
+    },
+  });
+  const reviewedAt = new Date('2026-11-04T12:00:00.000Z');
+  const now = new Date('2026-11-05T12:00:00.000Z');
+  const saved = await sources.setSnapshotRetentionPolicy(sourceId, 90, reviewedAt, now);
+  assert.deepEqual(saved.data, {
+    snapshotRetentionDays: 90,
+    retentionReviewedAt: reviewedAt,
+  });
+  assert.equal(calls.length, 1);
+
+  assert.throws(
+    () => sources.setSnapshotRetentionPolicy(sourceId, 0, reviewedAt, now),
+    /positive number of days/u,
+  );
+  assert.throws(
+    () =>
+      sources.setSnapshotRetentionPolicy(sourceId, 90, new Date('2026-11-06T00:00:00.000Z'), now),
+    /cannot be in the future/u,
+  );
+  assert.equal(calls.length, 1);
+});
+
+test('clears the snapshot retention policy only when both values are null', async () => {
+  const calls = [];
+  const sources = new SourcesRepository({
+    source: { update: async (input) => (calls.push(input), input) },
+  });
+  await sources.setSnapshotRetentionPolicy(sourceId, null, null);
+  assert.deepEqual(calls[0].data, {
+    snapshotRetentionDays: null,
+    retentionReviewedAt: null,
+  });
+  assert.throws(
+    () => sources.setSnapshotRetentionPolicy(sourceId, null, new Date()),
+    /positive number of days/u,
+  );
+  assert.equal(calls.length, 1);
+});

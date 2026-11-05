@@ -1,6 +1,8 @@
 import { PasswordException } from 'pdfjs-dist/legacy/build/pdf.mjs';
 import { openLocalPdf } from './pdfjs-local.js';
 
+export const PDF_TEXT_PARSER_VERSION = 1;
+
 export interface PdfTextSegment {
   text: string;
   x: number;

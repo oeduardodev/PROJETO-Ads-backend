@@ -20,16 +20,24 @@ export class DocumentsRepository {
     if (!['text/html', 'application/pdf'].includes(input.mediaType)) {
       throw new Error('Unsupported snapshot MIME type');
     }
-    const stored = await input.storage.write(input.bytes);
+    const stored = input.storage.identify(input.bytes);
     const now = new Date();
     return this.database.$transaction(async (transaction) => {
       const blob = await transaction.documentBlob.upsert({
         where: { sha256: stored.sha256 },
-        create: stored,
-        update: {},
+        create: { ...stored, expiredAt: null },
+        update: { expiredAt: null },
       });
       if (blob.storageKey !== stored.storageKey || blob.byteLength !== stored.byteLength) {
         throw new Error('Snapshot hash identity conflicts with stored metadata');
+      }
+      const written = await input.storage.write(input.bytes);
+      if (
+        written.sha256 !== stored.sha256 ||
+        written.storageKey !== stored.storageKey ||
+        written.byteLength !== stored.byteLength
+      ) {
+        throw new Error('Snapshot bytes do not match their prepared identity');
       }
       const latest = await transaction.document.findFirst({
         where: { url: input.url },
