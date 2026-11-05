@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F04 — Workers, fontes e descoberta incremental |
-| Passo | 037 — `feat(discovery): classificar relevância por heurísticas` |
-| Estado | Passo 037 implementado; validação verde; pronto para commit local |
+| Passo | 038 — `feat(connectors): integrar fontes da UFPB e UFCG` |
+| Estado | Passo 038 implementado offline; validação verde; pronto para commit local |
 | Data | 2026-11-05 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 037: § 4.3; glossário e corpus histórico |
-| Roteiro consultado | Passos 036–037; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `91df9b5` - passo 036 |
+| Arquitetura consultada | Passo 038: §§ 4.1–4.3 e 10.1; política de fontes |
+| Roteiro consultado | Passo 038; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `8192885` - passo 037 |
 | Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` - passo 029; sem alterações em 030-032 |
-| Commit atual backend | `91df9b5` - passo 036; sem push |
+| Commit atual backend | `8192885` - passo 037; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 038 — integrar fontes oficiais da UFPB e UFCG |
+| Próximo passo | 039 — integrar fontes da UEPB e IFPB |
 
 ## Passo 001 — evidências
 
@@ -334,6 +334,15 @@
 - Validação com corpus: teste lê `docs/research/golden-dataset.csv` e cobre UFPB-12 histórico, IFPB-15 ENEM próprio fora do SiSU, UFPB-06 seleção específica, UFPB-05/07 e UFCG-05 negativos que não podem ser descartados por URL isolada, e UFCG-02 `PENDING_REVIEW`. Fixture sintética cobre âncoras explícitas de SiSU regular, pós-graduação e curso técnico, além de menção isolada e sinais contraditórios. Nenhum edital/link oficial foi criado ou consultado.
 - Validação: `corepack pnpm test` (53/53), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem chamadas externas, banco, migration ou alteração OpenAPI.
 - Pendências: conectores oficiais da UFPB/UFCG seguem para o passo 038; candidatos priorizados ou mantidos não se tornam elegíveis nem públicos sem revisão humana. Nenhum dado foi publicado e nenhum push foi feito.
+
+## Passo 038 — evidências
+
+- Estado observado ao iniciar: backend limpo em `8192885` após o passo 037; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Reexaminados ambos os repositórios, roteiro 038, arquitetura §§ 4.1–4.3 e 10.1, matriz de fontes e política de coleta.
+- A matriz confirma as URLs/hosts `www.prg.ufpb.br/editais/ingressantes/` e `comprov.ufcg.edu.br/graduacao.html`. A coleta permanece desabilitada: UFPB aguarda revisão dos termos; UFCG aguarda revisão dos termos/licença e retenção. Não foi feita requisição de rede nem ativação de fonte.
+- Artefatos: `apps/api/src/modules/discovery/connectors/institution-connectors.ts` define `HTML_INDEX`, seletor `a[href]`, frequência proposta de 1440 minutos, `DRAFT`, `collectionAllowed=false` e `PENDING_REVIEW`. O helper só processa HTML fornecido localmente e exige host exato. O host `drive.ufpb.br` continua fora da allowlist da fonte UFPB e é rejeitado.
+- Fixtures v1 sintéticas por instituição contêm somente URLs oficiais já listadas em `test/fixtures/institutions/candidate-manifest.csv`; não são snapshots nem cópias de conteúdo. Testes confirmam configuração contra a matriz, geração local de candidatos, exatidão de host e ausência de URLs fora do manifesto.
+- Validação: `corepack pnpm test` (57/57), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem alterações de schema/migration, banco, API pública ou OpenAPI.
+- Pendências: não ativar ou agendar UFPB/UFCG até revisão humana de política/licença/retenção; nenhum edital ou candidato foi publicado e nenhum push foi feito.
 
 ## Pendências e decisões
 

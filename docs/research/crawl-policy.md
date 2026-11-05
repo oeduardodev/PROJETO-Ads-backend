@@ -33,6 +33,10 @@ Não foram enviados e-mails nem foi solicitado acesso às instituições. Os con
 5. Não versionar PDFs integrais sem licença ou autorização de retenção. Armazenar somente snapshots permitidos, com política de expiração a definir. O link oficial prevalece no catálogo.
 6. Nenhum candidato desta pesquisa vira dado público automaticamente. Publicação exige prova por campo crítico, revisão humana e decisão auditável, conforme ADR 0001 e ADR 0002.
 
+## Passo 038 — adapters offline UFPB/UFCG
+
+Os adapters em `apps/api/src/modules/discovery/connectors/` usam as duas URLs e hosts exatos desta matriz, mas permanecem em `DRAFT` com `collectionAllowed=false` e `PENDING_REVIEW`. O seletor `a[href]` aciona o parser HTML genérico apenas sobre HTML fornecido localmente; não há fetch, agendamento ou ativação. Fixtures versionadas são harnesses sintéticos com URLs já registradas no manifesto/corpus, não snapshots nem transcrições dos sites. UFPB continua sem allowlist para `drive.ufpb.br`; links desse host ficam excluídos até revisão própria. UFCG mantém a pendência de licença/retenção.
+
 ## Pendências antes da automação
 
 - Esclarecer o 403 em `uepb.edu.br/robots.txt` e os termos específicos de cada host.
