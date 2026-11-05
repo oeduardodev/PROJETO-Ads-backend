@@ -18,6 +18,13 @@ enum SourceKind {
   RSS
 }
 
+enum DocumentRelationType {
+  ATTACHMENT
+  TIMELINE
+  RECTIFICATION
+  RELATED
+}
+
 enum SourceStatus {
   DRAFT
   ACTIVE
@@ -217,11 +224,28 @@ model Document {
   discoveredUrl   DiscoveredUrl? @relation(fields: [discoveredUrlId], references: [id], onDelete: Restrict)
   evidence        Evidence[]
   revisions       Revision[]
+  outgoingRelations DocumentRelation[] @relation("document_relation_origin")
+  incomingRelations DocumentRelation[] @relation("document_relation_related")
 
   @@unique([url, version], map: "documents_url_version_key")
   @@index([sha256], map: "documents_sha256_idx")
   @@index([discoveredUrlId], map: "documents_discovered_url_idx")
   @@map("documents")
+}
+
+model DocumentRelation {
+  id                String               @id @default(uuid()) @db.Uuid
+  originDocumentId  String               @map("origin_document_id") @db.Uuid
+  relatedDocumentId String               @map("related_document_id") @db.Uuid
+  relationType      DocumentRelationType @map("relation_type")
+  createdAt         DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  originDocument    Document             @relation("document_relation_origin", fields: [originDocumentId], references: [id], onDelete: Restrict)
+  relatedDocument   Document             @relation("document_relation_related", fields: [relatedDocumentId], references: [id], onDelete: Restrict)
+
+  @@unique([originDocumentId, relatedDocumentId, relationType], map: "document_relations_pair_type_key")
+  @@index([originDocumentId, createdAt, id], map: "document_relations_origin_created_idx")
+  @@index([relatedDocumentId, relationType, createdAt], map: "document_relations_target_type_created_idx")
+  @@map("document_relations")
 }
 
 model SelectionProcess {

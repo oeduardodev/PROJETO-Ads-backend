@@ -393,6 +393,14 @@
 - Validação: `corepack pnpm test` passou com 82/82; `corepack pnpm test:e2e` passou com 2/2 na repetição (a primeira execução excedeu o timeout de inicialização de 10 s da API, sem falha no worker); `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. O teste OCR reconheceu texto da imagem sintética; PDF com texto e página em branco sem imagem não produziu candidatos; orçamento zero não enfileirou jobs. Sem migration.
 - Pendências: o passo 047 integrará o consumidor da fila com fetch/extração e persistência do resultado; quota continua zero e a fila não está ativada para fontes oficiais. O PDF.js roda no processo do worker, limitado por bytes, páginas, pixels e timeout; produção ainda depende do limite de memória do container. Nenhum dado foi publicado; sem push, deploy ou migração de produção.
 
+## Passo 045 — concluído localmente; ADR 0026 aceito
+
+- Estado observado antes do passo: backend limpo em `b561f36` após o passo 044; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Lidos o roteiro 045 e arquitetura §§ 4.1, 5.2, 6 e 10.1.
+- O usuário aceitou o ADR 0026: relações direcionadas entre snapshots imutáveis com tipos ATTACHMENT, TIMELINE, RECTIFICATION e RELATED. O schema e migration adicionam a tabela `document_relations`, duas FKs `RESTRICT`, proibição de auto-relação e unicidade por origem, destino e tipo. Repositório faz upsert idempotente e mantém relações ligadas ao ID da versão observada; `DocumentBlob` continua deduplicado por hash.
+- Artefatos: `apps/api/src/modules/documents/versioning/`, migration `20261105150000_document_relations`, teste de integração com fixture local, teste de repositório com fake Prisma e `docs/engineering/document-versioning.md`. Snapshots oficiais continuam bloqueados pelo ADR 0008.
+- Validação: `corepack pnpm test` (85/85), `corepack pnpm test:e2e` (2/2 na repetição), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check`, `prisma validate` e `git diff --check`: PASS. O teste local confirmou versões 1 e 2 com hashes/bytes distintos e o vínculo antigo preso à versão 1.
+- Pendência operacional: o teste de integração PostgreSQL não pôde ser executado porque `TEST_DATABASE_URL` não está configurada; a URL local do `.env` aponta para 5433, que recusou conexão. Nenhum banco foi criado ou alterado e a migration não foi aplicada. Sem migration de produção, push ou deploy.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
