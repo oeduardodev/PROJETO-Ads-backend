@@ -14,16 +14,16 @@
 | Campo | Valor |
 | --- | --- |
 | Fase | F04 — Workers, fontes e descoberta incremental |
-| Passo | 039 — `feat(connectors): integrar fontes da UEPB e IFPB` |
-| Estado | Passo 039 implementado offline; validação verde; pronto para commit local |
+| Passo | 040 — `test(discovery): replay e regressão de fontes` |
+| Estado | Passo 040 implementado; validação verde; pronto para commit local |
 | Data | 2026-11-05 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 039: §§ 4.1–4.3 e 10.1; política por fonte |
-| Roteiro consultado | Passo 039; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `78b5f9d` — passo 038 |
+| Arquitetura consultada | Passo 040: §§ 3, 4, 7 e 11 |
+| Roteiro consultado | Passo 040; checkpoint G1 concluído no passo 029 |
+| Commit anterior backend | `606dea8` — passo 039 |
 | Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` - passo 029; sem alterações em 030-032 |
-| Commit atual backend | `78b5f9d` — passo 038; alterações 039 validadas localmente; sem push |
+| Commit atual backend | `606dea8` — passo 039; alterações 040 validadas localmente; sem push |
 | Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 040 — replay e regressão offline de fontes |
+| Próximo passo | 041 — baixar e tipificar artefatos com segurança |
 
 ## Passo 001 — evidências
 
@@ -351,6 +351,14 @@
 - Artefatos: conectores UEPB/IFPB isolados em arquivos próprios; fixtures sintéticas versionadas usam somente URLs oficiais já presentes no manifesto revisado. Execução offline informa status, contagem de candidatos, origem, `lastCheckedAt` e `lastSuccessAt` quando há sucesso. `CrawlRunsRepository` grava as datas de verificação/transação de modo atômico; falhas preservam o último sucesso.
 - Validação: `corepack pnpm test` (59/59), `node --test test/integration/discovery.test.mjs` (1/1 no PostgreSQL local), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. A integração inicialmente não alcançou o PostgreSQL desligado; após iniciar o contêiner local já existente, repetiu e passou. Nenhuma migration foi aplicada.
 - Pendências: revisão humana dos termos/licença/retenção por host; UEPB continua proibida para coleta automatizada até esclarecer o 403. Conectores não agendam jobs e não publicam candidatos. Nenhum push foi feito.
+
+## Passo 040 — evidências
+
+- Estado observado antes do passo: backend limpo em `606dea8` após o passo 039; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Relidos roteiro 040 e arquitetura §§ 3, 4, 7 e 11.
+- ADR 0022 aceito pelo usuário: uma observação por candidato/`crawlRunId`; replays preservam contadores e timestamps; execuções distintas contam uma vez. ADR 0023 aceito: aviso na primeira falha final, alerta após três falhas consecutivas ou duas frequências desde o último sucesso; zero candidatos é aviso de revisão.
+- Artefatos: fixture sintética `connector-layout-v2.html` cobre markup alterado, duplicatas canônicas, host externo e exclusão explícita. Testes HTTP simulam 403 e indisponibilidade com transporte mockado. `DiscoveredUrlsRepository` serializa gravações por URL e não altera a observação existente no replay. `docs/ops/connector-replay.md` documenta replay, bloqueios, isolamento da API e limiares de alerta. Nenhum fetch real, snapshot ou publicação.
+- Validação: `corepack pnpm test` (62/62), integração local `test/integration/discovery.test.mjs` (2/2), `corepack pnpm test:e2e` (2/2, sequencial), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. A primeira execução de integração encontrou retorno SQL `void` incompatível com a desserialização do Prisma; o lock transacional foi mantido com projeção escalar e a integração repetida passou. O E2E paralelo excedeu o timeout de inicialização; a execução sequencial passou e o script foi ajustado para ser estável.
+- Sem mudança de schema ou migration. Alerta ainda sem emissor/integração operacional; fila não consome conectores, e os quatro permanecem desativados. Nenhuma fonte acessada, nenhum dado publicado e nenhum push/deploy.
 
 ## Pendências e decisões
 

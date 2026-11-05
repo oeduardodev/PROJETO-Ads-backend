@@ -89,6 +89,41 @@ test('blocks robots-disallowed paths and never requests the page', async () => {
   );
 });
 
+test('source HTTP 403 blocks without retry and never returns its body', async () => {
+  let pageAttempts = 0;
+  const transport = mockTransport({
+    route: (url) => {
+      if (url.pathname === '/robots.txt') return response(404);
+      pageAttempts += 1;
+      return response(403, '<html>blocked</html>', { 'content-type': 'text/html' });
+    },
+  });
+  await assert.rejects(
+    client(transport).fetch(`https://${host}/edital`),
+    (error) => error instanceof HttpFetchError && error.code === 'HTTP' && error.status === 403,
+  );
+  assert.equal(pageAttempts, 1);
+});
+
+test('bounded retries report source unavailability without returning HTML', async () => {
+  let pageAttempts = 0;
+  const sleeps = [];
+  const transport = mockTransport({
+    sleeps,
+    route: (url) => {
+      if (url.pathname === '/robots.txt') return response(404);
+      pageAttempts += 1;
+      throw new Error('ECONNRESET');
+    },
+  });
+  await assert.rejects(
+    client(transport).fetch(`https://${host}/edital`),
+    (error) => error instanceof HttpFetchError && error.code === 'NETWORK',
+  );
+  assert.equal(pageAttempts, 3);
+  assert.deepEqual(sleeps, [500, 1_000]);
+});
+
 test('retries 429 using Retry-After and returns only after a successful attempt', async () => {
   const sleeps = [];
   let attempts = 0;

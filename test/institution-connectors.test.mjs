@@ -131,6 +131,32 @@ test('fragile UEPB and IFPB fixtures remain separate and trace only reviewed URL
   }
 });
 
+test('synthetic layout v2 replays deterministically and deduplicates canonical URLs', () => {
+  const html = readFileSync(
+    new URL('./fixtures/discovery/connector-layout-v2.html', import.meta.url),
+    'utf8',
+  );
+  const firstReplay = parseInstitutionIndexHtml('UFPB', html);
+  const secondReplay = parseInstitutionIndexHtml('UFPB', html);
+  const knownUrls = manifestUrls.get('UFPB');
+
+  assert.deepEqual(firstReplay, secondReplay);
+  assert.deepEqual(
+    firstReplay.map((candidate) => candidate.canonicalUrl),
+    [
+      'https://www.prg.ufpb.br/edital/processo-seletivo-especifico-pse-2027/',
+      'https://www.prg.ufpb.br/edital/processo-seletivo-de-transferencia-voluntaria-para-cursos-de-graduacao-presenciais-pstv-2026-2/',
+    ],
+  );
+  assert.equal(new Set(firstReplay.map((candidate) => candidate.canonicalUrl)).size, 2);
+  assert.ok(firstReplay.every((candidate) => knownUrls.has(candidate.canonicalUrl)));
+  assert.ok(
+    firstReplay.every(
+      (candidate) => candidate.sourceUrl === getPilotHtmlConnector('UFPB').sourceUrl,
+    ),
+  );
+});
+
 test('unsupported institution codes are rejected without network access', () => {
   assert.throws(() => getPilotHtmlConnector('OTHER'), /No HTML connector configured/u);
 });

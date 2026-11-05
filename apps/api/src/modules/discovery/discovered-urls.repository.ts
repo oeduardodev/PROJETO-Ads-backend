@@ -21,26 +21,61 @@ export class DiscoveredUrlsRepository {
     }
     const now = new Date();
     return this.database.$transaction(async (transaction) => {
-      const candidate = await transaction.discoveredUrl.upsert({
+      // Serialize writes for this canonical URL so a repeated run cannot race the
+      // observation check and increment counters more than once per crawl run.
+      await transaction.$queryRaw`SELECT 1::int AS locked FROM (SELECT pg_advisory_xact_lock(hashtextextended(${canonicalUrl}, 0))) AS advisory_lock`;
+
+      const existingCandidate = await transaction.discoveredUrl.findUnique({
         where: { canonicalUrl },
-        create: { canonicalUrl, foundAt: now, lastSeenAt: now, relevanceScore: score },
-        update: { lastSeenAt: now, seenCount: { increment: 1 } },
       });
-      await transaction.discoveryObservation.upsert({
-        where: {
-          discoveredUrlId_crawlRunId: {
-            discoveredUrlId: candidate.id,
-            crawlRunId: input.crawlRunId,
+      if (existingCandidate) {
+        const existingObservation = await transaction.discoveryObservation.findUnique({
+          where: {
+            discoveredUrlId_crawlRunId: {
+              discoveredUrlId: existingCandidate.id,
+              crawlRunId: input.crawlRunId,
+            },
           },
+        });
+        if (existingObservation) return existingCandidate;
+
+        const observation = await transaction.discoveryObservation.createMany({
+          data: [
+            {
+              discoveredUrlId: existingCandidate.id,
+              sourceId: input.sourceId,
+              crawlRunId: input.crawlRunId,
+              firstSeenAt: now,
+              lastSeenAt: now,
+            },
+          ],
+          skipDuplicates: true,
+        });
+        if (observation.count === 0) return existingCandidate;
+
+        return transaction.discoveredUrl.update({
+          where: { id: existingCandidate.id },
+          data: { lastSeenAt: now, seenCount: { increment: 1 } },
+        });
+      }
+
+      const candidate = await transaction.discoveredUrl.create({
+        data: {
+          canonicalUrl,
+          foundAt: now,
+          lastSeenAt: now,
+          seenCount: 1,
+          ...(score === undefined ? {} : { relevanceScore: score }),
         },
-        create: {
+      });
+      await transaction.discoveryObservation.create({
+        data: {
           discoveredUrlId: candidate.id,
           sourceId: input.sourceId,
           crawlRunId: input.crawlRunId,
           firstSeenAt: now,
           lastSeenAt: now,
         },
-        update: { lastSeenAt: now, seenCount: { increment: 1 } },
       });
       return candidate;
     });

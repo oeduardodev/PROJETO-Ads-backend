@@ -16,3 +16,5 @@ O roteiro exige que detectar a mesma URL canônica duas vezes não crie dois can
 ## Decisão e consequências
 
 Decisão: alternativa 1. `discovered_urls.canonical_url` terá unicidade global. Uma tabela de observações ligará candidato, fonte e execução; repetir a mesma descoberta atualiza somente o contador/última observação e não publica nada. A normalização conservará query string, removerá fragmento e exigirá HTTPS com host DNS público. Redirecionamentos e DNS serão validados no fetch futuro. A escolha foi confirmada antes da migration 017.
+
+> Nota de evolução: a contagem por repetições do mesmo `crawlRunId` foi refinada pelo ADR 0022 no passo 040. A identidade global por URL e a proveniência múltipla permanecem vigentes.
