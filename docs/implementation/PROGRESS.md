@@ -419,6 +419,15 @@
 - Validação: `corepack pnpm test:e2e` (3/3), `corepack pnpm test` (97/97), `corepack pnpm lint`, `corepack pnpm format:check` e `git diff --check`: PASS. Sem alteração de worker ou migration neste passo.
 - Pendências: consumidores BullMQ e integração real com PostgreSQL/Redis continuam em passos funcionais posteriores. Nenhuma fonte oficial foi acessada, migration aplicada ou dado publicado; sem push ou deploy.
 
+## Passo 048 — concluído localmente
+
+- Estado observado antes do passo: backend limpo em `db06280` após o passo 047; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Lidos o roteiro 048 e arquitetura §§ 5.1, 5.2, 5.3 e 12.1. Os códigos de `selection_type` vieram do glossário/taxonomia revisada, não de novos rótulos inferidos.
+- Implementação: Zod 4.6.7 gera schemas estruturais JSON Schema 2020-12 versionados para classificação e extração. Todos os campos contratuais são obrigatórios; valores não confirmados e coleções desconhecidas usam `null`. Janelas mantêm datas, horas e fuso em propriedades separadas. Ofertas, reservas e requisitos são arrays aninhados e aceitam valores nulos.
+- Evidência: validação Zod exige, para cada campo crítico não nulo, evidência associada ao caminho do campo, UUID do documento, página/seção e trecho. O JSON Schema gerado não expressa essa dependência entre campos; a validação Zod final é obrigatória, conforme `docs/contracts/README.md`. `institution_id` é contexto fornecido pelo pipeline.
+- Artefatos: `apps/api/src/modules/ai/schemas/`, `docs/contracts/classification-v1.json`, `docs/contracts/extraction-v1.json`; `corepack pnpm schemas:generate` recria os arquivos e o teste verifica sincronização. Nenhum provider, prompt ou fluxo de publicação foi adicionado.
+- Validação: `corepack pnpm test` (101/101), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Testes cobrem enums, null explícito, campos ausentes, propriedades extras, arrays aninhados, datas/horas, evidência obrigatória e igualdade dos schemas JSON com os artefatos versionados.
+- Pendências: adapters de provedor e sua compatibilidade de structured output pertencem ao passo 049; publicação continua sujeita a validação determinística e revisão humana. Nenhuma migration, dado oficial publicado, push ou deploy.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)

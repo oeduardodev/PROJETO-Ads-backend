@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "schema_version": {
+      "type": "number",
+      "const": 1
+    },
+    "scope_decision": {
+      "type": "string",
+      "enum": [
+        "IN_SCOPE",
+        "OUT_OF_SCOPE",
+        "PENDING_REVIEW",
+        "UNKNOWN"
+      ]
+    },
+    "selection_type": {
+      "anyOf": [
+        {
+          "type": "string",
+          "enum": [
+            "GRADUATE_ENTRY",
+            "TRANSFER",
+            "COURSE_CHANGE",
+            "SPECIFIC_KNOWLEDGE",
+            "REMAINING_SEATS",
+            "FIELD_EDUCATION",
+            "ENEM_OWN_SELECTION",
+            "SCHOOL_RECORD",
+            "OLYMPIAD_ENTRY",
+            "PRONERA_GRADUATION",
+            "SISU",
+            "SISU_PLUS"
+          ]
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "regular_sisu_flow": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "requires_enem": {
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string",
+            "minLength": 1
+          },
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$"
+          },
+          "page_or_section": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "excerpt": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "field",
+          "document_id",
+          "page_or_section",
+          "excerpt"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "schema_version",
+    "scope_decision",
+    "selection_type",
+    "regular_sisu_flow",
+    "requires_enem",
+    "evidence"
+  ],
+  "additionalProperties": false
+}
