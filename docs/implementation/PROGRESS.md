@@ -460,6 +460,13 @@
 - Validação: `corepack pnpm test` (121/121), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Testes do passo cobrem múltiplas ofertas, reservas, requisitos, documentos associados, curso desconhecido e rejeição de campus incompatível.
 - Pendências: associação automática por nome depende de decisão no ADR 0031. A normalização não inventa campus ou curso; rascunhos incompletos ainda não são persistidos/publicados. Nenhum push, deploy ou migration em produção.
 
+## Passo 053 — concluído; ADR 0032 proposto
+
+- Estado observado: backend limpo em `d832efa`, frontend sem alterações desde `fa0248e`. Relidos roteiro 053, arquitetura §§ 1.2, 2.1, 5.2–5.4 e 6.2, glossário e máquina de estados. A API já possuía normalização, mas `ValidationModule` estava vazio.
+- Implementação: validador determinístico de instituição pública/verificada, fonte oficial, graduação, SiSU regular separado de ENEM, mensalidade separada de taxa, prazo de inscrição completo/cronológico, vagas e pendências da normalização. Resultado é sempre invisível até revisão humana; exclusões explícitas recebem `OUT_OF_SCOPE`, demais casos `NEEDS_REVIEW`. Oferta técnica em processo misto não apaga a oferta de graduação.
+- Validação: `corepack pnpm test` (126/126), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Casos conflitantes nunca geram publicação.
+- Pendências: `ExtractionV1` não modela isenção de taxa; ADR 0032 propõe estrutura e registra revisão obrigatória quando há taxa positiva. O validador ainda não é ligado a escrita/publicação, previstas nos passos posteriores. Nenhum push, deploy ou migration em produção.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
