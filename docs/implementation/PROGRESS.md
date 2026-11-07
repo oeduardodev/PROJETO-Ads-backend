@@ -452,6 +452,14 @@
 - Validação: `corepack pnpm test` (117/117), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck` e `corepack pnpm format:check`: PASS. Fixtures sintéticas cobrem janela completa e prazo parcial sem hora inventada, taxa, ENEM, oferta/requisito, citação inventada, mudança de instituição, valor de taxa/hora/tipo não sustentado.
 - Pendências: sem provider externo ou consumo de dados oficiais neste passo; qualidade em corpus real, reconciliação e regras de domínio seguem nos passos 052–057. Nenhum resultado foi publicado, nenhuma migration aplicada; sem push ou deploy.
 
+## Passo 052 — concluído; ADR 0031 proposto
+
+- Estado observado: backend limpo em `2cef357` após o passo 051; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Relidos roteiro 052, arquitetura §§ 5.3 e 6–6.1, schema Prisma, repositórios de processo/oferta/campus e contrato `ExtractionV1`.
+- Lacuna identificada: o payload admite campus/curso nulos e não fornece cidade/ID de campus. ADR 0031 propõe vínculo somente por nome normalizado único de campus verificado na mesma instituição, ou ID escolhido por curador. Enquanto isso, a normalização preservará texto original, chaves de busca e todas as linhas sem criar vínculos incertos.
+- Implementação: `normalizeExtractedProcess` valida o payload v1 e contexto da instituição/documento principal, preserva valores crus e normalizados, todas as ofertas, reservas, requisitos, janelas parciais e evidências. Documento desconhecido e curso ausente geram pendências. Vínculo de campus só é aceito por atribuição explícita com índice da oferta, ID, verificação, instituição e nome normalizado compatíveis. Não há escrita no banco nem publicação neste passo.
+- Validação: `corepack pnpm test` (121/121), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Testes do passo cobrem múltiplas ofertas, reservas, requisitos, documentos associados, curso desconhecido e rejeição de campus incompatível.
+- Pendências: associação automática por nome depende de decisão no ADR 0031. A normalização não inventa campus ou curso; rascunhos incompletos ainda não são persistidos/publicados. Nenhum push, deploy ou migration em produção.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
