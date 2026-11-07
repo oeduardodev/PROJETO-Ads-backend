@@ -436,6 +436,15 @@
 - Validação: `corepack pnpm test` (110/110), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Testes cobrem fixture sem segredo, zero bloqueando provider externo, timeout/retry, reconciliação, duplicata, teto, falha do Redis e configuração do worker.
 - Pendências: scripts Lua Redis foram verificados com fake de EVAL, sem integração com um servidor Redis real neste passo; validar no ambiente de integração quando disponível. A seleção e validação de segredo de um provider real ficam para a etapa que o ativar. Sem migration, publicação de dados, push ou deploy.
 
+## Passo 050 — concluído localmente; ADR 0030 aceito
+
+- Estado observado: backend limpo no commit `059f907` após o passo 049; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Relidos roteiro 050, arquitetura §§ 4.3, 5.1 e 5.2, ADRs 0001, 0003 e 0021, contrato v1 e corpus aprovado.
+- O CSV contém rótulos e referências de seção, mas não os títulos/trechos necessários para medir precisão/recall sem vazamento do gabarito ou texto inventado. A URL, por decisão do ADR 0021, não prova descarte. O checkpoint diz `NEEDS_REVIEW`, enquanto `ClassificationV1` define `PENDING_REVIEW` e `UNKNOWN`.
+- O usuário escolheu matriz sintética conservadora. ADR 0030 aceita `PENDING_REVIEW` como representação do `NEEDS_REVIEW` e deixa métricas do corpus real pendentes até haver trechos oficiais revisados. Nenhum novo dado oficial foi adicionado.
+- Implementação: `ScopeClassifier` combina o heurístico de descoberta com título, trechos citáveis e fatos de escopo acompanhados de evidência. Regras explícitas rejeitam SiSU regular/SiSU+, pós-graduação, técnico, instituição privada ou curso pago; menções contextuais, conflitos e vagas remanescentes ligadas ao SiSU vão para revisão. Apenas candidatos priorizados chegam ao adapter abstrato de IA; resposta estruturada exige schema v1 e citação curta presente no texto recebido. Exclusão sugerida apenas pelo modelo, citação inventada ou ausência de prova de instituição pública, graduação, gratuidade e seleção própria retorna `PENDING_REVIEW`. Nenhuma classificação publica um processo.
+- Validação: matriz de 13 casos **sintéticos** derivados dos ADRs aprovados; precisão e recall `1,0` para `IN_SCOPE` e `OUT_OF_SCOPE` nessa matriz, com os três ambíguos em `PENDING_REVIEW`. `corepack pnpm test` (113/113), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck` e `corepack pnpm format:check`: PASS.
+- Pendências: o corpus histórico de 35 artefatos ainda não tem títulos/trechos versionados suficientes para medir precisão/recall real sem vazamento de rótulos; curadoria humana e reavaliação são necessárias antes do gate de qualidade 057/082. O adapter externo segue desativado, sem chave, coleta, migration, publicação, push ou deploy.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
