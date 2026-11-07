@@ -467,6 +467,13 @@
 - Validação: `corepack pnpm test` (126/126), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Casos conflitantes nunca geram publicação.
 - Pendências: `ExtractionV1` não modela isenção de taxa; ADR 0032 propõe estrutura e registra revisão obrigatória quando há taxa positiva. O validador ainda não é ligado a escrita/publicação, previstas nos passos posteriores. Nenhum push, deploy ou migration em produção.
 
+## Passo 054 — concluído; ADR 0033 proposto
+
+- Estado observado: backend limpo em `822f717`, frontend sem mudanças desde `fa0248e`. Relidos roteiro 054 e arquitetura §§ 5.2 e 6–6.1. O schema tem unicidade de instituição + edital + ano e documentos por URL/versão; não há vínculo explícito para documento principal do processo.
+- Implementação: reconciliador determinístico usa instituição, código normalizado e ano completos; o mesmo ID de documento principal pode vincular extração incompleta sem conflito. Hash igual sem chave conclusiva bloqueia criação duplicada e encaminha à revisão assistida. Códigos conflitantes, candidatos múltiplos e documento compartilhado entre editais também exigem revisão; curso parecido e URL parecida não são chaves.
+- Validação: `corepack pnpm test` (133/133), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS após ajuste de formatação. Testes cobrem replay, mudança de URL, hash compartilhado, conflito e editais distintos.
+- Pendências: ADR 0033 propõe vínculo tipado e persistido processo–documento principal; o reconciliador ainda não executa escrita no banco. Sem criação/publicação de edital, push ou deploy.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
