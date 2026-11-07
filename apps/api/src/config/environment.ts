@@ -16,11 +16,13 @@ export interface WorkerConfig extends BaseConfig {
   maxPdfBytes: number;
   ocrDailyPageBudget: number;
   ocrMaxPagesPerDocument: number;
+  aiMaxTokensPerDocument: number;
 }
 
 export const DEFAULT_MAX_PDF_BYTES = 10 * 1024 * 1024;
 export const DEFAULT_OCR_DAILY_PAGE_BUDGET = 0;
 export const DEFAULT_OCR_MAX_PAGES_PER_DOCUMENT = 5;
+export const DEFAULT_AI_MAX_TOKENS_PER_DOCUMENT = 0;
 
 export class ConfigurationError extends Error {
   constructor(message: string) {
@@ -143,6 +145,15 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
   if (!Number.isSafeInteger(ocrMaxPagesPerDocument) || ocrMaxPagesPerDocument < 1) {
     throw new ConfigurationError('OCR_MAX_PAGES_PER_DOCUMENT must be a positive safe integer');
   }
+  const rawAiMaxTokens =
+    env.AI_MAX_TOKENS_PER_DOCUMENT?.trim() || String(DEFAULT_AI_MAX_TOKENS_PER_DOCUMENT);
+  if (!/^(0|[1-9]\d*)$/u.test(rawAiMaxTokens)) {
+    throw new ConfigurationError('AI_MAX_TOKENS_PER_DOCUMENT must be a non-negative safe integer');
+  }
+  const aiMaxTokensPerDocument = Number(rawAiMaxTokens);
+  if (!Number.isSafeInteger(aiMaxTokensPerDocument) || aiMaxTokensPerDocument < 0) {
+    throw new ConfigurationError('AI_MAX_TOKENS_PER_DOCUMENT must be a non-negative safe integer');
+  }
   return {
     ...base,
     crawlConcurrency,
@@ -150,5 +161,6 @@ export function loadWorkerConfig(env: NodeJS.ProcessEnv = process.env): WorkerCo
     maxPdfBytes,
     ocrDailyPageBudget,
     ocrMaxPagesPerDocument,
+    aiMaxTokensPerDocument,
   };
 }

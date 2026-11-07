@@ -428,6 +428,14 @@
 - Validação: `corepack pnpm test` (101/101), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Testes cobrem enums, null explícito, campos ausentes, propriedades extras, arrays aninhados, datas/horas, evidência obrigatória e igualdade dos schemas JSON com os artefatos versionados.
 - Pendências: adapters de provedor e sua compatibilidade de structured output pertencem ao passo 049; publicação continua sujeita a validação determinística e revisão humana. Nenhuma migration, dado oficial publicado, push ou deploy.
 
+## Passo 049 — concluído localmente; ADR 0029 aceito
+
+- Estado observado antes do passo: backend limpo em `3cef146` após o passo 048; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Lidos roteiro 049 e arquitetura §§ 5.1, 5.2, 7.1, 10.1 e 11.2.
+- O usuário escolheu tokens cumulativos por documento em Redis; limite zero desativa chamadas externas. ADR 0029 registra a decisão e o fechamento conservador de reservas. ADR 0004 continua adiando a chave até a ativação de um provider concreto; nenhum fornecedor foi escolhido.
+- Implementação: `AiProviderService` impõe timeouts, retries limitados, identidade estável, schema ID, limites máximos de entrada/saída e valida token usage. `RedisAiTokenBudgetStore` reserva atomicamente o teto de todas as tentativas por documento, reconcilia uso confirmado, mantém teto para falhas de uso desconhecido e bloqueia replay do mesmo request ID. Chaves do documento usam hash tag Redis comum e request IDs são guardados como SHA-256. Worker recebe `AI_MAX_TOKENS_PER_DOCUMENT` (inteiro não negativo, default 0) e factory aplica a configuração; fixture de teste funciona offline sem chave. Não há provider externo, chamada real ou dependência da API pública.
+- Validação: `corepack pnpm test` (110/110), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Testes cobrem fixture sem segredo, zero bloqueando provider externo, timeout/retry, reconciliação, duplicata, teto, falha do Redis e configuração do worker.
+- Pendências: scripts Lua Redis foram verificados com fake de EVAL, sem integração com um servidor Redis real neste passo; validar no ambiente de integração quando disponível. A seleção e validação de segredo de um provider real ficam para a etapa que o ativar. Sem migration, publicação de dados, push ou deploy.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)

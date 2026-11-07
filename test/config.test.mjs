@@ -35,6 +35,7 @@ test('worker requires Redis while search and AI keys remain deferred', () => {
   assert.equal(loadWorkerConfig(valid).maxPdfBytes, 10 * 1024 * 1024);
   assert.equal(loadWorkerConfig(valid).ocrDailyPageBudget, 0);
   assert.equal(loadWorkerConfig(valid).ocrMaxPagesPerDocument, 5);
+  assert.equal(loadWorkerConfig(valid).aiMaxTokensPerDocument, 0);
   assert.equal(loadWorkerConfig({ ...valid, MAX_PDF_BYTES: '2048' }).maxPdfBytes, 2048);
   assert.equal(loadWorkerConfig({ ...valid, CRAWL_CONCURRENCY: '4' }).crawlConcurrency, 4);
   assert.equal(
@@ -42,6 +43,10 @@ test('worker requires Redis while search and AI keys remain deferred', () => {
     7,
   );
   assert.equal(loadWorkerConfig({ ...valid, OCR_DAILY_PAGE_BUDGET: '7' }).ocrDailyPageBudget, 7);
+  assert.equal(
+    loadWorkerConfig({ ...valid, AI_MAX_TOKENS_PER_DOCUMENT: '5000' }).aiMaxTokensPerDocument,
+    5000,
+  );
   assert.equal(
     loadWorkerConfig({ ...valid, OCR_MAX_PAGES_PER_DOCUMENT: '3' }).ocrMaxPagesPerDocument,
     3,
@@ -66,6 +71,12 @@ test('worker requires Redis while search and AI keys remain deferred', () => {
     assert.throws(
       () => loadWorkerConfig({ ...valid, OCR_DAILY_PAGE_BUDGET: budget }),
       /OCR_DAILY_PAGE_BUDGET must be a non-negative safe integer/,
+    );
+  }
+  for (const budget of ['-1', '1.5', '1e2', '9007199254740992']) {
+    assert.throws(
+      () => loadWorkerConfig({ ...valid, AI_MAX_TOKENS_PER_DOCUMENT: budget }),
+      /AI_MAX_TOKENS_PER_DOCUMENT must be a non-negative safe integer/,
     );
   }
   for (const pageLimit of ['0', '-1', '1.5', '1e2', '9007199254740992']) {
