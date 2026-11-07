@@ -445,6 +445,13 @@
 - Validação: matriz de 13 casos **sintéticos** derivados dos ADRs aprovados; precisão e recall `1,0` para `IN_SCOPE` e `OUT_OF_SCOPE` nessa matriz, com os três ambíguos em `PENDING_REVIEW`. `corepack pnpm test` (113/113), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck` e `corepack pnpm format:check`: PASS.
 - Pendências: o corpus histórico de 35 artefatos ainda não tem títulos/trechos versionados suficientes para medir precisão/recall real sem vazamento de rótulos; curadoria humana e reavaliação são necessárias antes do gate de qualidade 057/082. O adapter externo segue desativado, sem chave, coleta, migration, publicação, push ou deploy.
 
+## Passo 051 — concluído localmente
+
+- Estado observado antes do passo: backend limpo em `67549d0` após o passo 050; frontend limpo em `fa0248e555074b3fd322a69048ada63642a7f293`. Relidos roteiro 051 e arquitetura §§ 5.2–5.4, contrato `ExtractionV1` e guia dos contratos.
+- Implementação: `StructuredExtractor` envia prompt `extraction-v1` e JSON Schema v1 ao adapter abstrato, preservando `institution_id` do contexto. A saída Zod exige campos nulos explícitos e evidência por campo crítico; checagem adicional exige UUID, página/seção, trecho curto literal recebido e suporte textual para datas, horas, números, taxa de inscrição, ENEM, gratuidade e tipo de seleção. Evidência falsa, valor sem suporte, schema inválido ou instituição trocada retornam `PENDING_REVIEW` sem dados extraídos aceitos. O prompt versionado está documentado em `docs/prompts/extraction-v1.md`.
+- Validação: `corepack pnpm test` (117/117), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck` e `corepack pnpm format:check`: PASS. Fixtures sintéticas cobrem janela completa e prazo parcial sem hora inventada, taxa, ENEM, oferta/requisito, citação inventada, mudança de instituição, valor de taxa/hora/tipo não sustentado.
+- Pendências: sem provider externo ou consumo de dados oficiais neste passo; qualidade em corpus real, reconciliação e regras de domínio seguem nos passos 052–057. Nenhum resultado foi publicado, nenhuma migration aplicada; sem push ou deploy.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
