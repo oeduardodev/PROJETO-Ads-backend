@@ -39,4 +39,8 @@ Esses quocientes descrevem completude da **amostra selecionada**, não recall de
 2. Comparar campos normalizados e evidências, sem considerar `UNKNOWN` como acerto de valor. Reportar numerador, denominador, intervalos por instituição e erros concretos. A arquitetura propõe ≥ 95% de precisão nas extrações revisadas do piloto; tratar como alvo a validar, não número já alcançado.
 3. Exigir 100% de URL oficial em registros publicados e auditoria humana documentada. Ausência ou conflito de prazo/requisito fica em revisão ou aparece como não confirmado, jamais como valor presumido.
 4. Medir p95 < 500 ms apenas após carga de referência e índices definidos. Registrar ingestão e busca separadamente; não usar tempo de resposta de uma fonte oficial como latência da API.
-5. Antes de cada gate, anexar resultados, falhas, versão do corpus e decisão em `docs/implementation/PROGRESS.md`. `NOT_MEASURED` permanece para precisão do extrator, recall de descoberta, custo e latência até existirem os respectivos componentes.
+5. Antes de cada gate, anexar resultados, falhas, versão do corpus e decisão em `docs/implementation/PROGRESS.md`. O relatório do passo 057 registra o que está medido e o que segue `NOT_MEASURED`; não substituir métricas ausentes por zero ou por resultados sintéticos.
+
+O protocolo executável de comparação por campo e versão está em
+`apps/api/test/evaluation/metrics.mjs`. Métricas reais continuam
+`NOT_MEASURED` enquanto o gabarito não contiver trechos versionados suficientes.

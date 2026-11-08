@@ -488,6 +488,14 @@
 - Validação: `prisma validate`, build, `corepack pnpm test` (150/150), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check e `git diff --check`: PASS. Testes cobrem permissões, transições inválidas, revisão, requisitos de publicação e auditoria.
 - Pendências: migração `20261108120000_process_review_workflow` criada, ainda não aplicada porque Docker e PostgreSQL local não estão disponíveis. Autenticação/verificação de tokens, guards e RBAC conectados a identidade real seguem nos passos 058–059; o passo 056 só recebe ator/escopos fornecidos pela camada confiável. Sem migration em produção, push ou deploy.
 
+## Passo 057 — concluído com limites do corpus registrados
+
+- Estado observado: backend limpo em `f8c0fc8`, frontend sem mudanças desde `fa0248e`. Relidos roteiro 057, arquitetura §§ 2.2, 5.1–5.4, 10.1, 12–13, `docs/quality/metrics.md` e corpus dourado. A matriz tem 35 artefatos e referências por seção, mas não títulos/trechos versionados suficientes para avaliar extração sem vazamento.
+- Implementação: avaliador em `apps/api/test/evaluation/metrics.mjs` calcula precisão/recall exatos, cobertura, erro e abstenção por campo; exclui `UNKNOWN` e `NOT_MEASURED`; separa tokens de provider e fixtures; compara regressões por prompt/modelo apenas nos mesmos casos. Relatório versionado em `docs/quality/evaluation-report.md` mantém resultados reais ausentes como `NOT_MEASURED`.
+- Evidência de corpus: `python test/fixtures/institutions/validate_golden_dataset.py` confirmou 35 documentos, 4 instituições e os casos ENEM, prazo ambíguo, duplicatas, negativos e retificação.
+- Validação: `corepack pnpm test` (154/154), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check e `git diff --check`: PASS. A matriz pré-existente de 13 casos sintéticos obteve precisão/recall 1,00 em `IN_SCOPE` e `OUT_OF_SCOPE`; os três ambíguos foram encaminhados à revisão. Isso não é desempenho do corpus nem do piloto.
+- Pendências: precisão/recall de extração no corpus, custo real por documento e regressão de provider/modelo continuam `NOT_MEASURED`; nenhum provider externo foi chamado. Curadoria humana deve acrescentar títulos e trechos oficiais antes do gate piloto. Nenhuma publicação, push ou deploy.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)
