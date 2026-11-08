@@ -481,6 +481,13 @@
 - Validação: `corepack pnpm test` (143/143), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Dez testes direcionados cobrem prazo/requisito crítico, evidências anteriores, replay, fonte não verificada e ambas as políticas.
 - Pendências/evidências: o teste da transação usa adapter simulado; não foi possível rodar integração PostgreSQL porque Docker não está instalado/disponível (`docker` não reconhecido). Não houve migration. A escolha do comportamento em produção permanece no ADR 0034 e deve ser explícita no consumidor antes de ativar o fluxo. Sem push, deploy ou escrita em produção.
 
+## Passo 056 — concluído; integração de autenticação fica para 058–059
+
+- Estado observado: backend limpo em `aea3658`, frontend sem mudanças desde `fa0248e`. Relidos roteiro 056, arquitetura §§ 6–9 e `docs/domain/state-machine.md`. Havia apenas `publication_status`; faltava persistir estado de ingestão e aplicar transições.
+- Implementação: enum `ProcessIngestionState`, campos `ingestion_state`/`ingestion_state_reason` e índice para a fila; módulo de regras valida arestas de ingestão/publicação. Registrar transição e decisão é atômico, usa comparação do estado anterior e grava ator/motivo. Publicação exige estado `VERIFIED`, fonte oficial, escopo e fatos críticos explicitamente confirmados, humano e permissão. Worker não publica. Rejeitado só reabre com evidência nova; estado arquivado é terminal. A política de retificação crítica permanece parâmetro explícito conforme ADR 0034.
+- Validação: `prisma validate`, build, `corepack pnpm test` (150/150), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check e `git diff --check`: PASS. Testes cobrem permissões, transições inválidas, revisão, requisitos de publicação e auditoria.
+- Pendências: migração `20261108120000_process_review_workflow` criada, ainda não aplicada porque Docker e PostgreSQL local não estão disponíveis. Autenticação/verificação de tokens, guards e RBAC conectados a identidade real seguem nos passos 058–059; o passo 056 só recebe ator/escopos fornecidos pela camada confiável. Sem migration em produção, push ou deploy.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)

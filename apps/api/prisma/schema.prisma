@@ -76,6 +76,17 @@ enum PublicationStatus {
   ARQUIVADO
 }
 
+enum ProcessIngestionState {
+  CANDIDATE
+  FETCHED
+  CLASSIFIED
+  EXTRACTED
+  NEEDS_REVIEW
+  VERIFIED
+  REJECTED
+  SUPERSEDED
+}
+
 model Institution {
   id             String       @id @default(uuid()) @db.Uuid
   name           String       @db.VarChar(250)
@@ -283,6 +294,8 @@ model SelectionProcess {
   demoHistorical  Boolean             @default(false) @map("demo_historical")
   referenceUrl    String?             @map("reference_url") @db.Text
   verifiedAt      DateTime?           @map("verified_at") @db.Timestamptz(6)
+  ingestionState  ProcessIngestionState @default(CANDIDATE) @map("ingestion_state")
+  ingestionStateReason String?         @map("ingestion_state_reason") @db.Text
   publicationStatus PublicationStatus @default(RASCUNHO) @map("publication_status")
   createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   institution     Institution         @relation(fields: [institutionId], references: [id], onDelete: Restrict)
@@ -297,6 +310,7 @@ model SelectionProcess {
   @@unique([id, institutionId], map: "processes_id_institution_key")
   @@index([publicationStatus, institutionId], map: "processes_publication_institution_idx")
   @@index([publicationStatus, verifiedAt, id], map: "processes_publication_verified_idx")
+  @@index([ingestionState, createdAt, id], map: "processes_ingestion_state_created_idx")
   @@index([selectionType, requiresEnem], map: "processes_type_enem_idx")
   @@map("selection_processes")
 }

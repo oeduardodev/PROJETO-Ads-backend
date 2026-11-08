@@ -1,6 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
+import {
+  validateIngestionTransition,
+  validatePublicationTransition,
+  type IngestionState,
+  type PublicationState,
+  type WorkflowActor,
+} from '../review/workflow/state-machine.js';
 import type { RevisionPlan } from '../revisions/revision-plan.js';
 
 export interface EvidenceInput {
@@ -137,24 +144,127 @@ export class ReviewsRepository {
         if (process?.publicationStatus === 'PUBLICADO') {
           const hide = input.criticalRevisionPolicy === 'HIDE';
           if (hide) {
-            await transaction.selectionProcess.update({
-              where: { id: input.processId },
+            const reason = validatePublicationTransition(
+              'PUBLICADO',
+              'OCULTO',
+              { id: 'SYSTEM:REVISION_POLICY', kind: 'SYSTEM', permissions: [] },
+              {
+                reason: 'Official critical revision detected; hidden pending human approval.',
+                officialSourceVerified: true,
+                criticalRevision: true,
+                criticalRevisionPolicy: 'HIDE',
+              },
+            );
+            const updated = await transaction.selectionProcess.updateMany({
+              where: { id: input.processId, publicationStatus: 'PUBLICADO' },
               data: { publicationStatus: 'OCULTO' },
             });
+            if (updated.count !== 1)
+              throw new Error('Process publication state changed concurrently');
+            await transaction.reviewDecision.create({
+              data: {
+                processId: input.processId,
+                reviewerId: 'SYSTEM:REVISION_POLICY',
+                decision: 'HIDE_CRITICAL_REVISION',
+                reason,
+              },
+            });
+          } else {
+            const current = await transaction.selectionProcess.updateMany({
+              where: { id: input.processId, publicationStatus: 'PUBLICADO' },
+              data: { publicationStatus: 'PUBLICADO' },
+            });
+            if (current.count !== 1)
+              throw new Error('Process publication state changed concurrently');
+            await transaction.reviewDecision.create({
+              data: {
+                processId: input.processId,
+                reviewerId: 'SYSTEM:REVISION_POLICY',
+                decision: 'KEEP_PREVIOUS_VERSION',
+                reason:
+                  'Official critical revision detected; previous public version remains visible pending human review.',
+              },
+            });
           }
-          await transaction.reviewDecision.create({
-            data: {
-              processId: input.processId,
-              reviewerId: 'SYSTEM:REVISION_POLICY',
-              decision: hide ? 'HIDE_CRITICAL_REVISION' : 'KEEP_PREVIOUS_VERSION',
-              reason: hide
-                ? 'Official critical revision detected; hidden pending human approval.'
-                : 'Official critical revision detected; previous public version remains visible pending human review.',
-            },
-          });
         }
       }
       return { status: 'RECORDED' as const, revision };
+    });
+  }
+
+  transitionIngestion(input: {
+    processId: string;
+    to: IngestionState;
+    actor: WorkflowActor;
+    reason: string;
+    newEvidence?: boolean;
+    officialSourceVerified?: boolean;
+    unresolvedCriticalFacts?: boolean;
+  }) {
+    return this.database.$transaction(async (transaction) => {
+      const current = await transaction.selectionProcess.findUnique({
+        where: { id: input.processId },
+        select: { ingestionState: true },
+      });
+      if (!current) throw new Error('Process was not found');
+      const reason = validateIngestionTransition(
+        current.ingestionState,
+        input.to,
+        input.actor,
+        input,
+      );
+      const updated = await transaction.selectionProcess.updateMany({
+        where: { id: input.processId, ingestionState: current.ingestionState },
+        data: { ingestionState: input.to, ingestionStateReason: reason },
+      });
+      if (updated.count !== 1) throw new Error('Process ingestion state changed concurrently');
+      await transaction.reviewDecision.create({
+        data: {
+          processId: input.processId,
+          reviewerId: requiredText(input.actor.id, 'Actor'),
+          decision: `INGESTION_${current.ingestionState}_TO_${input.to}`,
+          reason,
+        },
+      });
+      return { from: current.ingestionState, to: input.to, reason };
+    });
+  }
+
+  transitionPublication(input: {
+    processId: string;
+    to: PublicationState;
+    actor: WorkflowActor;
+    reason: string;
+    officialSourceVerified?: boolean;
+    scopeEligible?: boolean;
+    unresolvedCriticalFacts?: boolean;
+  }) {
+    return this.database.$transaction(async (transaction) => {
+      const current = await transaction.selectionProcess.findUnique({
+        where: { id: input.processId },
+        select: { publicationStatus: true, ingestionState: true },
+      });
+      if (!current) throw new Error('Process was not found');
+      const reason = validatePublicationTransition(
+        current.publicationStatus,
+        input.to,
+        input.actor,
+        { ...input, verifiedState: current.ingestionState },
+      );
+      const updated = await transaction.selectionProcess.updateMany({
+        where: { id: input.processId, publicationStatus: current.publicationStatus },
+        data: { publicationStatus: input.to },
+      });
+      if (updated.count !== 1) throw new Error('Process publication state changed concurrently');
+      await transaction.reviewDecision.create({
+        data: {
+          processId: input.processId,
+          reviewerId: requiredText(input.actor.id, 'Actor'),
+          decision: `PUBLICATION_${current.publicationStatus}_TO_${input.to}`,
+          reason,
+        },
+      });
+      return { from: current.publicationStatus, to: input.to, reason };
     });
   }
 

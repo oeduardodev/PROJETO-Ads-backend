@@ -17,6 +17,14 @@ Referências: arquitetura §§ 5.2–5.4, 6.2, 9.3, 12.2; ADRs 0001–0003. A se
 
 O processo pode relacionar vários documentos em estados diferentes. Reprocessar o mesmo hash e versão não cria novo processo ou nova notificação. `PENDING_REVIEW` no gabarito é rótulo de escopo, enquanto `NEEDS_REVIEW` é estágio de ingestão; ambos impedem publicação automática. O worker não escreve `PUBLICADO` diretamente.
 
+No backend, `selection_processes.ingestion_state` e `ingestion_state_reason`
+guardam o eixo de ingestão separadamente de `publication_status`. Mudanças são
+validadas por `review/workflow/state-machine.ts` e registradas em
+`review_decisions`. A verificação e a rejeição exigem ator humano com permissão;
+reabrir um rejeitado exige evidência nova. Publicar exige processo `VERIFIED`,
+fonte oficial, escopo elegível, fatos críticos completos, motivo e permissão
+humana. Atualizações usam o estado anterior como condição para detectar corrida.
+
 ## Publicação do processo
 
 | Estado | Regra de transição |

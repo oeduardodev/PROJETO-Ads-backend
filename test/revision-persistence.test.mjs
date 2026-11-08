@@ -49,6 +49,7 @@ function repository() {
     revisionCreate: 0,
     evidenceCreateMany: 0,
     publicationStatus: 'PUBLICADO',
+    ingestionState: 'NEEDS_REVIEW',
     reviewDecisions: [],
   };
   let existing = null;
@@ -73,9 +74,21 @@ function repository() {
           },
         },
         selectionProcess: {
-          findUnique: async () => ({ publicationStatus: calls.publicationStatus }),
-          update: async ({ data }) => {
-            calls.publicationStatus = data.publicationStatus;
+          findUnique: async ({ select }) => ({
+            ...(select.publicationStatus ? { publicationStatus: calls.publicationStatus } : {}),
+            ...(select.ingestionState ? { ingestionState: calls.ingestionState } : {}),
+          }),
+          updateMany: async ({ where, data }) => {
+            if (where.publicationStatus && where.publicationStatus !== calls.publicationStatus) {
+              return { count: 0 };
+            }
+            if (where.ingestionState && where.ingestionState !== calls.ingestionState) {
+              return { count: 0 };
+            }
+            if (data.publicationStatus) calls.publicationStatus = data.publicationStatus;
+            if (data.ingestionState) calls.ingestionState = data.ingestionState;
+            if (data.ingestionStateReason) calls.ingestionStateReason = data.ingestionStateReason;
+            return { count: 1 };
           },
         },
         reviewDecision: {
@@ -154,4 +167,39 @@ test('unverified source cannot change visibility or create a policy audit decisi
   );
   assert.equal(calls.publicationStatus, 'PUBLICADO');
   assert.deepEqual(calls.reviewDecisions, []);
+});
+
+test('persists ingestion transitions and audit records atomically', async () => {
+  const { service, calls } = repository();
+  const result = await service.transitionIngestion({
+    processId: 'process-1',
+    to: 'VERIFIED',
+    actor: { id: 'curator-1', kind: 'HUMAN', permissions: ['process.verify'] },
+    reason: 'Official source and critical facts confirmed',
+    officialSourceVerified: true,
+    unresolvedCriticalFacts: false,
+  });
+  assert.equal(result.from, 'NEEDS_REVIEW');
+  assert.equal(result.to, 'VERIFIED');
+  assert.equal(calls.ingestionState, 'VERIFIED');
+  assert.equal(calls.reviewDecisions[0].decision, 'INGESTION_NEEDS_REVIEW_TO_VERIFIED');
+});
+
+test('publishes only through an authorized, verified human transition and audits the actor', async () => {
+  const { service, calls } = repository();
+  calls.publicationStatus = 'EM_REVISAO';
+  calls.ingestionState = 'VERIFIED';
+  const result = await service.transitionPublication({
+    processId: 'process-1',
+    to: 'PUBLICADO',
+    actor: { id: 'curator-1', kind: 'HUMAN', permissions: ['process.publish'] },
+    reason: 'Reviewed official notice and all critical fields',
+    officialSourceVerified: true,
+    scopeEligible: true,
+    unresolvedCriticalFacts: false,
+  });
+  assert.equal(result.from, 'EM_REVISAO');
+  assert.equal(calls.publicationStatus, 'PUBLICADO');
+  assert.equal(calls.reviewDecisions[0].reviewerId, 'curator-1');
+  assert.equal(calls.reviewDecisions[0].decision, 'PUBLICATION_EM_REVISAO_TO_PUBLICADO');
 });
