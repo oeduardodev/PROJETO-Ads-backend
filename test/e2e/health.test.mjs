@@ -60,6 +60,9 @@ test('API serves health with configured CORS origin', async () => {
     assert.ok(contract.paths['/api/v1/processes']);
     assert.ok(contract.paths['/api/v1/processes/{id}']);
     assert.equal(contract.paths['/api/v1/admin/reviews'], undefined);
+    const adminQueue = await fetch(`http://127.0.0.1:${port}/api/v1/admin/review-queue`);
+    assert.equal(adminQueue.status, 401);
+    assert.equal((await adminQueue.json()).error.status, 401);
   } finally {
     child.kill();
   }

@@ -525,3 +525,10 @@
 - Implementa??o: models e migration para `AdminUser` e `AuditEvent`; guard consulta usu?rio ativo com papel permitido, sem permiss?es concedidas a identidades n?o cadastradas; decorator de pap?is; reposit?rio de auditoria exige ator/motivo, guarda before/after limitados e recusa snapshots com chaves de segredo. ADR 0036 registra alternativa, consequ?ncias e provisionamento inicial manual controlado.
 - Valida??o: `prisma validate`, build + `corepack pnpm test` (164/164), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check e `git diff --check`: PASS.
 - Pend?ncias: n?o existem rotas administrativas ainda; guards ser?o aplicados nos endpoints dos passos 060?062. Migration `20261108130000_admin_rbac_audit` foi criada, n?o aplicada. Provisionamento de usu?rio/papel e pol?tica SQL para impedir altera??o/remo??o de eventos precisam ser configurados antes de produ??o. Sem push, deploy ou altera??o de banco em produ??o.
+
+## Passo 060 ? conclu?do
+
+- Estado observado: backend limpo em `4caa2f2`; relidos roteiro 060 e arquitetura ?? 8 e 10.3, m?dulos Nest de processo/revis?o, guardas de authz, contratos p?blicos e schema de evid?ncias/documentos. Fila administrativa ainda n?o existia.
+- Implementa??o: `GET /api/v1/admin/review-queue` com estado padr?o `NEEDS_REVIEW`, filtros validados por estado/institui??o, pagina??o limitada e ordena??o est?vel por cria??o+ID; `GET /api/v1/admin/processes/:id` detalha status, ofertas/janelas/requisitos, evid?ncias com documento/hash/vers?o, retifica??es/diferen?as e decis?es. Ambos exigem autentica??o e papel CURATOR ou ADMIN; opera??es administrativas seguem fora do OpenAPI p?blico.
+- Valida??o: build + `corepack pnpm test` (168/168), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check, `corepack pnpm openapi:check` e `git diff --check`: PASS. E2E confirma 401 sem token; testes unit?rios verificam filtros/pagina??o, evid?ncia e 400/404.
+- Pend?ncias: consultas foram testadas com adapter Prisma simulado; integra??o de banco depende da migration 0036 ainda n?o aplicada e de PostgreSQL local. Altera??es e auditoria das decis?es ficam no passo 061. Sem push, deploy ou migration em produ??o.
