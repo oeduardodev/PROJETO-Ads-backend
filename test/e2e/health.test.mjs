@@ -75,6 +75,23 @@ test('API serves health with configured CORS origin', async () => {
       );
       assert.equal(protectedCommand.status, 401);
     }
+    for (const [method, path] of [
+      ['GET', 'sources'],
+      ['POST', 'sources'],
+      ['GET', 'sources/123e4567-e89b-42d3-a456-426614174000'],
+      ['PATCH', 'sources/123e4567-e89b-42d3-a456-426614174000'],
+      ['POST', 'sources/123e4567-e89b-42d3-a456-426614174000/run'],
+      ['POST', 'allowed-domains'],
+      ['PATCH', 'allowed-domains/123e4567-e89b-42d3-a456-426614174000/review'],
+    ]) {
+      const protectedSource = await fetch(`http://127.0.0.1:${port}/api/v1/admin/${path}`, {
+        method,
+        ...(method === 'GET'
+          ? {}
+          : { headers: { 'content-type': 'application/json' }, body: JSON.stringify({}) }),
+      });
+      assert.equal(protectedSource.status, 401, `${method} ${path}`);
+    }
   } finally {
     child.kill();
   }

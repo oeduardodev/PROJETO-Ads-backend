@@ -29,6 +29,19 @@ export const DEFAULT_MAX_PDF_BYTES = 10 * 1024 * 1024;
 export const DEFAULT_OCR_DAILY_PAGE_BUDGET = 0;
 export const DEFAULT_OCR_MAX_PAGES_PER_DOCUMENT = 5;
 export const DEFAULT_AI_MAX_TOKENS_PER_DOCUMENT = 0;
+export const DEFAULT_ADMIN_SOURCE_RUN_COOLDOWN_SECONDS = 60;
+
+export function loadAdminSourceRunCooldownSeconds(env: NodeJS.ProcessEnv = process.env): number {
+  const raw =
+    env.ADMIN_SOURCE_RUN_COOLDOWN_SECONDS?.trim() ||
+    String(DEFAULT_ADMIN_SOURCE_RUN_COOLDOWN_SECONDS);
+  if (!/^[1-9]\d*$/u.test(raw) || !Number.isSafeInteger(Number(raw)) || Number(raw) > 86_400) {
+    throw new ConfigurationError(
+      'ADMIN_SOURCE_RUN_COOLDOWN_SECONDS must be an integer from 1 to 86400',
+    );
+  }
+  return Number(raw);
+}
 
 export class ConfigurationError extends Error {
   constructor(message: string) {

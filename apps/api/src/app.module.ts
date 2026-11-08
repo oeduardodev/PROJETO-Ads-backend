@@ -3,6 +3,7 @@ import { HealthModule } from './modules/health/health.module.js';
 import { InstitutionsModule } from './modules/institutions/institutions.module.js';
 import { CampusesModule } from './modules/campuses/campuses.module.js';
 import { SourcesModule } from './modules/sources/sources.module.js';
+import { AdminSourcesModule } from './modules/sources/admin-sources.module.js';
 import { DiscoveryModule } from './modules/discovery/discovery.module.js';
 import { CrawlingModule } from './modules/crawling/crawling.module.js';
 import { DocumentsModule } from './modules/documents/documents.module.js';
@@ -26,6 +27,7 @@ import { DatabaseModule } from './database/database.module.js';
     InstitutionsModule,
     CampusesModule,
     SourcesModule,
+    AdminSourcesModule,
     DiscoveryModule,
     CrawlingModule,
     DocumentsModule,

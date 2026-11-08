@@ -13,16 +13,16 @@
 
 | Campo                   | Valor |
 | ----------------------- | ----- |
-| Fase                    | F07 ? MVP administrativo |
-| Passo                   | 061 ? `feat(admin-api): aprovar, rejeitar, corrigir e ocultar` |
-| Estado                  | Passo 061 conclu?do localmente; commit consolidado abaixo |
+| Fase                    | F07 — MVP administrativo |
+| Passo                   | 062 — `feat(admin-api): gerenciar fontes e jobs controlados` |
+| Estado                  | Passo 062 implementado localmente; pronto para commit |
 | Data                    | 2026-11-08 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 061: ?? 7.3 e 10.3 |
-| Roteiro consultado      | Passo 061; checkpoint sequencial F07 |
-| Commit anterior backend | `a28998b` ? passo 060 |
-| Reposit?rio frontend    | Sem altera??es neste passo |
-| Gate                   | Prisma, testes, E2E, lint, typecheck, format, OpenAPI e diff: PASS |
-| Pr?ximo passo           | 062 ? administrar fontes e jobs controlados |
+| Arquitetura consultada  | Passo 062: §§ 4.2, 7.3 e 10.3 |
+| Roteiro consultado      | Passo 062; checkpoint sequencial F07 |
+| Commit anterior backend | `7e9ec7f` — passo 061 |
+| Repositório frontend    | Sem alterações neste passo |
+| Gate                    | Prisma, 180 testes, 3 E2E, lint, typecheck, format, OpenAPI e diff: PASS |
+| Próximo passo           | 063 — shell administrativo protegido no frontend |
 
 ## Passo 001 — evidências
 
@@ -539,3 +539,13 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Evidencias/seguranca: aprovacao, correcao e ocultacao exigem evidencias ligadas ao processo, com URL HTTPS em host exato de fonte ativa revisada. Correcoes aceitam apenas campos allowlisted, verificam IDs filhos no processo, normalizam chaves de curso/cota e ocultam dados alterados quando o processo estava publicado.
 - Validacao: build + `corepack pnpm test` (176/176), `corepack pnpm test:e2e` (3/3; fila e quatro comandos administrativos retornam 401 sem token), lint, typecheck e format:check: PASS. Os testes cobrem stale 409 sem escrita, auditoria atomica, before/after, correcoes fora de escopo e evidencias por host.
 - Pendencias: migration `20261108140000_process_review_version` criada e nao aplicada; adapter Prisma de comandos testado em memoria, sem PostgreSQL local. OpenAPI publico permanece sem rotas administrativas. Sem push, deploy ou migracao de producao.
+
+
+## Passo 062 — implementado localmente; ADR 0038 aceito
+
+- Estado observado: backend limpo após passo 061 em `7e9ec7f`; frontend limpo em `fa0248e`. Relidos roteiro 062 e arquitetura §§ 4.2, 7.3 e 10.3; inspecionados Source, AllowedDomain, CrawlRun, filas BullMQ, scheduler, quotas Redis e guards ADMIN/CURATOR.
+- Decisão do usuário: ADR 0038 aceito. Disparos manuais usam cooldown Redis atômico por host exato, compartilhado entre usuários/instâncias, padrão 60 s e configurável; 429 inclui `Retry-After`, e falhas Redis retornam 503.
+- Implementação: rotas administrativas para listar fontes e domínios, obter saúde de fonte, cadastrar domínio sem coleta, registrar fonte DRAFT, revisar política do domínio, ativar/pausar/configurar fonte e solicitar execução manual. Apenas ADMIN altera allowlist/configuração; CURATOR/ADMIN podem ler e disparar. Ativação/disparo exigem instituição pública verificada, domínio exato revisado com coleta autorizada e fonte não BLOCKED. Mutações registram ator, motivo e before/after em AuditEvent; corrida entre coleta e revogação exige revalidação pelo consumidor.
+- Saúde: detalhes incluem últimas CrawlRun, estado atual, quota de busca por host/dia UTC e jobs atrasados da fila `source.refresh`; sem horário exato confiável de retry, o campo `nextRetryAt` permanece nulo. O OpenAPI público é gerado só com módulos públicos e não inclui rotas administrativas.
+- Validação: `prisma validate`, `corepack pnpm test` (180/180), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check, openapi:check e `git diff --check`: PASS. Testes cobrem papel ADMIN, revisão de domínio, ativação, auditoria, limite Redis e host exato; E2E verifica 401 nas rotas novas.
+- Pendências: consumidor `source.refresh` ainda não está integrado à fila, portanto o endpoint confirma enfileiramento e não afirma execução concluída. Integração com PostgreSQL/Redis reais requer serviços de desenvolvimento; nenhuma migração ou deploy de produção, publicação ou push.

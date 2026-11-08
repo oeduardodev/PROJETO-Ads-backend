@@ -1,13 +1,19 @@
 import { NestFactory } from '@nestjs/core';
+import { Module } from '@nestjs/common';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { DatabaseModule } from '../database/database.module.js';
+import { InstitutionsModule } from '../modules/institutions/institutions.module.js';
+import { ProcessesModule } from '../modules/processes/processes.module.js';
 import { createPublicOpenApi } from './public-openapi.js';
 
 // Only metadata is generated. The client is never connected to this URL.
 process.env.DATABASE_URL ??= 'postgresql://openapi:openapi@127.0.0.1:5433/openapi';
 
-const { AppModule } = await import('../app.module.js');
-const app = await NestFactory.create(AppModule, { logger: false });
+@Module({ imports: [DatabaseModule, InstitutionsModule, ProcessesModule] })
+class PublicOpenApiMetadataModule {}
+
+const app = await NestFactory.create(PublicOpenApiMetadataModule, { logger: false });
 try {
   app.setGlobalPrefix('api/v1', { exclude: ['health', 'ready'] });
   const document = createPublicOpenApi(app);

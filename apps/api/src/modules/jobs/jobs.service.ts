@@ -47,6 +47,35 @@ export class JobsService implements OnApplicationShutdown {
     );
   }
 
+  enqueueManualSourceRefresh(sourceIdValue: string, requestIdValue: string, priority?: number) {
+    const sourceId = uuid(sourceIdValue, 'sourceId');
+    const requestId = uuid(requestIdValue, 'requestId');
+    return this.add(
+      'source.refresh',
+      { sourceId, scheduleVersion: Math.floor(Date.now() / 60_000) },
+      'source-refresh-manual-' + sourceId + '-' + requestId,
+      priority,
+    );
+  }
+
+  async sourceRefreshBackoff(sourceIdValue: string) {
+    const sourceId = uuid(sourceIdValue, 'sourceId');
+    const delayed = await this.queues['source.refresh'].getJobs(['delayed'], 0, -1, true);
+    const matching = delayed
+      .filter((job) => job.data.sourceId === sourceId)
+      .sort((left, right) => right.timestamp - left.timestamp);
+    const job = matching[0];
+    return job
+      ? {
+          active: true,
+          jobId: job.id,
+          attemptsMade: job.attemptsMade,
+          retryDelayMs: job.delay,
+          nextRetryAt: null,
+        }
+      : { active: false, jobId: null, attemptsMade: 0, retryDelayMs: null, nextRetryAt: null };
+  }
+
   enqueueUrlFetch(candidateUrlId: string) {
     const payload = { candidateUrlId: uuid(candidateUrlId, 'candidateUrlId') };
     return this.add('url.fetch', payload, 'url-fetch-' + payload.candidateUrlId);
