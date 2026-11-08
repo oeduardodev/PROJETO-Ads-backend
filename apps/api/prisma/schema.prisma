@@ -87,6 +87,11 @@ enum ProcessIngestionState {
   SUPERSEDED
 }
 
+enum AdminRole {
+  ADMIN
+  CURATOR
+}
+
 model Institution {
   id             String       @id @default(uuid()) @db.Uuid
   name           String       @db.VarChar(250)
@@ -360,6 +365,41 @@ model ReviewDecision {
 
   @@index([processId, reviewedAt], map: "review_decisions_process_reviewed_idx")
   @@map("review_decisions")
+}
+
+model AdminUser {
+  id        String       @id @default(uuid()) @db.Uuid
+  issuer    String       @db.VarChar(512)
+  subject   String       @db.VarChar(255)
+  role      AdminRole
+  active    Boolean      @default(true)
+  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
+  auditEvents AuditEvent[]
+
+  @@unique([issuer, subject], map: "admin_users_issuer_subject_key")
+  @@index([active, role], map: "admin_users_active_role_idx")
+  @@map("admin_users")
+}
+
+model AuditEvent {
+  id               String    @id @default(uuid()) @db.Uuid
+  actorAdminUserId String    @map("actor_admin_user_id") @db.Uuid
+  actorIssuer      String    @map("actor_issuer") @db.VarChar(512)
+  actorSubject     String    @map("actor_subject") @db.VarChar(255)
+  action           String    @db.VarChar(100)
+  resourceType     String    @map("resource_type") @db.VarChar(100)
+  resourceId       String    @map("resource_id") @db.VarChar(255)
+  reason           String    @db.Text
+  beforeJson       Json?     @map("before_json") @db.JsonB
+  afterJson        Json?     @map("after_json") @db.JsonB
+  requestId        String?   @map("request_id") @db.VarChar(128)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  actor            AdminUser @relation(fields: [actorAdminUserId], references: [id], onDelete: Restrict)
+
+  @@index([resourceType, resourceId, createdAt], map: "audit_events_resource_created_idx")
+  @@index([actorAdminUserId, createdAt], map: "audit_events_actor_created_idx")
+  @@map("audit_events")
 }
 
 model Offering {

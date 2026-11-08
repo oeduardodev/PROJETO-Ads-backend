@@ -16,6 +16,7 @@ import { AccountsModule } from './modules/accounts/accounts.module.js';
 import { AlertsModule } from './modules/alerts/alerts.module.js';
 import { AuditModule } from './modules/audit/audit.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { AuthzModule } from './modules/authz/authz.module.js';
 import { DatabaseModule } from './database/database.module.js';
 
 @Module({
@@ -38,6 +39,7 @@ import { DatabaseModule } from './database/database.module.js';
     AlertsModule,
     AuditModule,
     AuthModule,
+    AuthzModule,
   ],
 })
 export class AppModule {}
