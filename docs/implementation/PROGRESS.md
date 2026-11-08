@@ -474,6 +474,13 @@
 - Validação: `corepack pnpm test` (133/133), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS após ajuste de formatação. Testes cobrem replay, mudança de URL, hash compartilhado, conflito e editais distintos.
 - Pendências: ADR 0033 propõe vínculo tipado e persistido processo–documento principal; o reconciliador ainda não executa escrita no banco. Sem criação/publicação de edital, push ou deploy.
 
+## Passo 055 — mecanismo concluído; ADR 0034 proposto
+
+- Estado observado: backend limpo em `06f3291`, frontend sem mudanças desde `fa0248e`. Relidos roteiro 055, arquitetura §§ 5.4 e 6.2 e máquina de estados. O schema já preserva revisões append-only, evidências e decisões humanas, mas não tinha planejador de diferenças nem registro transacional de candidato.
+- Implementação: compara snapshots normalizados, marca mudanças críticas em prazos/ofertas/requisitos e campos de escopo, mantém snapshots e evidências antigas, grava a revisão candidata e as novas evidências na mesma transação e torna replay do documento idempotente. Processo publicado só muda com fonte oficial confirmada e política explicitamente passada: `HIDE` registra evento de sistema e oculta; `KEEP_PREVIOUS` registra evento e mantém a versão pública anterior. Nenhuma opção é padrão enquanto ADR 0034 aguarda escolha.
+- Validação: `corepack pnpm test` (143/143), `corepack pnpm test:e2e` (3/3), `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. Dez testes direcionados cobrem prazo/requisito crítico, evidências anteriores, replay, fonte não verificada e ambas as políticas.
+- Pendências/evidências: o teste da transação usa adapter simulado; não foi possível rodar integração PostgreSQL porque Docker não está instalado/disponível (`docker` não reconhecido). Não houve migration. A escolha do comportamento em produção permanece no ADR 0034 e deve ser explícita no consumidor antes de ativar o fluxo. Sem push, deploy ou escrita em produção.
+
 ## Pendências e decisões
 
 ### Decisão de topologia dos repositórios (ADR 0000)

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
+import type { RevisionPlan } from '../revisions/revision-plan.js';
 
 export interface EvidenceInput {
   processId: string;
@@ -16,6 +17,14 @@ export interface RevisionInput {
   documentId: string;
   changedFields: Record<string, unknown>;
   supersedesId?: string;
+}
+
+export interface RevisionCandidateInput {
+  processId: string;
+  plan: RevisionPlan;
+  supersedesId?: string;
+  officialSourceVerified: boolean;
+  criticalRevisionPolicy: 'HIDE' | 'KEEP_PREVIOUS';
 }
 
 export interface ReviewDecisionInput {
@@ -58,6 +67,94 @@ export class ReviewsRepository {
         changedFieldsJson: input.changedFields as Prisma.InputJsonValue,
         supersedes: input.supersedesId ? { connect: { id: input.supersedesId } } : undefined,
       },
+    });
+  }
+
+  recordRevisionCandidate(input: RevisionCandidateInput) {
+    if (input.plan.action === 'NO_CHANGE') {
+      return Promise.resolve({ status: 'UNCHANGED' as const, revision: null });
+    }
+    if (input.plan.previous.institutionId !== input.plan.candidate.institutionId) {
+      throw new Error('Revision candidate changes institution identity');
+    }
+    if (!input.plan.candidate.documentIds.includes(input.plan.candidateDocumentId)) {
+      throw new Error('Candidate document must be linked to the normalized process');
+    }
+    if (
+      input.plan.candidate.evidence.some(
+        (item) => !input.plan.candidate.documentIds.includes(item.documentId),
+      )
+    ) {
+      throw new Error('Candidate evidence references an unknown document');
+    }
+
+    return this.database.$transaction(async (transaction) => {
+      const existing = await transaction.revision.findFirst({
+        where: { processId: input.processId, documentId: input.plan.candidateDocumentId },
+      });
+      if (existing) return { status: 'REPLAY' as const, revision: existing };
+
+      if (input.supersedesId) {
+        const predecessor = await transaction.revision.findUnique({
+          where: { id_processId: { id: input.supersedesId, processId: input.processId } },
+        });
+        if (!predecessor) throw new Error('Superseded revision must belong to this process');
+      }
+
+      const revision = await transaction.revision.create({
+        data: {
+          process: { connect: { id: input.processId } },
+          document: { connect: { id: input.plan.candidateDocumentId } },
+          changedFieldsJson: {
+            schemaVersion: 1,
+            changedFields: input.plan.changedFields,
+            previousSnapshot: input.plan.previous,
+            candidateSnapshot: input.plan.candidate,
+            requiresReview: input.plan.requiresReview,
+            blocksCurrentPublication: input.plan.blocksCurrentPublication,
+          } as unknown as Prisma.InputJsonValue,
+          supersedes: input.supersedesId
+            ? { connect: { id_processId: { id: input.supersedesId, processId: input.processId } } }
+            : undefined,
+        },
+      });
+      if (input.plan.candidate.evidence.length > 0) {
+        await transaction.evidence.createMany({
+          data: input.plan.candidate.evidence.map((evidence) => ({
+            processId: input.processId,
+            documentId: evidence.documentId,
+            fieldPath: evidence.fieldPath,
+            pageOrSection: evidence.pageOrSection,
+            quote: evidence.quote,
+          })),
+        });
+      }
+      if (input.plan.blocksCurrentPublication && input.officialSourceVerified) {
+        const process = await transaction.selectionProcess.findUnique({
+          where: { id: input.processId },
+          select: { publicationStatus: true },
+        });
+        if (process?.publicationStatus === 'PUBLICADO') {
+          const hide = input.criticalRevisionPolicy === 'HIDE';
+          if (hide) {
+            await transaction.selectionProcess.update({
+              where: { id: input.processId },
+              data: { publicationStatus: 'OCULTO' },
+            });
+          }
+          await transaction.reviewDecision.create({
+            data: {
+              processId: input.processId,
+              reviewerId: 'SYSTEM:REVISION_POLICY',
+              decision: hide ? 'HIDE_CRITICAL_REVISION' : 'KEEP_PREVIOUS_VERSION',
+              reason: hide
+                ? 'Official critical revision detected; hidden pending human approval.'
+                : 'Official critical revision detected; previous public version remains visible pending human review.',
+            },
+          });
+        }
+      }
+      return { status: 'RECORDED' as const, revision };
     });
   }
 
