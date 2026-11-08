@@ -1,6 +1,20 @@
-import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
+import { randomUUID } from 'node:crypto';
 import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+  Req,
+  UnauthorizedException,
+  UseGuards,
+} from '@nestjs/common';
+import {
+  ApiBadRequestResponse,
   ApiBearerAuth,
+  ApiConflictResponse,
   ApiNotFoundResponse,
   ApiOperation,
   ApiQuery,
@@ -10,7 +24,36 @@ import { AuthenticationGuard } from '../auth/authentication.guard.js';
 import { AdminAuthorizationGuard } from '../authz/admin-authorization.guard.js';
 import { RequireAdminRoles } from '../authz/roles.decorator.js';
 import { AdminRole, ProcessIngestionState } from '../../generated/prisma/enums.js';
+import type { WorkflowActor } from '../review/workflow/state-machine.js';
 import { AdminReviewQueueService } from './admin-review-queue.service.js';
+import { AdminReviewCommandsService } from './commands/admin-review-commands.service.js';
+
+interface AuthenticatedAdminRequest {
+  adminUser?: { id: string; issuer: string; subject: string; role: AdminRole };
+}
+
+function actorFrom(request: AuthenticatedAdminRequest): WorkflowActor {
+  const admin = request.adminUser;
+  if (!admin) throw new UnauthorizedException();
+  const adminIdentity = {
+    id: admin.id,
+    issuer: admin.issuer,
+    subject: admin.subject,
+    requestId: randomUUID(),
+  };
+  return {
+    id: admin.id,
+    kind: 'HUMAN',
+    permissions: [
+      'process.verify',
+      'process.publish',
+      'process.reject',
+      'process.correct',
+      'process.hide',
+    ],
+    adminIdentity,
+  };
+}
 
 @Controller('admin')
 @ApiTags('admin')
@@ -18,7 +61,10 @@ import { AdminReviewQueueService } from './admin-review-queue.service.js';
 @UseGuards(AuthenticationGuard, AdminAuthorizationGuard)
 @RequireAdminRoles(AdminRole.CURATOR, AdminRole.ADMIN)
 export class AdminReviewController {
-  constructor(private readonly reviews: AdminReviewQueueService) {}
+  constructor(
+    private readonly reviews: AdminReviewQueueService,
+    private readonly commands: AdminReviewCommandsService,
+  ) {}
 
   @Get('review-queue')
   @ApiOperation({
@@ -41,5 +87,61 @@ export class AdminReviewController {
   @ApiNotFoundResponse({ description: 'Processo não encontrado' })
   get(@Param('id') id: string) {
     return this.reviews.get(id);
+  }
+
+  @Post('processes/:id/approve')
+  @ApiOperation({
+    operationId: 'approveAdminProcess',
+    summary: 'Aprovar e publicar processo revisado',
+  })
+  @ApiBadRequestResponse({ description: 'Justificativa, evidencias ou confirmacoes invalidas' })
+  @ApiConflictResponse({ description: 'Versao desatualizada ou processo em estado incompativel' })
+  approve(
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+    @Req() request: AuthenticatedAdminRequest,
+  ) {
+    return this.commands.approve(id, body, actorFrom(request));
+  }
+
+  @Post('processes/:id/reject')
+  @ApiOperation({
+    operationId: 'rejectAdminProcess',
+    summary: 'Rejeitar processo com justificativa',
+  })
+  @ApiConflictResponse({ description: 'Versao desatualizada ou processo em estado incompativel' })
+  reject(
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+    @Req() request: AuthenticatedAdminRequest,
+  ) {
+    return this.commands.reject(id, body, actorFrom(request));
+  }
+
+  @Post('processes/:id/hide')
+  @ApiOperation({ operationId: 'hideAdminProcess', summary: 'Ocultar processo publicado' })
+  @ApiBadRequestResponse({ description: 'Justificativa ou evidencia invalida' })
+  @ApiConflictResponse({ description: 'Versao desatualizada ou processo em estado incompativel' })
+  hide(
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+    @Req() request: AuthenticatedAdminRequest,
+  ) {
+    return this.commands.hide(id, body, actorFrom(request));
+  }
+
+  @Patch('processes/:id/correct')
+  @ApiOperation({
+    operationId: 'correctAdminProcess',
+    summary: 'Corrigir fatos de processo com evidencia oficial',
+  })
+  @ApiBadRequestResponse({ description: 'Correcao, justificativa ou evidencia invalida' })
+  @ApiConflictResponse({ description: 'Versao desatualizada ou processo fora da revisao' })
+  correct(
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+    @Req() request: AuthenticatedAdminRequest,
+  ) {
+    return this.commands.correct(id, body, actorFrom(request));
   }
 }

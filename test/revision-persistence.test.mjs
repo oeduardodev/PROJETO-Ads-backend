@@ -50,7 +50,9 @@ function repository() {
     evidenceCreateMany: 0,
     publicationStatus: 'PUBLICADO',
     ingestionState: 'NEEDS_REVIEW',
+    reviewVersion: 0,
     reviewDecisions: [],
+    auditEvents: [],
   };
   let existing = null;
   const database = {
@@ -77,8 +79,12 @@ function repository() {
           findUnique: async ({ select }) => ({
             ...(select.publicationStatus ? { publicationStatus: calls.publicationStatus } : {}),
             ...(select.ingestionState ? { ingestionState: calls.ingestionState } : {}),
+            ...(select.reviewVersion ? { reviewVersion: calls.reviewVersion } : {}),
           }),
           updateMany: async ({ where, data }) => {
+            if (where.reviewVersion !== undefined && where.reviewVersion !== calls.reviewVersion) {
+              return { count: 0 };
+            }
             if (where.publicationStatus && where.publicationStatus !== calls.publicationStatus) {
               return { count: 0 };
             }
@@ -88,11 +94,15 @@ function repository() {
             if (data.publicationStatus) calls.publicationStatus = data.publicationStatus;
             if (data.ingestionState) calls.ingestionState = data.ingestionState;
             if (data.ingestionStateReason) calls.ingestionStateReason = data.ingestionStateReason;
+            if (data.reviewVersion?.increment) calls.reviewVersion += data.reviewVersion.increment;
             return { count: 1 };
           },
         },
         reviewDecision: {
           create: async ({ data }) => calls.reviewDecisions.push(data),
+        },
+        auditEvent: {
+          create: async ({ data }) => calls.auditEvents.push(data),
         },
       };
       return operation(transaction);
@@ -173,6 +183,7 @@ test('persists ingestion transitions and audit records atomically', async () => 
   const { service, calls } = repository();
   const result = await service.transitionIngestion({
     processId: 'process-1',
+    expectedReviewVersion: 0,
     to: 'VERIFIED',
     actor: { id: 'curator-1', kind: 'HUMAN', permissions: ['process.verify'] },
     reason: 'Official source and critical facts confirmed',
@@ -183,6 +194,8 @@ test('persists ingestion transitions and audit records atomically', async () => 
   assert.equal(result.to, 'VERIFIED');
   assert.equal(calls.ingestionState, 'VERIFIED');
   assert.equal(calls.reviewDecisions[0].decision, 'INGESTION_NEEDS_REVIEW_TO_VERIFIED');
+  assert.equal(calls.reviewVersion, 1);
+  assert.equal(result.reviewVersion, 1);
 });
 
 test('publishes only through an authorized, verified human transition and audits the actor', async () => {
@@ -191,6 +204,7 @@ test('publishes only through an authorized, verified human transition and audits
   calls.ingestionState = 'VERIFIED';
   const result = await service.transitionPublication({
     processId: 'process-1',
+    expectedReviewVersion: 0,
     to: 'PUBLICADO',
     actor: { id: 'curator-1', kind: 'HUMAN', permissions: ['process.publish'] },
     reason: 'Reviewed official notice and all critical fields',
@@ -202,4 +216,66 @@ test('publishes only through an authorized, verified human transition and audits
   assert.equal(calls.publicationStatus, 'PUBLICADO');
   assert.equal(calls.reviewDecisions[0].reviewerId, 'curator-1');
   assert.equal(calls.reviewDecisions[0].decision, 'PUBLICATION_EM_REVISAO_TO_PUBLICADO');
+  assert.equal(calls.reviewVersion, 1);
+});
+
+test('workflow transition requires the current monotonic review version', async () => {
+  const { service, calls } = repository();
+  calls.publicationStatus = 'EM_REVISAO';
+  calls.ingestionState = 'VERIFIED';
+  await assert.rejects(
+    service.transitionPublication({
+      processId: 'process-1',
+      expectedReviewVersion: 1,
+      to: 'PUBLICADO',
+      actor: { id: 'curator-1', kind: 'HUMAN', permissions: ['process.publish'] },
+      reason: 'Review should be rejected as stale',
+      officialSourceVerified: true,
+      scopeEligible: true,
+      unresolvedCriticalFacts: false,
+    }),
+    (error) => error.getStatus() === 409,
+  );
+  assert.equal(calls.publicationStatus, 'EM_REVISAO');
+  assert.equal(calls.reviewVersion, 0);
+  assert.equal(calls.reviewDecisions.length, 0);
+});
+
+test('admin publication transition writes actor, before/after state and reason to audit atomically', async () => {
+  const { service, calls } = repository();
+  calls.publicationStatus = 'EM_REVISAO';
+  calls.ingestionState = 'VERIFIED';
+  const adminIdentity = {
+    id: 'admin-user-uuid',
+    issuer: 'https://identity.example',
+    subject: 'user-123',
+    requestId: 'request-123',
+  };
+
+  await service.transitionPublication({
+    processId: 'process-1',
+    expectedReviewVersion: 0,
+    to: 'PUBLICADO',
+    actor: {
+      id: adminIdentity.id,
+      kind: 'HUMAN',
+      permissions: ['process.publish'],
+      adminIdentity,
+    },
+    reason: 'Official notice and all evidence checked',
+    officialSourceVerified: true,
+    scopeEligible: true,
+    unresolvedCriticalFacts: false,
+  });
+
+  assert.equal(calls.auditEvents.length, 1);
+  assert.equal(calls.auditEvents[0].actorAdminUserId, adminIdentity.id);
+  assert.equal(calls.auditEvents[0].actorIssuer, adminIdentity.issuer);
+  assert.equal(calls.auditEvents[0].actorSubject, adminIdentity.subject);
+  assert.equal(calls.auditEvents[0].action, 'process.publication.publicado');
+  assert.deepEqual(calls.auditEvents[0].beforeJson, { publicationStatus: 'EM_REVISAO' });
+  assert.deepEqual(calls.auditEvents[0].afterJson, { publicationStatus: 'PUBLICADO' });
+  assert.equal(calls.auditEvents[0].reason, 'Official notice and all evidence checked');
+  assert.equal(calls.auditEvents[0].requestId, adminIdentity.requestId);
+  assert.equal(calls.reviewVersion, 1);
 });

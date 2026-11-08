@@ -14,6 +14,7 @@ export interface WorkflowActor {
   id: string;
   kind: 'HUMAN' | 'SYSTEM';
   permissions: readonly string[];
+  adminIdentity?: { id: string; issuer: string; subject: string; requestId?: string };
 }
 
 export interface IngestionTransitionFacts {

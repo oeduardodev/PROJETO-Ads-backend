@@ -53,6 +53,7 @@ export class AdminReviewQueueService {
           publicationStatus: true,
           ingestionState: true,
           ingestionStateReason: true,
+          reviewVersion: true,
           createdAt: true,
           verifiedAt: true,
           institution: { select: { id: true, name: true, acronym: true } },
@@ -90,6 +91,7 @@ export class AdminReviewQueueService {
         ingestionState: true,
         ingestionStateReason: true,
         publicationStatus: true,
+        reviewVersion: true,
         createdAt: true,
         institution: { select: { id: true, name: true, acronym: true } },
         offerings: {

@@ -11,19 +11,18 @@
 
 ## Estado atual
 
-| Campo | Valor |
-| --- | --- |
-| Fase | F05 — Documentos, parsing e evidências |
-| Passo | 044 — `feat(documents): adicionar OCR como fallback sob demanda` |
-| Estado | Passo 043 concluído em `700bec3`; passo 044 aguarda decisão do ADR 0025 |
-| Data | 2026-11-05 (America/Sao_Paulo) |
-| Arquitetura consultada | Passo 044: §§ 5.2, 7.2 e 10.1 |
-| Roteiro consultado | Passo 044; checkpoint G1 concluído no passo 029 |
-| Commit anterior backend | `700bec3` — passo 043 |
-| Commit frontend | `fa0248e555074b3fd322a69048ada63642a7f293` — passo 029; sem alterações em 030–044 |
-| Commit atual backend | `700bec3` — passo 043; sem push |
-| Gate G1 | PASS local no passo 029; schema local segue atualizado |
-| Próximo passo | 044 — decidir ADR 0025 antes de implementar OCR |
+| Campo                   | Valor |
+| ----------------------- | ----- |
+| Fase                    | F07 ? MVP administrativo |
+| Passo                   | 061 ? `feat(admin-api): aprovar, rejeitar, corrigir e ocultar` |
+| Estado                  | Passo 061 conclu?do localmente; commit consolidado abaixo |
+| Data                    | 2026-11-08 (America/Sao_Paulo) |
+| Arquitetura consultada  | Passo 061: ?? 7.3 e 10.3 |
+| Roteiro consultado      | Passo 061; checkpoint sequencial F07 |
+| Commit anterior backend | `a28998b` ? passo 060 |
+| Reposit?rio frontend    | Sem altera??es neste passo |
+| Gate                   | Prisma, testes, E2E, lint, typecheck, format, OpenAPI e diff: PASS |
+| Pr?ximo passo           | 062 ? administrar fontes e jobs controlados |
 
 ## Passo 001 — evidências
 
@@ -496,39 +495,47 @@
 - Validação: `corepack pnpm test` (154/154), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check e `git diff --check`: PASS. A matriz pré-existente de 13 casos sintéticos obteve precisão/recall 1,00 em `IN_SCOPE` e `OUT_OF_SCOPE`; os três ambíguos foram encaminhados à revisão. Isso não é desempenho do corpus nem do piloto.
 - Pendências: precisão/recall de extração no corpus, custo real por documento e regressão de provider/modelo continuam `NOT_MEASURED`; nenhum provider externo foi chamado. Curadoria humana deve acrescentar títulos e trechos oficiais antes do gate piloto. Nenhuma publicação, push ou deploy.
 
-## Pendências e decisões
+## Decisions and pending items
 
-### Decisão de topologia dos repositórios (ADR 0000)
+### Repository topology (ADR 0000)
 
-**Contexto.** A arquitetura (§ 7.1) descreve um monorepo lógico e o roteiro prevê iniciar um monorepo pnpm no passo 006. Foram fornecidos dois repositórios GitHub separados, ambos vazios. O workspace local tem as pastas `frontend/` e `backend/` vazias e documentos na raiz.
+The user chose separate Git repositories for frontend and backend. Architecture, roadmap, and this progress log live in backend as the reference shared by both. Each step commits to the relevant repository; if a later step requires atomic changes in both, record both SHAs here. No push is authorized.
 
-**Decisão do usuário.** Manter frontend e backend como repositórios Git separados. Os documentos de arquitetura, o roteiro e este registro de progresso ficam no backend como fonte de referência para ambos. Cada passo gera no máximo um commit no repositório pertinente; se um passo futuro exigir alterações atômicas nos dois, registrar a exceção e os dois SHAs no progresso antes de prosseguir.
+### Gates and product boundaries
 
-**Consequência.** O monorepo pnpm sugerido no roteiro será adaptado para dois projetos e CI independentes; contratos entre API e Angular terão versionamento explícito. Justificativa, alternativas e impacto estão registrados no ADR 0000 antes da fundação.
+- Do not treat the source matrix as approval to crawl. Resolve access, license, and retention per source before automating collection.
+- Out-of-scope regular selection and SiSU+ remain excluded. Remnant-vacancy process stays in review pending a documented decision.
+- No invented notices or links; official data requires an official source and human review before publication.
+- ADR 0035 (identity provider) remains proposed. ADR 0036 (server-side roles mapped by issuer+subject) and ADR 0037 (monotonic reviewVersion with HTTP 409 on stale writes) are accepted.
 
-### Outras pendências
+### Style reference
 
-- Após G0: iniciar dependências e fundação somente nos passos 006–013. Não tratar a matriz de fontes como aprovação de crawling. Restrições de acesso, licença e retenção serão resolvidas por fonte antes de automatizar a coleta.
-- Referência visual: imagem inspecionada. Linguagem de cartaz/colagem: fundo marfim, preto dominante, tipografia sans extremamente pesada nos títulos, blocos verde limão, laranja intenso, azul elétrico e lilás, contornos pretos espessos, sombras deslocadas, cantos e formas oblíquas, raios e setas desenhadas, fotos em meio-tom, busca larga e cards com imagem institucional. Extrair tokens e componentes no passo 067 e aplicar na interface pública no passo 068, com equivalentes responsivos/acessíveis e sem apresentar oportunidades fictícias como vigentes.
+The inspected `style-reference.png` defines a poster/collage language: ivory background, dominant black, extremely heavy sans headings, lime green, intense orange, electric blue and lilac blocks, thick black outlines, offset shadows, angled corners/forms, hand-drawn rays and arrows, halftone photos, a wide search area, and institutional image cards. Extract tokens/components in step 067 and apply them in step 068 with responsive and accessible equivalents. Never present unverified opportunities as current.
 
-## Passo 058 ? conclu?do; ADR 0035 proposto
+## Passo 058 - concluido; ADR 0035 proposto
 
-- Estado observado: backend limpo em `da546dc`. Relidos roteiro 058 e arquitetura ? 7.3 (autentica??o/RBAC); a arquitetura sugere Supabase Auth, mas o provedor n?o foi decidido.
-- Implementa??o: verificador OIDC/JWKS gen?rico com `jose` 6.2.15, valida??o de assinatura assim?trica, issuer, audience, expira??o, subject e limite de tamanho; JWKS remoto com cache e timeout. Configura??o de autentica??o ? opcional no boot e exigida apenas quando um guard for acionado. Endpoints p?blicos continuam an?nimos. ADR 0035 registra a decis?o de provedor pendente; guia operacional em `docs/security/admin-auth.md`.
-- Valida??o: build + `corepack pnpm test` (159/159), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check e `git diff --check`: PASS. Testes incluem token ES256 v?lido, claims/assinatura inv?lidos, algoritmo proibido, JWKS cache e API p?blica sem credenciais.
-- Pend?ncias: nenhum provedor de identidade est? ativado e ainda n?o h? rota administrativa protegida; RBAC, associa??o de sujeito a usu?rio e auditoria seguem no passo 059. ADR 0035 permanece proposto. Sem push, deploy ou migra??o de produ??o.
+- Estado observado: backend limpo em `da546dc`. Relidos roteiro 058 e arquitetura secao 7.3; autenticacao OIDC/JWKS generica, configuracao opcional no boot ate ativar guards, rotas publicas anonimas.
+- Validacao: build + `corepack pnpm test` (159/159), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check e `git diff --check`: PASS.
+- Pendencias: provedor de identidade ainda nao ativado; ADR 0035 proposto. Sem push, deploy ou migracao de producao.
 
-## Passo 059 ? conclu?do; ADR 0036 aceito
+## Passo 059 - concluido; ADR 0036 aceito
 
-- Estado observado: backend limpo em `3f1dd39`; frontend sem altera??es. Relidos roteiro 059 e arquitetura ? 7.3/? 10.3, m?dulos de autentica??o, auditoria e revis?o, schema Prisma e migrations existentes. `AuditModule` ainda era vazio; ainda n?o havia cadastro local nem guard de pap?is.
-- Decis?o: ADR 0036 aceito pelo usu?rio. Pap?is `ADMIN`/`CURATOR` s?o atribu?dos no servidor e mapeados pelo par exato `issuer`+`subject`; claims do IdP n?o concedem acesso. Cada identidade possui um papel, sem autoeleva??o.
-- Implementa??o: models e migration para `AdminUser` e `AuditEvent`; guard consulta usu?rio ativo com papel permitido, sem permiss?es concedidas a identidades n?o cadastradas; decorator de pap?is; reposit?rio de auditoria exige ator/motivo, guarda before/after limitados e recusa snapshots com chaves de segredo. ADR 0036 registra alternativa, consequ?ncias e provisionamento inicial manual controlado.
-- Valida??o: `prisma validate`, build + `corepack pnpm test` (164/164), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check e `git diff --check`: PASS.
-- Pend?ncias: n?o existem rotas administrativas ainda; guards ser?o aplicados nos endpoints dos passos 060?062. Migration `20261108130000_admin_rbac_audit` foi criada, n?o aplicada. Provisionamento de usu?rio/papel e pol?tica SQL para impedir altera??o/remo??o de eventos precisam ser configurados antes de produ??o. Sem push, deploy ou altera??o de banco em produ??o.
+- Decisao do usuario: papeis ADMIN/CURATOR atribuidos no servidor e mapeados pelo par exato issuer+subject. Claims do IdP nao concedem acesso.
+- Implementacao: models/migration AdminUser e AuditEvent; guard consulta usuario ativo por papel; trilha de auditoria validada contra motivo vazio, snapshot excessivo e chaves de segredo. ADR 0036 registra provisionamento inicial controlado.
+- Validacao: `prisma validate`, build + testes (164/164), E2E (3/3), lint, typecheck, format:check e `git diff --check`: PASS.
+- Pendencias: migration nao aplicada; rotas administrativas e provisionamento/audit DB privileges ainda nao ativos. Sem push/deploy/producao.
 
-## Passo 060 ? conclu?do
+## Passo 060 - concluido
 
-- Estado observado: backend limpo em `4caa2f2`; relidos roteiro 060 e arquitetura ?? 8 e 10.3, m?dulos Nest de processo/revis?o, guardas de authz, contratos p?blicos e schema de evid?ncias/documentos. Fila administrativa ainda n?o existia.
-- Implementa??o: `GET /api/v1/admin/review-queue` com estado padr?o `NEEDS_REVIEW`, filtros validados por estado/institui??o, pagina??o limitada e ordena??o est?vel por cria??o+ID; `GET /api/v1/admin/processes/:id` detalha status, ofertas/janelas/requisitos, evid?ncias com documento/hash/vers?o, retifica??es/diferen?as e decis?es. Ambos exigem autentica??o e papel CURATOR ou ADMIN; opera??es administrativas seguem fora do OpenAPI p?blico.
-- Valida??o: build + `corepack pnpm test` (168/168), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check, `corepack pnpm openapi:check` e `git diff --check`: PASS. E2E confirma 401 sem token; testes unit?rios verificam filtros/pagina??o, evid?ncia e 400/404.
-- Pend?ncias: consultas foram testadas com adapter Prisma simulado; integra??o de banco depende da migration 0036 ainda n?o aplicada e de PostgreSQL local. Altera??es e auditoria das decis?es ficam no passo 061. Sem push, deploy ou migration em produ??o.
+- Estado observado: backend limpo em `4caa2f2`; relidos roteiro 060 e arquitetura secoes 8 e 10. Implementacao Nest de processos, revisoes, authz e evidencias examinada.
+- Implementacao: `GET /api/v1/admin/review-queue` com estado padrao NEEDS_REVIEW, filtros por estado/instituicao, paginacao limitada e ordenacao estavel; `GET /api/v1/admin/processes/:id` apresenta status, ofertas, janelas, requisitos, evidencias, hash/versao de documentos, retificacoes e decisoes. Ambos exigem autenticacao e CURATOR/ADMIN; rotas nao entram no OpenAPI publico.
+- Validacao: build + testes (168/168), E2E (3/3; rota admin retorna 401 sem token), lint, typecheck, format:check, `openapi:check` e `git diff --check`: PASS.
+- Pendencias: servico testado com adapter Prisma simulado; integracao com banco requer migration aplicada em desenvolvimento. Sem push/deploy/migration de producao.
+
+## Passo 061 - concluido; ADR 0037 aceito
+
+- Decisao do usuario: escolher a melhor abordagem para optimistic locking. ADR 0037 aceito com `reviewVersion` monotonicamente crescente, obrigatorio nas mutacoes e conflito HTTP 409 em versao obsoleta.
+- Implementacao: migration adiciona o contador ao processo; fila e detalhe administrativos expoem a versao; aprovacao+publicacao, rejeicao, correcao tipada e ocultacao exigem `expectedReviewVersion`. Todas as mutacoes atualizam a linha do processo por compare-and-swap e incrementam a versao; decisao, ator local, justificativa e snapshots before/after/evidencia sao gravados na mesma transacao.
+- Evidencias/seguranca: aprovacao, correcao e ocultacao exigem evidencias ligadas ao processo, com URL HTTPS em host exato de fonte ativa revisada. Correcoes aceitam apenas campos allowlisted, verificam IDs filhos no processo, normalizam chaves de curso/cota e ocultam dados alterados quando o processo estava publicado.
+- Validacao: build + `corepack pnpm test` (176/176), `corepack pnpm test:e2e` (3/3; fila e quatro comandos administrativos retornam 401 sem token), lint, typecheck e format:check: PASS. Os testes cobrem stale 409 sem escrita, auditoria atomica, before/after, correcoes fora de escopo e evidencias por host.
+- Pendencias: migration `20261108140000_process_review_version` criada e nao aplicada; adapter Prisma de comandos testado em memoria, sem PostgreSQL local. OpenAPI publico permanece sem rotas administrativas. Sem push, deploy ou migracao de producao.

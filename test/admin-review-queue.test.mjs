@@ -77,6 +77,7 @@ test('review detail returns process, evidence with document hashes, revisions an
     after: '2030-02-10',
   });
   assert.equal(result.ingestionState, 'NEEDS_REVIEW');
+  assert.equal(calls.detail.select.reviewVersion, true);
   assert.deepEqual(calls.detail.where, { id: processId });
   assert.equal(calls.detail.select.evidence.include.document.select.sha256, true);
   assert.equal(calls.detail.select.revisions.include.document.select.version, true);

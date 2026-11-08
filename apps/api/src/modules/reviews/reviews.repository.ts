@@ -1,4 +1,9 @@
-import { Injectable } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
 import {
@@ -39,12 +44,43 @@ export interface ReviewDecisionInput {
   reviewerId: string;
   decision: string;
   reason: string;
+  auditActor?: WorkflowActor['adminIdentity'];
+  before?: Record<string, unknown>;
+  after?: Record<string, unknown>;
 }
 
 function requiredText(value: string, label: string): string {
   const normalized = value.trim();
   if (!normalized) throw new Error(`${label} is required`);
   return normalized;
+}
+
+function expectedVersion(value: number): number {
+  if (!Number.isSafeInteger(value) || value < 0) throw new BadRequestException();
+  return value;
+}
+
+export function adminAuditData(
+  actor: WorkflowActor['adminIdentity'],
+  action: string,
+  processId: string,
+  reason: string,
+  before: Record<string, unknown>,
+  after: Record<string, unknown>,
+) {
+  if (!actor) return null;
+  return {
+    actorAdminUserId: requiredText(actor.id, 'Admin actor'),
+    actorIssuer: requiredText(actor.issuer, 'Actor issuer'),
+    actorSubject: requiredText(actor.subject, 'Actor subject'),
+    action,
+    resourceType: 'selection_process',
+    resourceId: processId,
+    reason,
+    beforeJson: before as Prisma.InputJsonValue,
+    afterJson: after as Prisma.InputJsonValue,
+    requestId: actor.requestId,
+  };
 }
 
 @Injectable()
@@ -139,7 +175,7 @@ export class ReviewsRepository {
       if (input.plan.blocksCurrentPublication && input.officialSourceVerified) {
         const process = await transaction.selectionProcess.findUnique({
           where: { id: input.processId },
-          select: { publicationStatus: true },
+          select: { publicationStatus: true, reviewVersion: true },
         });
         if (process?.publicationStatus === 'PUBLICADO') {
           const hide = input.criticalRevisionPolicy === 'HIDE';
@@ -156,8 +192,12 @@ export class ReviewsRepository {
               },
             );
             const updated = await transaction.selectionProcess.updateMany({
-              where: { id: input.processId, publicationStatus: 'PUBLICADO' },
-              data: { publicationStatus: 'OCULTO' },
+              where: {
+                id: input.processId,
+                publicationStatus: 'PUBLICADO',
+                reviewVersion: process.reviewVersion,
+              },
+              data: { publicationStatus: 'OCULTO', reviewVersion: { increment: 1 } },
             });
             if (updated.count !== 1)
               throw new Error('Process publication state changed concurrently');
@@ -171,8 +211,12 @@ export class ReviewsRepository {
             });
           } else {
             const current = await transaction.selectionProcess.updateMany({
-              where: { id: input.processId, publicationStatus: 'PUBLICADO' },
-              data: { publicationStatus: 'PUBLICADO' },
+              where: {
+                id: input.processId,
+                publicationStatus: 'PUBLICADO',
+                reviewVersion: process.reviewVersion,
+              },
+              data: { reviewVersion: { increment: 1 } },
             });
             if (current.count !== 1)
               throw new Error('Process publication state changed concurrently');
@@ -194,6 +238,7 @@ export class ReviewsRepository {
 
   transitionIngestion(input: {
     processId: string;
+    expectedReviewVersion: number;
     to: IngestionState;
     actor: WorkflowActor;
     reason: string;
@@ -204,9 +249,12 @@ export class ReviewsRepository {
     return this.database.$transaction(async (transaction) => {
       const current = await transaction.selectionProcess.findUnique({
         where: { id: input.processId },
-        select: { ingestionState: true },
+        select: { ingestionState: true, reviewVersion: true },
       });
-      if (!current) throw new Error('Process was not found');
+      if (!current) throw new NotFoundException();
+      if (current.reviewVersion !== expectedVersion(input.expectedReviewVersion)) {
+        throw new ConflictException('Process review version is stale');
+      }
       const reason = validateIngestionTransition(
         current.ingestionState,
         input.to,
@@ -214,10 +262,18 @@ export class ReviewsRepository {
         input,
       );
       const updated = await transaction.selectionProcess.updateMany({
-        where: { id: input.processId, ingestionState: current.ingestionState },
-        data: { ingestionState: input.to, ingestionStateReason: reason },
+        where: {
+          id: input.processId,
+          ingestionState: current.ingestionState,
+          reviewVersion: current.reviewVersion,
+        },
+        data: {
+          ingestionState: input.to,
+          ingestionStateReason: reason,
+          reviewVersion: { increment: 1 },
+        },
       });
-      if (updated.count !== 1) throw new Error('Process ingestion state changed concurrently');
+      if (updated.count !== 1) throw new ConflictException('Process review version is stale');
       await transaction.reviewDecision.create({
         data: {
           processId: input.processId,
@@ -226,12 +282,27 @@ export class ReviewsRepository {
           reason,
         },
       });
-      return { from: current.ingestionState, to: input.to, reason };
+      const audit = adminAuditData(
+        input.actor.adminIdentity,
+        `process.ingestion.${input.to.toLowerCase()}`,
+        input.processId,
+        reason,
+        { ingestionState: current.ingestionState },
+        { ingestionState: input.to },
+      );
+      if (audit) await transaction.auditEvent.create({ data: audit });
+      return {
+        from: current.ingestionState,
+        to: input.to,
+        reason,
+        reviewVersion: current.reviewVersion + 1,
+      };
     });
   }
 
   transitionPublication(input: {
     processId: string;
+    expectedReviewVersion: number;
     to: PublicationState;
     actor: WorkflowActor;
     reason: string;
@@ -242,9 +313,12 @@ export class ReviewsRepository {
     return this.database.$transaction(async (transaction) => {
       const current = await transaction.selectionProcess.findUnique({
         where: { id: input.processId },
-        select: { publicationStatus: true, ingestionState: true },
+        select: { publicationStatus: true, ingestionState: true, reviewVersion: true },
       });
-      if (!current) throw new Error('Process was not found');
+      if (!current) throw new NotFoundException();
+      if (current.reviewVersion !== expectedVersion(input.expectedReviewVersion)) {
+        throw new ConflictException('Process review version is stale');
+      }
       const reason = validatePublicationTransition(
         current.publicationStatus,
         input.to,
@@ -252,10 +326,14 @@ export class ReviewsRepository {
         { ...input, verifiedState: current.ingestionState },
       );
       const updated = await transaction.selectionProcess.updateMany({
-        where: { id: input.processId, publicationStatus: current.publicationStatus },
-        data: { publicationStatus: input.to },
+        where: {
+          id: input.processId,
+          publicationStatus: current.publicationStatus,
+          reviewVersion: current.reviewVersion,
+        },
+        data: { publicationStatus: input.to, reviewVersion: { increment: 1 } },
       });
-      if (updated.count !== 1) throw new Error('Process publication state changed concurrently');
+      if (updated.count !== 1) throw new ConflictException('Process review version is stale');
       await transaction.reviewDecision.create({
         data: {
           processId: input.processId,
@@ -264,18 +342,45 @@ export class ReviewsRepository {
           reason,
         },
       });
-      return { from: current.publicationStatus, to: input.to, reason };
+      const audit = adminAuditData(
+        input.actor.adminIdentity,
+        `process.publication.${input.to.toLowerCase()}`,
+        input.processId,
+        reason,
+        { publicationStatus: current.publicationStatus },
+        { publicationStatus: input.to },
+      );
+      if (audit) await transaction.auditEvent.create({ data: audit });
+      return {
+        from: current.publicationStatus,
+        to: input.to,
+        reason,
+        reviewVersion: current.reviewVersion + 1,
+      };
     });
   }
 
   recordDecision(input: ReviewDecisionInput) {
-    return this.database.reviewDecision.create({
-      data: {
-        process: { connect: { id: input.processId } },
-        reviewerId: requiredText(input.reviewerId, 'Reviewer'),
-        decision: requiredText(input.decision, 'Decision'),
-        reason: requiredText(input.reason, 'Reason'),
-      },
+    const reason = requiredText(input.reason, 'Reason');
+    return this.database.$transaction(async (transaction) => {
+      const decision = await transaction.reviewDecision.create({
+        data: {
+          process: { connect: { id: input.processId } },
+          reviewerId: requiredText(input.reviewerId, 'Reviewer'),
+          decision: requiredText(input.decision, 'Decision'),
+          reason,
+        },
+      });
+      const audit = adminAuditData(
+        input.auditActor,
+        `process.review.${input.decision.toLowerCase()}`,
+        input.processId,
+        reason,
+        input.before ?? {},
+        input.after ?? {},
+      );
+      if (audit) await transaction.auditEvent.create({ data: audit });
+      return decision;
     });
   }
 

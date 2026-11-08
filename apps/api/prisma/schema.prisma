@@ -302,6 +302,7 @@ model SelectionProcess {
   ingestionState  ProcessIngestionState @default(CANDIDATE) @map("ingestion_state")
   ingestionStateReason String?         @map("ingestion_state_reason") @db.Text
   publicationStatus PublicationStatus @default(RASCUNHO) @map("publication_status")
+  reviewVersion   Int                 @default(0) @map("review_version")
   createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
   institution     Institution         @relation(fields: [institutionId], references: [id], onDelete: Restrict)
   offerings       Offering[]
