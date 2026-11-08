@@ -510,3 +510,10 @@
 
 - Após G0: iniciar dependências e fundação somente nos passos 006–013. Não tratar a matriz de fontes como aprovação de crawling. Restrições de acesso, licença e retenção serão resolvidas por fonte antes de automatizar a coleta.
 - Referência visual: imagem inspecionada. Linguagem de cartaz/colagem: fundo marfim, preto dominante, tipografia sans extremamente pesada nos títulos, blocos verde limão, laranja intenso, azul elétrico e lilás, contornos pretos espessos, sombras deslocadas, cantos e formas oblíquas, raios e setas desenhadas, fotos em meio-tom, busca larga e cards com imagem institucional. Extrair tokens e componentes no passo 067 e aplicar na interface pública no passo 068, com equivalentes responsivos/acessíveis e sem apresentar oportunidades fictícias como vigentes.
+
+## Passo 058 ? conclu?do; ADR 0035 proposto
+
+- Estado observado: backend limpo em `da546dc`. Relidos roteiro 058 e arquitetura ? 7.3 (autentica??o/RBAC); a arquitetura sugere Supabase Auth, mas o provedor n?o foi decidido.
+- Implementa??o: verificador OIDC/JWKS gen?rico com `jose` 6.2.15, valida??o de assinatura assim?trica, issuer, audience, expira??o, subject e limite de tamanho; JWKS remoto com cache e timeout. Configura??o de autentica??o ? opcional no boot e exigida apenas quando um guard for acionado. Endpoints p?blicos continuam an?nimos. ADR 0035 registra a decis?o de provedor pendente; guia operacional em `docs/security/admin-auth.md`.
+- Valida??o: build + `corepack pnpm test` (159/159), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check e `git diff --check`: PASS. Testes incluem token ES256 v?lido, claims/assinatura inv?lidos, algoritmo proibido, JWKS cache e API p?blica sem credenciais.
+- Pend?ncias: nenhum provedor de identidade est? ativado e ainda n?o h? rota administrativa protegida; RBAC, associa??o de sujeito a usu?rio e auditoria seguem no passo 059. ADR 0035 permanece proposto. Sem push, deploy ou migra??o de produ??o.

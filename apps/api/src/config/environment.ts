@@ -19,6 +19,12 @@ export interface WorkerConfig extends BaseConfig {
   aiMaxTokensPerDocument: number;
 }
 
+export interface AdminAuthConfig {
+  issuer: string;
+  audience: string;
+  jwksUrl: string;
+}
+
 export const DEFAULT_MAX_PDF_BYTES = 10 * 1024 * 1024;
 export const DEFAULT_OCR_DAILY_PAGE_BUDGET = 0;
 export const DEFAULT_OCR_MAX_PAGES_PER_DOCUMENT = 5;
@@ -57,6 +63,35 @@ export function loadDatabaseUrl(env: NodeJS.ProcessEnv = process.env): string {
     throw new ConfigurationError('DATABASE_URL requires a username, password and database');
   }
   return databaseUrl.toString();
+}
+
+export function loadAdminAuthConfig(env: NodeJS.ProcessEnv = process.env): AdminAuthConfig | null {
+  const names = ['ADMIN_AUTH_ISSUER', 'ADMIN_AUTH_AUDIENCE', 'ADMIN_AUTH_JWKS_URL'] as const;
+  const present = names.filter((name) => env[name]?.trim());
+  if (present.length === 0) return null;
+  if (present.length !== names.length) {
+    throw new ConfigurationError(
+      'ADMIN_AUTH_ISSUER, ADMIN_AUTH_AUDIENCE and ADMIN_AUTH_JWKS_URL must be configured together',
+    );
+  }
+  const issuer = parseUrl(env, 'ADMIN_AUTH_ISSUER', ['https:']);
+  const jwksUrl = parseUrl(env, 'ADMIN_AUTH_JWKS_URL', ['https:']);
+  if (
+    issuer.username ||
+    issuer.password ||
+    issuer.search ||
+    issuer.hash ||
+    jwksUrl.username ||
+    jwksUrl.password ||
+    jwksUrl.search ||
+    jwksUrl.hash
+  ) {
+    throw new ConfigurationError(
+      'Admin auth URLs cannot contain credentials, query strings or fragments',
+    );
+  }
+  const audience = required(env, 'ADMIN_AUTH_AUDIENCE');
+  return { issuer: issuer.toString().replace(/\/$/u, ''), audience, jwksUrl: jwksUrl.toString() };
 }
 
 function baseConfig(env: NodeJS.ProcessEnv): BaseConfig {

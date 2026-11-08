@@ -1,6 +1,10 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { loadApiConfig, loadWorkerConfig } from '../apps/api/dist/config/environment.js';
+import {
+  loadAdminAuthConfig,
+  loadApiConfig,
+  loadWorkerConfig,
+} from '../apps/api/dist/config/environment.js';
 
 const valid = {
   DATABASE_URL: 'postgresql://test_user:test_password@127.0.0.1:5433/test_db',
@@ -11,6 +15,35 @@ const valid = {
 test('API and worker reject missing database configuration before starting', () => {
   assert.throws(() => loadApiConfig({}), /DATABASE_URL is required/);
   assert.throws(() => loadWorkerConfig({}), /DATABASE_URL is required/);
+});
+
+test('admin authentication settings stay optional until the admin guard is used', () => {
+  assert.equal(loadAdminAuthConfig({}), null);
+  assert.deepEqual(
+    loadAdminAuthConfig({
+      ADMIN_AUTH_ISSUER: 'https://auth.example.test/auth/v1',
+      ADMIN_AUTH_AUDIENCE: 'authenticated',
+      ADMIN_AUTH_JWKS_URL: 'https://auth.example.test/auth/v1/.well-known/jwks.json',
+    }),
+    {
+      issuer: 'https://auth.example.test/auth/v1',
+      audience: 'authenticated',
+      jwksUrl: 'https://auth.example.test/auth/v1/.well-known/jwks.json',
+    },
+  );
+  assert.throws(
+    () => loadAdminAuthConfig({ ADMIN_AUTH_ISSUER: 'https://auth.example.test/auth/v1' }),
+    /ADMIN_AUTH_ISSUER, ADMIN_AUTH_AUDIENCE and ADMIN_AUTH_JWKS_URL must be configured together/,
+  );
+  assert.throws(
+    () =>
+      loadAdminAuthConfig({
+        ADMIN_AUTH_ISSUER: 'http://auth.example.test',
+        ADMIN_AUTH_AUDIENCE: 'authenticated',
+        ADMIN_AUTH_JWKS_URL: 'https://auth.example.test/jwks',
+      }),
+    /ADMIN_AUTH_ISSUER has an invalid protocol or host/,
+  );
 });
 
 test('database URL requires a password without revealing its value in errors', () => {
