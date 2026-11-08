@@ -14,15 +14,15 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F07 — MVP administrativo |
-| Passo                   | 062 — `feat(admin-api): gerenciar fontes e jobs controlados` |
-| Estado                  | Passo 062 implementado localmente; pronto para commit |
+| Passo                   | 063 — `feat(admin-web): shell protegido e navegação` |
+| Estado                  | Passo 063 concluído no frontend em `5bf1342` |
 | Data                    | 2026-11-08 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 062: §§ 4.2, 7.3 e 10.3 |
-| Roteiro consultado      | Passo 062; checkpoint sequencial F07 |
-| Commit anterior backend | `7e9ec7f` — passo 061 |
-| Repositório frontend    | Sem alterações neste passo |
-| Gate                    | Prisma, 180 testes, 3 E2E, lint, typecheck, format, OpenAPI e diff: PASS |
-| Próximo passo           | 063 — shell administrativo protegido no frontend |
+| Arquitetura consultada  | Passo 063: §§ 7.3 e 9.1–9.4 |
+| Roteiro consultado      | Passo 063; checkpoint sequencial F07 |
+| Commit anterior backend | `b4153ee` — passo 062 |
+| Repositório frontend    | `5bf1342` — passo 063 |
+| Gate                    | Frontend build, 7 testes, 1 E2E, lint, typecheck, format e diff: PASS |
+| Próximo passo           | 064 — revisão lado a lado no frontend |
 
 ## Passo 001 — evidências
 
@@ -541,7 +541,7 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Pendencias: migration `20261108140000_process_review_version` criada e nao aplicada; adapter Prisma de comandos testado em memoria, sem PostgreSQL local. OpenAPI publico permanece sem rotas administrativas. Sem push, deploy ou migracao de producao.
 
 
-## Passo 062 — implementado localmente; ADR 0038 aceito
+## Passo 062 — concluído em `b4153ee`; ADR 0038 aceito
 
 - Estado observado: backend limpo após passo 061 em `7e9ec7f`; frontend limpo em `fa0248e`. Relidos roteiro 062 e arquitetura §§ 4.2, 7.3 e 10.3; inspecionados Source, AllowedDomain, CrawlRun, filas BullMQ, scheduler, quotas Redis e guards ADMIN/CURATOR.
 - Decisão do usuário: ADR 0038 aceito. Disparos manuais usam cooldown Redis atômico por host exato, compartilhado entre usuários/instâncias, padrão 60 s e configurável; 429 inclui `Retry-After`, e falhas Redis retornam 503.
@@ -549,3 +549,11 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Saúde: detalhes incluem últimas CrawlRun, estado atual, quota de busca por host/dia UTC e jobs atrasados da fila `source.refresh`; sem horário exato confiável de retry, o campo `nextRetryAt` permanece nulo. O OpenAPI público é gerado só com módulos públicos e não inclui rotas administrativas.
 - Validação: `prisma validate`, `corepack pnpm test` (180/180), `corepack pnpm test:e2e` (3/3), lint, typecheck, format:check, openapi:check e `git diff --check`: PASS. Testes cobrem papel ADMIN, revisão de domínio, ativação, auditoria, limite Redis e host exato; E2E verifica 401 nas rotas novas.
 - Pendências: consumidor `source.refresh` ainda não está integrado à fila, portanto o endpoint confirma enfileiramento e não afirma execução concluída. Integração com PostgreSQL/Redis reais requer serviços de desenvolvimento; nenhuma migração ou deploy de produção, publicação ou push.
+
+## Passo 063 — concluído localmente no frontend
+
+- Estado observado: backend limpo em `b4153ee` e frontend limpo em `fa0248e` antes do passo. Relidos roteiro 063 e arquitetura §§ 7.3 e 9.1–9.4; examinados Angular, rotas, ambientes e a imagem `style-reference.png`.
+- Implementação: `/admin/login`, `/admin/callback` e shell `/admin` com menu de revisões/fontes, estado de sessão, saída e guard de rota. Sem token, o guard redireciona para login com retorno interno validado. A API continua autorizando cada endpoint. O login usa OIDC Authorization Code com PKCE, client ID público, estado transitório em sessionStorage e token somente em memória. A configuração do provedor permanece nula até decisão operacional do ADR 0035.
+- Estética: o shell emprega fundo marfim, preto dominante, título muito pesado, blocos lima/laranja/azul/lilás, bordas grossas, sombras deslocadas e formas anguladas da referência, com foco visível, semântica e layout responsivo. A inspeção por navegador local não ficou disponível (`browser access host is unavailable`); build e testes de componente validaram a estrutura.
+- Evidência: frontend `5bf1342`; `corepack pnpm build`, `corepack pnpm test` (7/7), `corepack pnpm test:e2e` (1/1), lint, typecheck, format:check e `git diff --check`: PASS. Testes cobrem redirecionamento sem token, rotas de retorno restritas, provedor ausente e navegação rotulada.
+- Pendências: provedor de identidade e client ID operacionais não configurados; telas reais de revisão e fontes vêm nos passos 064–065. Nenhum token, segredo, edital ou URL oficial foi publicado; sem push/deploy.
