@@ -14,15 +14,15 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F08 - catalogo publico |
-| Passo                   | 074 - `feat(web): metadados SEO por rota` |
-| Estado                  | Passo 074 registrado localmente; frontend `4c383ea`, backend neste commit |
+| Passo                   | 075 - `test(web): jornadas publicas e acessibilidade` |
+| Estado                  | Passo 075 registrado localmente; frontend `f582494`, backend neste commit |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 074: secao 9.1, recomendacao ADR-005 e ADR 0041 |
-| Roteiro consultado      | Passo 074; F08/P0, sequencial |
-| Commit anterior backend | `80f8e70` - implementar filtros do diretorio de instituicoes |
-| Repositorio frontend    | Limpo apos commit `4c383ea`; ahead 13, sem push |
-| Gate                    | Frontend 47 testes, 1 E2E, build, lint, typecheck, format: PASS; diff: PASS |
-| Proximo passo           | 075 - E2E, acessibilidade e responsividade |
+| Arquitetura consultada  | Passo 075: secoes 9.3/9.4 e alvo WCAG 2.2 AA |
+| Roteiro consultado      | Passo 075; F08/P0, sequencial |
+| Commit anterior backend | `5b0155e` - ADR provisoria de SEO |
+| Repositorio frontend    | Limpo apos commit `f582494`; ahead 13, sem push |
+| Gate                    | Frontend 47 unitarios, 4 E2E, axe sem violacoes, build, lint, typecheck, format: PASS |
+| Proximo passo           | 076 - testes de confiabilidade do frontend |
 
 ## Passo 073 - evidencias
 
@@ -42,6 +42,16 @@
 - Sitemap nao criado: nao ha dominio oficial nem mecanismo de build que liste somente detalhes publicados. Manter vazio evita inventar URLs. O crawler sem JavaScript recebe o shell CSR; metadados dinamicos para crawlers permanecem pendentes de SSR/SSG/prerender apos escolha do provedor.
 - Validacao frontend: 47/47 testes unitarios (10 arquivos), E2E de shell e rotas 1/1, lint, typecheck, build sem avisos, format e `git diff --check`: PASS. Uma primeira execucao encontrou import incorreto de `Title` e tipagem do DOM; corrigido antes do commit e todos os checks reexecutados.
 - Estado: codigo e decisao provisoria concluidos no escopo aprovado; pendentes comparacao CSR vs SSR/SSG no provedor real, dominio oficial, canonicals ativos e sitemap de processos publicados. Proximo passo sequencial: 075, E2E/A11y/responsividade.
+
+## Passo 075 - evidencias e pendencias
+
+- Estado antes do passo: frontend limpo em `4c383ea`; backend limpo em `5b0155e`. Repositorios Git independentes. Frontend commitado localmente como `f582494` (`test(web): cobrir jornadas publicas e acessibilidade`); este commit registra o progresso no backend. Nenhum push.
+- Arquitetura consultada: regras de interacao das secoes 9.3/9.4 e alvo WCAG 2.2 AA. Roteiro 075 relido; escopo limitado a testes publicos, acessibilidade e responsividade.
+- Playwright + axe: quatro jornadas em Chromium com API mockada e dominios reservados `.example`: filtros/URL/historico e vazio; detalhe publico, saida segura em nova aba e 404; menu mobile/teclado/foco; auditoria axe em home, listagem, vazio, detalhe, 404, diretorio e menu aberto. Axe encontrou zero violacoes WCAG 2.2 A/AA nos estados cobertos.
+- Responsividade: sem overflow horizontal em 320, 390 e 768 px. Ajustado o grafismo da home e dimensoes de titulo/CTA. Corrigido nome acessivel duplicado da marca. Navegacao testou link de pulo, ordem de Tab, abertura com Enter e foco restaurado no botao ao fechar o menu.
+- Validacao final: testes unitarios 47/47 (10 arquivos); Playwright 4/4; axe 0 violacoes; lint, typecheck, build sem avisos, `format:check`, `install --frozen-lockfile` e `git diff --check`: PASS. Os testes nao acessam links oficiais reais nem dados de producao.
+- Pendente: validar anuncios e ordem de leitura com leitor de tela real (NVDA, Narrator ou VoiceOver). O host de automacao de UI/browser nao estava disponivel; o relatorio `frontend/docs/quality/a11y.md` declara esse limite e nao afirma conformidade integral.
+- Proximo passo sequencial: 076, testes de confiabilidade do frontend. Nenhum deploy/publicacao.
 
 ## Passo 001 — evidências
 
