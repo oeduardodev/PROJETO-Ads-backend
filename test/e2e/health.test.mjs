@@ -106,6 +106,10 @@ test('API serves health with configured CORS origin', async () => {
       assert.equal(protectedSource.status, 401, `${method} ${path}`);
     }
   } finally {
-    child.kill();
+    if (child.exitCode === null) {
+      const exited = once(child, 'exit');
+      child.kill();
+      await exited;
+    }
   }
 });
