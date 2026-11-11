@@ -14,15 +14,15 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F07 — MVP administrativo |
-| Passo                   | 066 — `test(admin): cobrir RBAC e jornada de publicação` |
-| Estado                  | Passo 066 concluído localmente em validação; frontend sem alterações |
+| Passo                   | 067 — `feat(ui): criar design system acessivel` |
+| Estado                  | Passo 067 concluído localmente no frontend `4959031` |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 066: §§ 7.3, 8 e 10.3 |
-| Roteiro consultado      | Passo 066; checkpoint F07 antes de F08 |
-| Commit anterior backend | `0a50c05` — passo 065 |
-| Repositório frontend    | `8b6ed8f` — passo 065 |
-| Gate                    | Backend 180 testes, E2E 5/5, build, lint, typecheck, format, OpenAPI e diff: PASS |
-| Próximo passo           | 067 — design system público (F08/P0) |
+| Arquitetura consultada  | Passo 067: §§ 8, 9 e 12 |
+| Roteiro consultado      | Passo 067; checkpoint inicial de F08/P0 |
+| Commit anterior backend | `2dd1737` — passo 066 |
+| Repositório frontend    | `4959031` — passo 067 |
+| Gate                    | Frontend build, 18 testes, 1 E2E, lint, typecheck, format e diff: PASS |
+| Próximo passo           | 068 — landing pública e navegação principal |
 
 ## Passo 001 — evidências
 
@@ -582,3 +582,12 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Cenário: prazo parcial permanece indisponível no detalhe público e não pode ser aprovado com fato crítico pendente. Curador corrige `endTime` com evidência oficial sintética; versão antiga retorna 409. Aprovação da nova versão registra decisão e evidência na trilha e o detalhe público retorna status ABERTA. Nenhum edital ou URL real foi criado/publicado.
 - Evidências: novo `test/e2e/admin/review-publication.test.mjs`; `corepack pnpm test` (180/180), `corepack pnpm test:e2e` (5/5), build, lint, typecheck, format:check, `openapi:check` e `git diff --check`: PASS.
 - Limitações: o teste cobre guards, controller e serviços reais com persistência em memória e transporte JWKS sintético; não há `TEST_DATABASE_URL` para PostgreSQL E2E local e nenhuma migração foi aplicada. Testes existentes do frontend seguem cobrindo guard e componentes (14/14 unitários, 1/1 E2E), sem alteração neste passo. Sem push/deploy.
+
+## Passo 067 — concluído localmente no frontend
+
+- Estado observado: frontend limpo em `8b6ed8f` e backend limpo em `2dd1737` antes do passo. Relidos roteiro 067 e arquitetura §§ 8, 9 e 12; revisados tokens/estilos existentes e inspecionada `style-reference.png`.
+- Implementação: tokens de cor, tipografia, spacing, largura, raio e sombra; utilitários de container/grid/stack/flow; componentes standalone para botão, campo de texto, badge neutra/status, skeleton, estado vazio, feedback e card. Sem biblioteca de UI adicional.
+- Acessibilidade/responsividade: controles nativos com foco visível e tabulação, associação label/hint/erro/aria-invalid, estados `role=status/alert`, contraste dos estados, grid reduzido em telas menores e respeito a `prefers-reduced-motion`.
+- Estética: paleta marfim/preto/lima/laranja/azul elétrico/lilás, títulos de peso alto, bordas marcadas, sombras deslocadas e blocos angulares conforme a referência.
+- Evidências: frontend `4959031`; `corepack pnpm test` (18/18), `test:e2e` (1/1), build, lint, typecheck, format:check e `git diff --check`: PASS. Testes cobrem foco de botão, estado disabled, badge neutra, labels/descrições de campo e anúncios acessíveis.
+- Pendências: primitives serão adotados pelas telas públicas a partir do passo 068; verificação por navegador permanece indisponível nesta sessão. Nenhum push/deploy.
