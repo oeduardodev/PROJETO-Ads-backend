@@ -14,15 +14,15 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F07 — MVP administrativo |
-| Passo                   | 065 — `feat(admin-web): monitorar fontes e execucoes` |
-| Estado                  | Passo 065 concluído localmente; frontend `8b6ed8f`, backend em validação |
+| Passo                   | 066 — `test(admin): cobrir RBAC e jornada de publicação` |
+| Estado                  | Passo 066 concluído localmente em validação; frontend sem alterações |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 065: §§ 9.3, 9.4 e 10.3 |
-| Roteiro consultado      | Passo 065; checkpoint sequencial F07 |
-| Commit anterior backend | `a6c0ffb` — progresso do passo 064 |
+| Arquitetura consultada  | Passo 066: §§ 7.3, 8 e 10.3 |
+| Roteiro consultado      | Passo 066; checkpoint F07 antes de F08 |
+| Commit anterior backend | `0a50c05` — passo 065 |
 | Repositório frontend    | `8b6ed8f` — passo 065 |
-| Gate                    | Frontend build, 14 testes, 1 E2E; backend build, 180 testes; lint, typecheck, format e diff: PASS |
-| Próximo passo           | 066 — E2E de RBAC e jornada de publicação |
+| Gate                    | Backend 180 testes, E2E 5/5, build, lint, typecheck, format, OpenAPI e diff: PASS |
+| Próximo passo           | 067 — design system público (F08/P0) |
 
 ## Passo 001 — evidências
 
@@ -574,3 +574,11 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Estética/acessibilidade: layout responsivo, estados rotulados, foco visível, tabela semântica, blocos de alto contraste, marfim/preto e acentos lima/azul/laranja/lilás da referência.
 - Evidências: frontend `8b6ed8f`; `corepack pnpm test` (14/14), `test:e2e` (1/1), build, lint, typecheck, format:check e diff: PASS. Backend `corepack pnpm test` (180/180), build, lint, typecheck e format:check: PASS. Testes cobrem falhas observadas, candidatas/fila, bloqueio de fonte e motivo obrigatório.
 - Pendências: navegador CUA indisponível para inspeção visual ao vivo; frontend verificado em TestBed/build. Não foi executada integração com Redis/PostgreSQL reais, nem push/deploy/migração.
+
+## Passo 066 — concluído localmente no backend
+
+- Estado observado: backend limpo em `0a50c05`; frontend limpo em `8b6ed8f`. Relidos roteiro 066 e arquitetura §§ 7.3, 8 e 10.3; revisados guards JWT/RBAC, controller administrativo, comandos versionados, fluxo de auditoria e detalhe público.
+- Implementação de teste E2E: token RS256 assinado e JWKS sintético atravessam AuthenticationGuard e AdminAuthorizationGuard. Claim `ADMIN` do token não concede elevação: o mapeamento servidor issuer+subject autoriza somente CURATOR; usuário sem mapeamento recebe 403. Controller e serviços reais exercitam fluxo de correção/auditoria/publicação.
+- Cenário: prazo parcial permanece indisponível no detalhe público e não pode ser aprovado com fato crítico pendente. Curador corrige `endTime` com evidência oficial sintética; versão antiga retorna 409. Aprovação da nova versão registra decisão e evidência na trilha e o detalhe público retorna status ABERTA. Nenhum edital ou URL real foi criado/publicado.
+- Evidências: novo `test/e2e/admin/review-publication.test.mjs`; `corepack pnpm test` (180/180), `corepack pnpm test:e2e` (5/5), build, lint, typecheck, format:check, `openapi:check` e `git diff --check`: PASS.
+- Limitações: o teste cobre guards, controller e serviços reais com persistência em memória e transporte JWKS sintético; não há `TEST_DATABASE_URL` para PostgreSQL E2E local e nenhuma migração foi aplicada. Testes existentes do frontend seguem cobrindo guard e componentes (14/14 unitários, 1/1 E2E), sem alteração neste passo. Sem push/deploy.
