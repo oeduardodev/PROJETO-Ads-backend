@@ -13,16 +13,16 @@
 
 | Campo                   | Valor |
 | ----------------------- | ----- |
-| Fase                    | F07 — MVP administrativo |
-| Passo                   | 069 — `feat(web): integrar client gerado e tratamento HTTP` |
-| Estado                  | Passo 069 conclu?do localmente no frontend `6232b4f` |
+| Fase                    | F08 — catálogo público |
+| Passo                   | 070 — `feat(web): construir listagem de oportunidades` |
+| Estado                  | Passo 070 concluído localmente no frontend `15330e4` |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 069: §§ 8, 9.3 e 12.1 |
-| Roteiro consultado      | Passo 069; F08/P0, sequencial |
-| Commit anterior backend | `5906732` — progresso do passo 068 |
-| Repositório frontend    | Em validação do passo 069 |
-| Gate                    | Frontend 25 testes, 1 E2E, build, lint, typecheck, format, diff; OpenAPI sync: PASS |
-| Próximo passo           | 070 — listagem pública com dados persistidos |
+| Arquitetura consultada  | Passo 070: §§ 8, 9.1, 9.3 e 9.4; ADR 0039 |
+| Roteiro consultado      | Passo 070; F08/P0, sequencial |
+| Commit anterior backend | `c00939e` — progresso do passo 069 |
+| Repositório frontend    | Limpo após commit `15330e4`; ahead 8, sem push |
+| Gate                    | Frontend 30 testes, 1 E2E, build sem avisos, lint, typecheck, format, diff: PASS |
+| Próximo passo           | 071 — filtros e query params |
 
 ## Passo 001 — evidências
 
@@ -607,3 +607,13 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Contrato: `pnpm api:generate` não gerou diff; `contracts/public-v1.json` confere byte a byte com o OpenAPI do backend e `corepack pnpm openapi:check` passou.
 - Evidências: `corepack pnpm test` (25/25), `test:e2e` (1/1), build, lint, typecheck, format:check e diff: PASS. Testes verificam URL/query, retorno tipado, normalização 503 sem segredo, timeout, cancelamento e rejeição de origem insegura.
 - Pendências: não há URL de staging configurada neste ambiente; portanto validação com API real de staging permanece pendente. O E2E atual verifica o shell web, e serviços são testados com `fetch` controlado. Sem push/deploy.
+
+## Passo 070 — concluído localmente no frontend
+
+- Estado inicial: frontend limpo em `6232b4f` (ahead 7, sem alterações); backend limpo em `c00939e` (ahead 6, sem alterações).
+- Arquitetura relida: §§ 8, 9.1 e 9.3–9.4. O passo exige listagem pública, paginação, estados de carregamento/erro/vazio e fonte oficial. O roteiro 070 exige resultados vindos integralmente de `GET /processes`.
+- ADR 0039 aceito: o roteiro dizia `:slug`, mas o contrato existente só dispõe de UUID em `ProcessCard.id` e `GET /processes/:id`. O usuário escolheu `/oportunidades/:id`; nenhuma mudança de schema/OpenAPI. A página detalhada será implementada no passo 072.
+- Implementação: rota `/oportunidades` usa client gerado; cards apenas dos resultados retornados pela API; paginação preserva `page` na querystring; skeleton, erro recuperável, estado vazio sem inventar oportunidades, status e verificação; links de detalhe por UUID e de edital com `noopener noreferrer`. Página inicial atualizada para descrever catálogo revisado.
+- Commit frontend: `15330e4 feat(web): construir listagem de oportunidades`. Nenhum push.
+- Verificações: `pnpm test` 30/30; `pnpm test:e2e` 1/1; `pnpm lint`, `pnpm typecheck`, `pnpm build` sem avisos, `pnpm format:check` e `git diff --check`: PASS.
+- Pendências: implementar a rota/página de detalhe no passo 072. Validação contra staging não executada, sem endpoint de staging configurado.
