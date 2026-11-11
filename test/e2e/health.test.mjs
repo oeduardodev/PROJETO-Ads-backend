@@ -42,7 +42,20 @@ test('API serves health with configured CORS origin', async () => {
     assert.ok(response, 'API did not start in 10 seconds');
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('access-control-allow-origin'), 'http://127.0.0.1:4200');
+    assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(response.headers.get('x-frame-options'), 'DENY');
+    assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
+    assert.match(response.headers.get('content-security-policy'), /default-src 'none'/u);
+    assert.equal(
+      response.headers.get('permissions-policy'),
+      'camera=(), geolocation=(), microphone=()',
+    );
     assert.deepEqual(await response.json(), { status: 'ok' });
+    const foreignOrigin = await fetch(`http://127.0.0.1:${port}/health`, {
+      headers: { Origin: 'https://unconfigured.example' },
+    });
+    assert.equal(foreignOrigin.headers.get('access-control-allow-origin'), null);
+    assert.equal(foreignOrigin.headers.get('x-content-type-options'), 'nosniff');
     const ready = await fetch(`http://127.0.0.1:${port}/ready`);
     assert.equal(ready.status, 503);
     const readyBody = await ready.json();

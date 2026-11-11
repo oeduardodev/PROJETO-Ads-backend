@@ -72,6 +72,47 @@ test('rejects redirects to internal addresses before requesting the destination'
   );
 });
 
+test('rejects mixed public/private DNS answers before opening any connection', async () => {
+  const transport = mockTransport({
+    route: () => response(200),
+    addresses: ['8.8.8.8', '10.0.0.8'],
+  });
+  await assert.rejects(client(transport).fetch(`https://${host}/edital`), /non-public address/u);
+  assert.equal(
+    transport.calls.some((call) => call.type === 'request'),
+    false,
+  );
+});
+
+test('re-resolves same-host redirects and blocks a DNS rebinding to a private address', async () => {
+  const requests = [];
+  let resolution = 0;
+  const transport = {
+    resolve: async () => {
+      resolution += 1;
+      return [
+        {
+          address: resolution === 3 ? '127.0.0.1' : '8.8.8.8',
+          family: 4,
+        },
+      ];
+    },
+    request: async (url, address) => {
+      requests.push({ path: url.pathname, address: address.address });
+      return url.pathname === '/robots.txt'
+        ? response(404)
+        : response(302, '', { location: `https://${host}/next` });
+    },
+    sleep: async () => {},
+    random: () => 0,
+  };
+  await assert.rejects(client(transport).fetch(`https://${host}/edital`), /non-public address/u);
+  assert.equal(
+    requests.some((request) => request.path === '/next'),
+    false,
+  );
+});
+
 test('blocks robots-disallowed paths and never requests the page', async () => {
   const transport = mockTransport({
     route: (url) =>

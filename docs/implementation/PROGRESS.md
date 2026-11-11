@@ -666,3 +666,12 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Verificacoes: testes unitarios cobrem dados presentes/ausentes, ENEM desconhecido, 404 e troca de UUID. `pnpm test` 37/37; `pnpm test:e2e` 1/1 (inclui a rota UUID); `pnpm lint`, `pnpm typecheck`, `pnpm build` sem avisos, `pnpm format:check` e `git diff --check`: PASS.
 - Commit frontend: `1a1b80b feat(web): desenvolver detalhes verificaveis`. Nenhum push.
 - Pendencias: validar detalhe contra API real de staging quando houver URL configurada; seguir para diretorio de instituicoes no passo 073.
+
+
+## Passo 076 — segurança da API — concluído localmente no backend
+
+- Estado inicial observado: backend limpo em `dfcb831` antes do passo; frontend limpo em `f582494`. Relidos o checkpoint 076 e as seções 10.1, 10.2, 10.3 e 11.1 da arquitetura; examinados cliente HTTP responsável, validação de artefatos, autenticação/autorização, CORS, erros, limites de execução manual e testes existentes.
+- Implementação: middleware instala CSP restritiva para respostas API, `nosniff`, frame denial, referrer e permissions policies; sem HSTS na API HTTP local. Testes adicionais cobrem headers/CORS em runtime, DNS misto público/privado, rebinding DNS no redirect e limite de execução manual por host. Threat model documenta ativos, controles, evidências e lacunas. Não foi alterado o contrato OpenAPI.
+- ADR 0042: a arquitetura e o roteiro não definem política de taxa global nem confiança de proxy. Registrada proposta pendente; nenhum limite geral foi presumido. O cooldown Redis de 60 s já existente para `POST /admin/sources/:id/run` permanece coberto. Limites no ingress e política geral são pré-requisito para exposição pública.
+- Testes: `corepack pnpm test` 185/185; `corepack pnpm test:e2e` 5/5; `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm format:check` e `git diff --check`: PASS. E2E valida headers/CORS reais em `/health`, inclusive ausência de permissão para origem não configurada.
+- Pendências: política global de rate limit e proxy confiável (ADR 0042); isolamento de processo para parsers, operação TLS/Redis/Postgres e retenção/licenças dependem da infraestrutura e revisão operacional. Nenhuma produção foi acessada; sem push, deploy ou migração.
