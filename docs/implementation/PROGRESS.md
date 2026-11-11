@@ -14,15 +14,15 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F07 — MVP administrativo |
-| Passo                   | 067 — `feat(ui): criar design system acessivel` |
-| Estado                  | Passo 067 concluído localmente no frontend `4959031` |
+| Passo                   | 068 — `feat(ui): landing publica e navegacao principal` |
+| Estado                  | Passo 068 concluído localmente no frontend; commit pendente |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 067: §§ 8, 9 e 12 |
-| Roteiro consultado      | Passo 067; checkpoint inicial de F08/P0 |
-| Commit anterior backend | `2dd1737` — passo 066 |
-| Repositório frontend    | `4959031` — passo 067 |
-| Gate                    | Frontend build, 18 testes, 1 E2E, lint, typecheck, format e diff: PASS |
-| Próximo passo           | 068 — landing pública e navegação principal |
+| Arquitetura consultada  | Passo 068: §§ 8, 9.1–9.4 e 10.1 |
+| Roteiro consultado      | Passo 068; F08/P0, sequencial |
+| Commit anterior backend | `2737b51` — progresso do passo 067 |
+| Repositório frontend    | Em validação do passo 068 |
+| Gate                    | Frontend build, 20 testes, 1 E2E, lint, typecheck, format e diff: PASS |
+| Próximo passo           | 069 — client gerado e tratamento HTTP |
 
 ## Passo 001 — evidências
 
@@ -591,3 +591,11 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Estética: paleta marfim/preto/lima/laranja/azul elétrico/lilás, títulos de peso alto, bordas marcadas, sombras deslocadas e blocos angulares conforme a referência.
 - Evidências: frontend `4959031`; `corepack pnpm test` (18/18), `test:e2e` (1/1), build, lint, typecheck, format:check e `git diff --check`: PASS. Testes cobrem foco de botão, estado disabled, badge neutra, labels/descrições de campo e anúncios acessíveis.
 - Pendências: primitives serão adotados pelas telas públicas a partir do passo 068; verificação por navegador permanece indisponível nesta sessão. Nenhum push/deploy.
+
+## Passo 068 — concluído localmente no frontend
+
+- Estado observado: frontend limpo em `4959031` e backend limpo em `2737b51` antes do passo. Relidos roteiro 068 e arquitetura §§ 8, 9.1–9.4 e 10.1; revisados shell Angular, rotas, design system e imagem `style-reference.png`.
+- Implementação: shell público com wordmark, navegação principal, skip link e rodapé; landing com proposta de valor, ilustração vetorial/retícula de megafone, busca rápida, atalhos de processo e avisos de prevalência documental. Busca conserva texto em query `q` para `/oportunidades`. CTA e tiles levam à rota prevista, que por enquanto informa com clareza que esta instalação não tem processos verificados e que isso não significa ausência de oportunidades. Nenhum card/dado/link oficial foi inventado.
+- Estética/acessibilidade: paleta e linguagem gráfica da referência, arte sem dependência externa, responsividade para mobile, links semânticos, rótulo de busca, skip link e foco visível.
+- Evidências: `corepack pnpm test` (20/20), `test:e2e` (1/1, shell e rotas profundas), build sem avisos, lint, typecheck, format:check e `git diff --check`: PASS.
+- Pendências: integração real de API/client pertence aos passos 069–70; navegação real por browser indisponível nesta sessão. Sem push/deploy/publicação.
