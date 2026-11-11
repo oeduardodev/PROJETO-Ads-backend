@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service.js';
 import { normalizeSourceUrl } from '../sources/source-url.js';
+import { hashObservedUrl, logStructured } from '../../observability/structured-log.js';
+import { observabilityMetrics } from '../../observability/metrics.registry.js';
 
 export interface DiscoveryInput {
   sourceId: string;
@@ -13,14 +15,14 @@ export interface DiscoveryInput {
 export class DiscoveredUrlsRepository {
   constructor(private readonly database: PrismaService) {}
 
-  record(input: DiscoveryInput) {
+  async record(input: DiscoveryInput) {
     const { url: canonicalUrl } = normalizeSourceUrl(input.url);
     const score = input.relevanceScore;
     if (score !== undefined && (!Number.isFinite(score) || score < 0 || score > 1)) {
       throw new Error('Relevance score must be from 0 to 1');
     }
     const now = new Date();
-    return this.database.$transaction(async (transaction) => {
+    const candidate = await this.database.$transaction(async (transaction) => {
       // Serialize writes for this canonical URL so a repeated run cannot race the
       // observation check and increment counters more than once per crawl run.
       await transaction.$queryRaw`SELECT 1::int AS locked FROM (SELECT pg_advisory_xact_lock(hashtextextended(${canonicalUrl}, 0))) AS advisory_lock`;
@@ -79,6 +81,18 @@ export class DiscoveredUrlsRepository {
       });
       return candidate;
     });
+    observabilityMetrics.increment(
+      'source_url_observation_attempts_total',
+      'Idempotent URL observation attempts by source',
+      { source_id: input.sourceId },
+    );
+    logStructured('info', 'discovery.url.observed', {
+      sourceId: input.sourceId,
+      crawlRunId: input.crawlRunId,
+      discoveredUrlId: candidate.id,
+      urlHash: hashObservedUrl(normalizeSourceUrl(input.url).url),
+    });
+    return candidate;
   }
 
   findByUrl(url: string) {

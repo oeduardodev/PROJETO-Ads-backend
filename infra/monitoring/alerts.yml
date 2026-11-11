@@ -1,0 +1,30 @@
+groups:
+  - name: alem-do-sisu-api
+    rules:
+      - alert: ActiveSourceHasNoRecentSuccess
+        expr: |
+          source_last_success_age_seconds
+          > on(source_id) (2 * source_frequency_seconds)
+          and on(source_id) source_info{status="ACTIVE",health!="BLOCKED",collection_authorized="true"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: An active official source has exceeded two configured polling intervals.
+          description: Check reviewed host authorization, latest crawl runs, worker health, and source policy.
+      - alert: SourceHasThreeConsecutiveFailures
+        expr: source_failure_streak >= 3 and on(source_id) source_info{status="ACTIVE",collection_authorized="true"} == 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: An active authorized source has three consecutive failed runs.
+          description: Inspect source health and recent CrawlRun error codes; do not infer missing opportunities.
+      - alert: QueueHasFailedJobs
+        expr: bullmq_jobs{state="failed"} > 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: A BullMQ queue has failed jobs awaiting review or retry.
+          description: Retry only after checking the failure and source authorization.

@@ -2,6 +2,7 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { WorkerModule } from './worker.module.js';
 import { loadWorkerConfig } from './config/environment.js';
+import { logStructured } from './observability/structured-log.js';
 
 loadWorkerConfig();
 const worker = await NestFactory.createApplicationContext(WorkerModule);
@@ -17,4 +18,4 @@ process.on('message', async (message) => {
     if (process.connected) process.disconnect();
   }
 });
-console.log('Worker initialized without an HTTP listener');
+logStructured('info', 'worker.initialized');

@@ -1,6 +1,8 @@
 import { AiProviderError } from './ai-provider.js';
 import type { AiGenerationRequest, AiProvider, AiProviderResponse } from './ai-provider.js';
 import type { AiTokenBudgetStore } from './ai-token-budget.store.js';
+import { logStructured } from '../../../observability/structured-log.js';
+import { observabilityMetrics } from '../../../observability/metrics.registry.js';
 
 export interface AiTokenUsage {
   inputTokens: number;
@@ -169,8 +171,41 @@ export class AiProviderService {
         throw new AiProviderError('BUDGET_UNAVAILABLE', false, { cause: error });
       }
     }
-    if (completed) return completed;
-    throw lastError ?? new AiProviderError('UNAVAILABLE', true);
+    if (completed) {
+      observabilityMetrics.increment(
+        'ai_tokens_total',
+        'AI tokens charged by schema and provider',
+        {
+          schema_id: request.schemaId,
+          provider: this.provider.kind,
+        },
+        completed.usage.totalTokens,
+      );
+      logStructured('info', 'ai.generation.completed', {
+        documentId: request.documentId,
+        requestId: request.requestId,
+        action: request.schemaId,
+        tokens: completed.usage.totalTokens,
+        attempt: completed.attempts,
+      });
+      return completed;
+    }
+    const failure = lastError ?? new AiProviderError('UNAVAILABLE', true);
+    observabilityMetrics.increment(
+      'ai_generation_failures_total',
+      'AI generation failures by code',
+      {
+        schema_id: request.schemaId,
+        error_code: failure.failureCode,
+      },
+    );
+    logStructured('warn', 'ai.generation.failed', {
+      documentId: request.documentId,
+      requestId: request.requestId,
+      action: request.schemaId,
+      errorCode: failure.failureCode,
+    });
+    throw failure;
   }
 
   private async withTimeout(request: AiGenerationRequest): Promise<AiProviderResponse> {

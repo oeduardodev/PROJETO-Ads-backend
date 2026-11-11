@@ -20,6 +20,7 @@ import { AuthModule } from './modules/auth/auth.module.js';
 import { AuthzModule } from './modules/authz/authz.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ApiRateLimitModule } from './common/security/api-rate-limit.module.js';
+import { ObservabilityModule } from './observability/observability.module.js';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { ApiRateLimitModule } from './common/security/api-rate-limit.module.js';
     AuditModule,
     AuthModule,
     AuthzModule,
+    ObservabilityModule,
   ],
 })
 export class AppModule {}

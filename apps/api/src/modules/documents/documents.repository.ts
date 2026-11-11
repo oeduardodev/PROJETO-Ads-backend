@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../database/prisma.service.js';
 import { FixtureLocalStorage } from './fixture-local-storage.js';
+import { hashObservedUrl, logStructured } from '../../observability/structured-log.js';
+import { observabilityMetrics } from '../../observability/metrics.registry.js';
 
 export interface FixtureSnapshotInput {
   url: string;
@@ -22,7 +24,7 @@ export class DocumentsRepository {
     }
     const stored = input.storage.identify(input.bytes);
     const now = new Date();
-    return this.database.$transaction(async (transaction) => {
+    const document = await this.database.$transaction(async (transaction) => {
       const blob = await transaction.documentBlob.upsert({
         where: { sha256: stored.sha256 },
         create: { ...stored, expiredAt: null },
@@ -58,6 +60,18 @@ export class DocumentsRepository {
         },
       });
     });
+    observabilityMetrics.increment(
+      'document_snapshots_recorded_total',
+      'Fixture document snapshots recorded',
+      {
+        media_type: input.mediaType,
+      },
+    );
+    logStructured('info', 'document.snapshot.recorded', {
+      documentId: document.id,
+      urlHash: hashObservedUrl(input.url),
+    });
+    return document;
   }
 
   listVersions(url: string) {

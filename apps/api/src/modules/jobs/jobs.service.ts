@@ -1,6 +1,8 @@
 import { Inject, Injectable, OnApplicationShutdown } from '@nestjs/common';
 import { Queue } from 'bullmq';
 import type { JobPayloads, JobQueueName, JobQueueSet } from './job-queues.js';
+import { observabilityMetrics } from '../../observability/metrics.registry.js';
+import { logStructured } from '../../observability/structured-log.js';
 
 export const JOB_QUEUE_SET = Symbol('JOB_QUEUE_SET');
 
@@ -155,16 +157,22 @@ export class JobsService implements OnApplicationShutdown {
     await Promise.all(Object.values(this.queues).map((queue) => queue.close()));
   }
 
-  private add<Name extends JobQueueName>(
+  private async add<Name extends JobQueueName>(
     name: Name,
     payload: JobPayloads[Name],
     id: string,
     priority?: number,
   ) {
     const queue = this.queues[name] as Queue;
-    return queue.add(name, payload, {
+    const result = await queue.add(name, payload, {
       jobId: jobId(id),
       ...(priority === undefined ? {} : { priority }),
     });
+    observabilityMetrics.increment('jobs_enqueued_total', 'Jobs enqueued by queue and job type', {
+      queue: name,
+      job_name: name,
+    });
+    logStructured('info', 'job.enqueued', { queue: name, jobName: name });
+    return result;
   }
 }

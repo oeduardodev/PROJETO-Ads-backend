@@ -27,8 +27,11 @@ import { AdminRole, ProcessIngestionState } from '../../generated/prisma/enums.j
 import type { WorkflowActor } from '../review/workflow/state-machine.js';
 import { AdminReviewQueueService } from './admin-review-queue.service.js';
 import { AdminReviewCommandsService } from './commands/admin-review-commands.service.js';
+import { logStructured } from '../../observability/structured-log.js';
+import { observabilityMetrics } from '../../observability/metrics.registry.js';
 
 interface AuthenticatedAdminRequest {
+  requestId?: string;
   adminUser?: { id: string; issuer: string; subject: string; role: AdminRole };
 }
 
@@ -39,7 +42,7 @@ function actorFrom(request: AuthenticatedAdminRequest): WorkflowActor {
     id: admin.id,
     issuer: admin.issuer,
     subject: admin.subject,
-    requestId: randomUUID(),
+    requestId: request.requestId ?? randomUUID(),
   };
   return {
     id: admin.id,
@@ -101,7 +104,11 @@ export class AdminReviewController {
     @Body() body: Record<string, unknown>,
     @Req() request: AuthenticatedAdminRequest,
   ) {
-    return this.commands.approve(id, body, actorFrom(request));
+    const actor = actorFrom(request);
+    return this.commands.approve(id, body, actor).then((result) => {
+      this.recordDecision('approved', id, actor.adminIdentity?.requestId, result.reviewVersion);
+      return result;
+    });
   }
 
   @Post('processes/:id/reject')
@@ -115,7 +122,11 @@ export class AdminReviewController {
     @Body() body: Record<string, unknown>,
     @Req() request: AuthenticatedAdminRequest,
   ) {
-    return this.commands.reject(id, body, actorFrom(request));
+    const actor = actorFrom(request);
+    return this.commands.reject(id, body, actor).then((result) => {
+      this.recordDecision('rejected', id, actor.adminIdentity?.requestId, result.reviewVersion);
+      return result;
+    });
   }
 
   @Post('processes/:id/hide')
@@ -127,7 +138,11 @@ export class AdminReviewController {
     @Body() body: Record<string, unknown>,
     @Req() request: AuthenticatedAdminRequest,
   ) {
-    return this.commands.hide(id, body, actorFrom(request));
+    const actor = actorFrom(request);
+    return this.commands.hide(id, body, actor).then((result) => {
+      this.recordDecision('hidden', id, actor.adminIdentity?.requestId, result.reviewVersion);
+      return result;
+    });
   }
 
   @Patch('processes/:id/correct')
@@ -142,6 +157,27 @@ export class AdminReviewController {
     @Body() body: Record<string, unknown>,
     @Req() request: AuthenticatedAdminRequest,
   ) {
-    return this.commands.correct(id, body, actorFrom(request));
+    const actor = actorFrom(request);
+    return this.commands.correct(id, body, actor).then((result) => {
+      this.recordDecision('corrected', id, actor.adminIdentity?.requestId, result.reviewVersion);
+      return result;
+    });
+  }
+
+  private recordDecision(
+    action: string,
+    processId: string,
+    requestId: string | undefined,
+    reviewVersion: number,
+  ): void {
+    observabilityMetrics.increment('review_decisions_total', 'Successful human review decisions', {
+      action,
+    });
+    logStructured('info', 'review.decision.completed', {
+      action,
+      processId,
+      requestId,
+      reviewVersion,
+    });
   }
 }

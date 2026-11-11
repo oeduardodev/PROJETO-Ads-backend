@@ -25,6 +25,7 @@ import {
 } from './admin-sources.service.js';
 
 interface AdminRequest {
+  requestId?: string;
   adminUser?: { id: string; issuer: string; subject: string; role: AdminRole };
 }
 
@@ -34,7 +35,7 @@ function actorFrom(request: AdminRequest): SourceAdminActor {
     id: request.adminUser.id,
     issuer: request.adminUser.issuer,
     subject: request.adminUser.subject,
-    requestId: randomUUID(),
+    requestId: request.requestId ?? randomUUID(),
   };
 }
 

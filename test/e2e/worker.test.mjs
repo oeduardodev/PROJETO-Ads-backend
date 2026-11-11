@@ -21,7 +21,7 @@ function waitForReady(child, output) {
       10_000,
     );
     const check = () => {
-      if (output().includes('Worker initialized without an HTTP listener')) {
+      if (output().includes('"event":"worker.initialized"')) {
         clearTimeout(timeout);
         resolve();
       }

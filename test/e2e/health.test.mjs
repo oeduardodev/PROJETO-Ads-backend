@@ -32,7 +32,10 @@ test('API serves health with configured CORS origin', async () => {
       if (child.exitCode !== null) throw new Error('API exited before health probe');
       try {
         response = await fetch(`http://127.0.0.1:${port}/health`, {
-          headers: { Origin: 'http://127.0.0.1:4200' },
+          headers: {
+            Origin: 'http://127.0.0.1:4200',
+            'X-Request-Id': '123e4567-e89b-42d3-a456-426614174000',
+          },
         });
         break;
       } catch {
@@ -44,6 +47,10 @@ test('API serves health with configured CORS origin', async () => {
     assert.equal(response.headers.get('access-control-allow-origin'), 'http://127.0.0.1:4200');
     assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
     assert.equal(response.headers.get('x-frame-options'), 'DENY');
+    assert.equal(response.headers.get('x-request-id'), '123e4567-e89b-42d3-a456-426614174000');
+    const exposedHeaders = response.headers.get('access-control-expose-headers').toLowerCase();
+    assert.match(exposedHeaders, /x-request-id/u);
+    assert.match(exposedHeaders, /retry-after/u);
     assert.equal(response.headers.get('referrer-policy'), 'no-referrer');
     assert.match(response.headers.get('content-security-policy'), /default-src 'none'/u);
     assert.equal(
@@ -73,9 +80,12 @@ test('API serves health with configured CORS origin', async () => {
     assert.ok(contract.paths['/api/v1/processes']);
     assert.ok(contract.paths['/api/v1/processes/{id}']);
     assert.equal(contract.paths['/api/v1/admin/reviews'], undefined);
+    assert.equal(contract.paths['/api/v1/internal/metrics'], undefined);
     const adminQueue = await fetch(`http://127.0.0.1:${port}/api/v1/admin/review-queue`);
     assert.equal(adminQueue.status, 401);
     assert.equal((await adminQueue.json()).error.status, 401);
+    const protectedMetrics = await fetch(`http://127.0.0.1:${port}/api/v1/internal/metrics`);
+    assert.equal(protectedMetrics.status, 401);
     for (const [method, path] of [
       ['POST', 'approve'],
       ['POST', 'reject'],

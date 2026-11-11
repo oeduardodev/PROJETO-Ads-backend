@@ -11,11 +11,13 @@ import {
   type PublicRateLimitResponse,
 } from './common/security/public-get-rate-limit.middleware.js';
 import { exposePublicOpenApi } from './openapi/public-openapi.js';
+import { requestObservabilityMiddleware } from './observability/request-observability.middleware.js';
 
 const config = loadApiConfig();
 const app = await NestFactory.create(AppModule);
 app.setGlobalPrefix('api/v1', { exclude: ['health', 'ready'] });
 app.use(apiSecurityHeadersMiddleware);
+app.use(requestObservabilityMiddleware);
 const rateLimiter = app.get(ApiRateLimitService);
 app.use(
   (
@@ -28,7 +30,7 @@ app.use(
 );
 app.enableCors({
   origin: config.corsOrigins,
-  exposedHeaders: ['Retry-After', 'X-RateLimit-Limit', 'X-RateLimit-Remaining'],
+  exposedHeaders: ['Retry-After', 'X-RateLimit-Limit', 'X-RateLimit-Remaining', 'X-Request-Id'],
 });
 app.useGlobalFilters(new ApiExceptionFilter());
 exposePublicOpenApi(app);
