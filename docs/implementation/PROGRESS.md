@@ -14,24 +14,34 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F08 - catalogo publico |
-| Passo                   | 073 - `feat(web): diretorio de instituicoes` |
-| Estado                  | Passo 073 concluido localmente; frontend `127fd89`, backend neste commit |
+| Passo                   | 074 - `feat(web): metadados SEO por rota` |
+| Estado                  | Passo 074 registrado localmente; frontend `4c383ea`, backend neste commit |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 073: secoes 8, 9.1, 9.3, 9.4 e ADR 0040 |
-| Roteiro consultado      | Passo 073; F08/P0, sequencial |
-| Commit anterior backend | `48a23c6` - progresso do passo 072 |
-| Repositorio frontend    | Limpo apos commit `127fd89`; ahead 11, sem push |
-| Gate                    | Frontend 44 testes, 1 E2E; backend 182 testes + 1 integracao; builds, lint, typecheck, OpenAPI, format: PASS |
-| Proximo passo           | 074 - spike SSR/SEO e metadados por rota |
+| Arquitetura consultada  | Passo 074: secao 9.1, recomendacao ADR-005 e ADR 0041 |
+| Roteiro consultado      | Passo 074; F08/P0, sequencial |
+| Commit anterior backend | `80f8e70` - implementar filtros do diretorio de instituicoes |
+| Repositorio frontend    | Limpo apos commit `4c383ea`; ahead 13, sem push |
+| Gate                    | Frontend 47 testes, 1 E2E, build, lint, typecheck, format: PASS; diff: PASS |
+| Proximo passo           | 075 - E2E, acessibilidade e responsividade |
 
 ## Passo 073 - evidencias
 
-- Estado antes da implementacao: frontend limpo em `1a1b80b` e backend limpo em `48a23c6`; repositorios Git independentes. O frontend foi commitado localmente como `127fd89` (`feat(web): criar diretorio de instituicoes e filtros`); o commit backend inclui API, contrato, ADR e este progresso. Nenhum push.
+- Estado antes da implementacao: frontend limpo em `1a1b80b` e backend limpo em `48a23c6`; repositorios Git independentes. O frontend foi commitado localmente como `127fd89` (`feat(web): criar diretorio de instituicoes e filtros`); o commit backend foi `80f8e70` (`feat(api): filtrar diretorio de instituicoes`). Nenhum push.
 - Arquitetura consultada: secoes 8, 9.1, 9.3 e 9.4. Roteiro consultado: checkpoint 073, F08/P0. O diretorio publica apenas instituicoes verificadas, mostra cobertura vinda da API e avisa que monitoramento nao garante completude.
 - ADR 0040 aceito pelo usuario: filtros server-side `q`, `uf`, `city` e `jurisdiction` antes da paginacao; `q` pesquisa nome/sigla, geografia usa apenas campi verificados. O mesmo contrato alimenta OpenAPI e cliente Angular gerado.
 - Backend: parser de filtros validado; consulta e contagem compartilham o mesmo predicado; filtro geografico tambem restringe os campi retornados. Testes unitarios 182/182; integracao `public-institutions` 1/1 em PostgreSQL descartavel local, com migrations e seed oficial; lint, typecheck, `openapi:check`, format e `git diff --check`: PASS. O servidor PostgreSQL temporario foi encerrado. A remocao dos arquivos temporarios foi bloqueada pelo executor; permanecem fora dos repositorios e sem servico ativo.
 - Frontend: rota `/instituicoes`, filtros com query string, debounce, paginacao/reset e navegacao voltar/avancar; sem instituicoes ou cobertura inventadas. Testes 44/44; E2E 1/1; lint, typecheck, build (sem avisos), format e `git diff --check`: PASS. `api:generate` executado a partir do OpenAPI e o contrato sincronizado.
 - Passo concluido localmente nos dois repositorios. Proximo: passo 074, spike SSR/SEO; sem push, deploy ou migracao de producao.
+
+## Passo 074 - evidencias e pendencias
+
+- Estado antes do passo: frontend limpo em `127fd89`; backend limpo em `80f8e70`. Repositorios Git separados. Frontend commitado localmente como `4c383ea` (`feat(web): adicionar metadados SEO por rota`); este commit registra ADR e progresso. Nenhum push.
+- Arquitetura consultada: secao 9.1, regras da 9.3 e recomendacao ADR-005. Roteiro 074 relido. A arquitetura sugere SSR em detalhes e SSR/SSG no diretorio, mas recomenda avaliar renderizacao hibrida antes da decisao.
+- O usuario decidiu manter CSR ate escolher hosting e dominio. ADR 0041 registra o aceite, a falta atual de hosting/dominio/API publica, as consequencias e pendencias. O nome `0004-rendering` do roteiro conflita com ADR 0004 (segredos); o documento foi numerado 0041 para nao sobrescrever historico.
+- Implementado no frontend: title e description por rota, Open Graph, `noindex` em area administrativa e detalhes indisponiveis; detalhe publicado recebe metadata dinamica somente apos resposta publica da API. Canonical e emitido apenas com `publicSiteUrl` HTTPS configurado, sem query string. URL oficial ainda nao configurada; nenhum canonical de producao e emitido.
+- Sitemap nao criado: nao ha dominio oficial nem mecanismo de build que liste somente detalhes publicados. Manter vazio evita inventar URLs. O crawler sem JavaScript recebe o shell CSR; metadados dinamicos para crawlers permanecem pendentes de SSR/SSG/prerender apos escolha do provedor.
+- Validacao frontend: 47/47 testes unitarios (10 arquivos), E2E de shell e rotas 1/1, lint, typecheck, build sem avisos, format e `git diff --check`: PASS. Uma primeira execucao encontrou import incorreto de `Title` e tipagem do DOM; corrigido antes do commit e todos os checks reexecutados.
+- Estado: codigo e decisao provisoria concluidos no escopo aprovado; pendentes comparacao CSR vs SSR/SSG no provedor real, dominio oficial, canonicals ativos e sitemap de processos publicados. Proximo passo sequencial: 075, E2E/A11y/responsividade.
 
 ## Passo 001 — evidências
 
