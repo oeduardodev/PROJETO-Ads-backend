@@ -14,15 +14,15 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F08 - catalogo publico |
-| Passo                   | 071 - `feat(web): implementar filtros e query params` |
-| Estado                  | Passo 071 concluido localmente no frontend `f159f1d` |
+| Passo                   | 072 - `feat(web): desenvolver detalhes verificaveis` |
+| Estado                  | Passo 072 concluido localmente no frontend `1a1b80b` |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 071: secoes 8, 9.1 e 9.3 |
-| Roteiro consultado      | Passo 071; F08/P0, sequencial |
-| Commit anterior backend | `ef85890` - progresso do passo 070 |
-| Repositorio frontend    | Limpo apos commit `f159f1d`; ahead 9, sem push |
-| Gate                    | Frontend 33 testes, 1 E2E, build sem avisos, lint, typecheck, format, diff: PASS |
-| Proximo passo           | 072 - detalhe verificavel |
+| Arquitetura consultada  | Passo 072: secoes 8, 9.1, 9.3 e ADR 0039 |
+| Roteiro consultado      | Passo 072; F08/P0, sequencial |
+| Commit anterior backend | `57dfd9e` - progresso do passo 071 |
+| Repositorio frontend    | Limpo apos commit `1a1b80b`; ahead 10, sem push |
+| Gate                    | Frontend 37 testes, 1 E2E, build sem avisos, lint, typecheck, format, diff: PASS |
+| Proximo passo           | 073 - diretorio de instituicoes |
 
 ## Passo 001 — evidências
 
@@ -627,3 +627,13 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Verificacoes: testes cobrem filtros, mapeamento, ENEM desconhecido e recarga por querystring/historico. `pnpm test` 33/33; `pnpm test:e2e` 1/1; `pnpm lint`, `pnpm typecheck`, `pnpm build` sem avisos, `pnpm format:check` e `git diff --check`: PASS.
 - Commit frontend: `f159f1d feat(web): implementar filtros e query params`. Nenhum push.
 - Pendencias: construir a pagina de detalhe no passo 072. Validacao com staging indisponivel sem URL configurada.
+
+
+## Passo 072 - concluido localmente no frontend
+
+- Estado inicial: frontend limpo em `f159f1d` (ahead 9); backend limpo em `57dfd9e` (ahead 8).
+- Arquitetura relida: secoes 8, 9.1, 9.3 e 9.4; ADR 0039 estabelece `/oportunidades/:id` com UUID, mapeado para `GET /processes/:id`.
+- Implementacao: rota e detalhe consultam apenas o contrato publico gerado. Exibem ofertas, reservas, campi verificados, janelas (data/hora/fuso sem completar valores ausentes), requisitos, evidencias, links oficiais e ultima verificacao. Campos ausentes ficam explicitos; 404 nao revela estado interno; detalhes nao afirmam elegibilidade. Links externos usam `noopener noreferrer`.
+- Verificacoes: testes unitarios cobrem dados presentes/ausentes, ENEM desconhecido, 404 e troca de UUID. `pnpm test` 37/37; `pnpm test:e2e` 1/1 (inclui a rota UUID); `pnpm lint`, `pnpm typecheck`, `pnpm build` sem avisos, `pnpm format:check` e `git diff --check`: PASS.
+- Commit frontend: `1a1b80b feat(web): desenvolver detalhes verificaveis`. Nenhum push.
+- Pendencias: validar detalhe contra API real de staging quando houver URL configurada; seguir para diretorio de instituicoes no passo 073.
