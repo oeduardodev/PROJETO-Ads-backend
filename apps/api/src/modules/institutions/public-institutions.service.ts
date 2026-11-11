@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Pagination } from '../../common/http/pagination.js';
 import { PrismaService } from '../../database/prisma.service.js';
 import { Prisma } from '../../generated/prisma/client.js';
+import { PublicInstitutionQuery } from './public-institutions.query.js';
 
 function latest(values: Array<Date | null>): Date | null {
   const known = values.filter((value): value is Date => value !== null);
@@ -24,11 +25,28 @@ const publicInstitution: Prisma.InstitutionWhereInput = {
 export class PublicInstitutionsService {
   constructor(private readonly database: PrismaService) {}
 
-  async list(pagination: Pagination) {
+  async list(query: PublicInstitutionQuery, pagination: Pagination) {
+    const campusFilter: Prisma.CampusWhereInput = {
+      verifiedAt: { not: null },
+      ...(query.uf !== undefined ? { state: query.uf } : {}),
+      ...(query.city !== undefined ? { normalizedCity: { contains: query.city } } : {}),
+    };
+    const where: Prisma.InstitutionWhereInput = {
+      ...publicInstitution,
+      jurisdiction: query.jurisdiction ?? publicInstitution.jurisdiction,
+      ...(query.q !== undefined
+        ? {
+            OR: [{ normalizedName: { contains: query.q } }, { acronym: { contains: query.q } }],
+          }
+        : {}),
+      ...(query.uf !== undefined || query.city !== undefined
+        ? { campuses: { some: campusFilter } }
+        : {}),
+    };
     const [total, institutions] = await Promise.all([
-      this.database.institution.count({ where: publicInstitution }),
+      this.database.institution.count({ where }),
       this.database.institution.findMany({
-        where: publicInstitution,
+        where,
         orderBy: [{ normalizedName: 'asc' }, { id: 'asc' }],
         skip: pagination.skip,
         take: pagination.pageSize,
@@ -40,7 +58,7 @@ export class PublicInstitutionsService {
           verifiedAt: true,
           referenceUrl: true,
           campuses: {
-            where: { verifiedAt: { not: null } },
+            where: campusFilter,
             orderBy: [{ normalizedCity: 'asc' }, { normalizedName: 'asc' }, { id: 'asc' }],
             select: {
               id: true,

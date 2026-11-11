@@ -14,15 +14,24 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F08 - catalogo publico |
-| Passo                   | 072 - `feat(web): desenvolver detalhes verificaveis` |
-| Estado                  | Passo 072 concluido localmente no frontend `1a1b80b` |
+| Passo                   | 073 - `feat(web): diretorio de instituicoes` |
+| Estado                  | Passo 073 concluido localmente; frontend `127fd89`, backend neste commit |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 072: secoes 8, 9.1, 9.3 e ADR 0039 |
-| Roteiro consultado      | Passo 072; F08/P0, sequencial |
-| Commit anterior backend | `57dfd9e` - progresso do passo 071 |
-| Repositorio frontend    | Limpo apos commit `1a1b80b`; ahead 10, sem push |
-| Gate                    | Frontend 37 testes, 1 E2E, build sem avisos, lint, typecheck, format, diff: PASS |
-| Proximo passo           | 073 - diretorio de instituicoes |
+| Arquitetura consultada  | Passo 073: secoes 8, 9.1, 9.3, 9.4 e ADR 0040 |
+| Roteiro consultado      | Passo 073; F08/P0, sequencial |
+| Commit anterior backend | `48a23c6` - progresso do passo 072 |
+| Repositorio frontend    | Limpo apos commit `127fd89`; ahead 11, sem push |
+| Gate                    | Frontend 44 testes, 1 E2E; backend 182 testes + 1 integracao; builds, lint, typecheck, OpenAPI, format: PASS |
+| Proximo passo           | 074 - spike SSR/SEO e metadados por rota |
+
+## Passo 073 - evidencias
+
+- Estado antes da implementacao: frontend limpo em `1a1b80b` e backend limpo em `48a23c6`; repositorios Git independentes. O frontend foi commitado localmente como `127fd89` (`feat(web): criar diretorio de instituicoes e filtros`); o commit backend inclui API, contrato, ADR e este progresso. Nenhum push.
+- Arquitetura consultada: secoes 8, 9.1, 9.3 e 9.4. Roteiro consultado: checkpoint 073, F08/P0. O diretorio publica apenas instituicoes verificadas, mostra cobertura vinda da API e avisa que monitoramento nao garante completude.
+- ADR 0040 aceito pelo usuario: filtros server-side `q`, `uf`, `city` e `jurisdiction` antes da paginacao; `q` pesquisa nome/sigla, geografia usa apenas campi verificados. O mesmo contrato alimenta OpenAPI e cliente Angular gerado.
+- Backend: parser de filtros validado; consulta e contagem compartilham o mesmo predicado; filtro geografico tambem restringe os campi retornados. Testes unitarios 182/182; integracao `public-institutions` 1/1 em PostgreSQL descartavel local, com migrations e seed oficial; lint, typecheck, `openapi:check`, format e `git diff --check`: PASS. O servidor PostgreSQL temporario foi encerrado. A remocao dos arquivos temporarios foi bloqueada pelo executor; permanecem fora dos repositorios e sem servico ativo.
+- Frontend: rota `/instituicoes`, filtros com query string, debounce, paginacao/reset e navegacao voltar/avancar; sem instituicoes ou cobertura inventadas. Testes 44/44; E2E 1/1; lint, typecheck, build (sem avisos), format e `git diff --check`: PASS. `api:generate` executado a partir do OpenAPI e o contrato sincronizado.
+- Passo concluido localmente nos dois repositorios. Proximo: passo 074, spike SSR/SEO; sem push, deploy ou migracao de producao.
 
 ## Passo 001 — evidências
 

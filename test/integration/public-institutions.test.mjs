@@ -38,7 +38,7 @@ test('public directory includes only reviewed institutions and campuses without 
         name: 'Campus de teste revisado',
         normalizedName: 'campus de teste revisado',
         city: 'João Pessoa',
-        normalizedCity: 'joao pessoa',
+        normalizedCity: 'JOAO PESSOA',
         state: 'PB',
         timezone: 'America/Sao_Paulo',
         verifiedAt,
@@ -50,7 +50,7 @@ test('public directory includes only reviewed institutions and campuses without 
         name: 'Campus de teste sem revisão',
         normalizedName: 'campus de teste sem revisao',
         city: 'João Pessoa',
-        normalizedCity: 'joao pessoa',
+        normalizedCity: 'JOAO PESSOA',
         state: 'PB',
         timezone: 'America/Sao_Paulo',
       },
@@ -111,8 +111,31 @@ test('public directory includes only reviewed institutions and campuses without 
     );
     const next = await fetch(`http://127.0.0.1:${port}/api/v1/institutions?page=2&page_size=1`);
     assert.deepEqual((await next.json()).meta, { page: 2, pageSize: 1, total: 1 });
+    for (const query of [
+      'q=para%C3%ADba',
+      'q=ufpb',
+      'uf=PB&city=Jo%C3%A3o%20Pessoa&jurisdiction=FEDERAL',
+    ]) {
+      const filtered = await fetch(`http://127.0.0.1:${port}/api/v1/institutions?${query}`);
+      assert.equal(filtered.status, 200, query);
+      const body = await filtered.json();
+      assert.equal(body.meta.total, 1, query);
+      assert.equal(body.data[0].acronym, 'UFPB', query);
+      assert.deepEqual(
+        body.data[0].campuses.map((campus) => campus.id),
+        [verifiedCampus.id],
+      );
+    }
+    const excluded = await fetch(
+      `http://127.0.0.1:${port}/api/v1/institutions?jurisdiction=ESTADUAL`,
+    );
+    assert.deepEqual((await excluded.json()).meta.total, 0);
     const invalid = await fetch(`http://127.0.0.1:${port}/api/v1/institutions?page_size=0`);
     assert.equal(invalid.status, 400);
+    const invalidFilter = await fetch(
+      `http://127.0.0.1:${port}/api/v1/institutions?jurisdiction=MUNICIPAL`,
+    );
+    assert.equal(invalidFilter.status, 400);
   } finally {
     child?.kill();
     if (source) await database.source.delete({ where: { id: source.id } });

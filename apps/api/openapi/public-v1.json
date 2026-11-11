@@ -6,6 +6,46 @@
         "operationId": "listInstitutions",
         "parameters": [
           {
+            "name": "jurisdiction",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "enum": [
+                "FEDERAL",
+                "ESTADUAL"
+              ],
+              "type": "string"
+            }
+          },
+          {
+            "name": "city",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 150,
+              "type": "string"
+            }
+          },
+          {
+            "name": "uf",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minLength": 2,
+              "maxLength": 2,
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 120,
+              "type": "string"
+            }
+          },
+          {
             "name": "page_size",
             "required": false,
             "in": "query",
