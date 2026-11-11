@@ -13,16 +13,16 @@
 
 | Campo                   | Valor |
 | ----------------------- | ----- |
-| Fase                    | F08 — catálogo público |
-| Passo                   | 070 — `feat(web): construir listagem de oportunidades` |
-| Estado                  | Passo 070 concluído localmente no frontend `15330e4` |
+| Fase                    | F08 - catalogo publico |
+| Passo                   | 071 - `feat(web): implementar filtros e query params` |
+| Estado                  | Passo 071 concluido localmente no frontend `f159f1d` |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 070: §§ 8, 9.1, 9.3 e 9.4; ADR 0039 |
-| Roteiro consultado      | Passo 070; F08/P0, sequencial |
-| Commit anterior backend | `c00939e` — progresso do passo 069 |
-| Repositório frontend    | Limpo após commit `15330e4`; ahead 8, sem push |
-| Gate                    | Frontend 30 testes, 1 E2E, build sem avisos, lint, typecheck, format, diff: PASS |
-| Próximo passo           | 071 — filtros e query params |
+| Arquitetura consultada  | Passo 071: secoes 8, 9.1 e 9.3 |
+| Roteiro consultado      | Passo 071; F08/P0, sequencial |
+| Commit anterior backend | `ef85890` - progresso do passo 070 |
+| Repositorio frontend    | Limpo apos commit `f159f1d`; ahead 9, sem push |
+| Gate                    | Frontend 33 testes, 1 E2E, build sem avisos, lint, typecheck, format, diff: PASS |
+| Proximo passo           | 072 - detalhe verificavel |
 
 ## Passo 001 — evidências
 
@@ -617,3 +617,13 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Commit frontend: `15330e4 feat(web): construir listagem de oportunidades`. Nenhum push.
 - Verificações: `pnpm test` 30/30; `pnpm test:e2e` 1/1; `pnpm lint`, `pnpm typecheck`, `pnpm build` sem avisos, `pnpm format:check` e `git diff --check`: PASS.
 - Pendências: implementar a rota/página de detalhe no passo 072. Validação contra staging não executada, sem endpoint de staging configurado.
+
+
+## Passo 071 - concluido localmente no frontend
+
+- Estado inicial: frontend limpo em `15330e4` (ahead 8); backend limpo em `ef85890` (ahead 7).
+- Arquitetura relida: secoes 8, 9.1 e 9.3. A interface persiste consulta, UF, cidade, grau, modalidade, ENEM, tipo, inscricoes abertas, ordenacao e pagina na querystring.
+- Implementacao: componente de filtros; busca textual com debounce de 300 ms; seletores de ENEM (inclui `unknown` para nao informado), abertas e ordenacao; campos para UF/cidade/grau/modalidade/tipo. A chave publica `type` mapeia para `selection_type` da API e aceita leitura do nome antigo. Mudanca de filtro zera pagina; historico recarrega filtros e resultados.
+- Verificacoes: testes cobrem filtros, mapeamento, ENEM desconhecido e recarga por querystring/historico. `pnpm test` 33/33; `pnpm test:e2e` 1/1; `pnpm lint`, `pnpm typecheck`, `pnpm build` sem avisos, `pnpm format:check` e `git diff --check`: PASS.
+- Commit frontend: `f159f1d feat(web): implementar filtros e query params`. Nenhum push.
+- Pendencias: construir a pagina de detalhe no passo 072. Validacao com staging indisponivel sem URL configurada.
