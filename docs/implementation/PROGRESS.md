@@ -14,15 +14,15 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F07 — MVP administrativo |
-| Passo                   | 068 — `feat(ui): landing publica e navegacao principal` |
-| Estado                  | Passo 068 concluído localmente no frontend; commit pendente |
+| Passo                   | 069 — `feat(web): integrar client gerado e tratamento HTTP` |
+| Estado                  | Passo 069 conclu?do localmente no frontend `6232b4f` |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 068: §§ 8, 9.1–9.4 e 10.1 |
-| Roteiro consultado      | Passo 068; F08/P0, sequencial |
-| Commit anterior backend | `2737b51` — progresso do passo 067 |
-| Repositório frontend    | Em validação do passo 068 |
-| Gate                    | Frontend build, 20 testes, 1 E2E, lint, typecheck, format e diff: PASS |
-| Próximo passo           | 069 — client gerado e tratamento HTTP |
+| Arquitetura consultada  | Passo 069: §§ 8, 9.3 e 12.1 |
+| Roteiro consultado      | Passo 069; F08/P0, sequencial |
+| Commit anterior backend | `5906732` — progresso do passo 068 |
+| Repositório frontend    | Em validação do passo 069 |
+| Gate                    | Frontend 25 testes, 1 E2E, build, lint, typecheck, format, diff; OpenAPI sync: PASS |
+| Próximo passo           | 070 — listagem pública com dados persistidos |
 
 ## Passo 001 — evidências
 
@@ -599,3 +599,11 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Estética/acessibilidade: paleta e linguagem gráfica da referência, arte sem dependência externa, responsividade para mobile, links semânticos, rótulo de busca, skip link e foco visível.
 - Evidências: `corepack pnpm test` (20/20), `test:e2e` (1/1, shell e rotas profundas), build sem avisos, lint, typecheck, format:check e `git diff --check`: PASS.
 - Pendências: integração real de API/client pertence aos passos 069–70; navegação real por browser indisponível nesta sessão. Sem push/deploy/publicação.
+
+## Passo 069 — concluído localmente no frontend
+
+- Estado observado: frontend limpo em `8499719` e backend limpo em `5906732` antes do passo. Relidos roteiro 069 e arquitetura §§ 8, 9.3 e 12.1; inspecionados OpenAPI público, cliente Hey API existente, environments e serviços Angular.
+- Implementação: `PublicCatalogService` tipado pelas operações e respostas geradas para busca/lista, detalhe, filtros e instituições; cliente configurado por `apiBaseUrl` com fallback same-origin. `PublicApiError` normaliza timeout, cancelamento, rede, 5xx e 4xx, preserva request ID quando disponível e não expõe mensagens internas de 5xx. Timeout padrão 8 s; serviços aceitam `AbortSignal`. Nenhuma cópia manual dos DTOs públicos.
+- Contrato: `pnpm api:generate` não gerou diff; `contracts/public-v1.json` confere byte a byte com o OpenAPI do backend e `corepack pnpm openapi:check` passou.
+- Evidências: `corepack pnpm test` (25/25), `test:e2e` (1/1), build, lint, typecheck, format:check e diff: PASS. Testes verificam URL/query, retorno tipado, normalização 503 sem segredo, timeout, cancelamento e rejeição de origem insegura.
+- Pendências: não há URL de staging configurada neste ambiente; portanto validação com API real de staging permanece pendente. O E2E atual verifica o shell web, e serviços são testados com `fetch` controlado. Sem push/deploy.
