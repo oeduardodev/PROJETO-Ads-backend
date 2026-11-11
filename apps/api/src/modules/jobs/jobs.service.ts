@@ -76,6 +76,16 @@ export class JobsService implements OnApplicationShutdown {
       : { active: false, jobId: null, attemptsMade: 0, retryDelayMs: null, nextRetryAt: null };
   }
 
+  sourceRefreshQueueCounts() {
+    return this.queues['source.refresh'].getJobCounts(
+      'waiting',
+      'active',
+      'delayed',
+      'failed',
+      'completed',
+    );
+  }
+
   enqueueUrlFetch(candidateUrlId: string) {
     const payload = { candidateUrlId: uuid(candidateUrlId, 'candidateUrlId') };
     return this.add('url.fetch', payload, 'url-fetch-' + payload.candidateUrlId);

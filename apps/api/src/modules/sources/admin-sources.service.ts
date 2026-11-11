@@ -164,14 +164,20 @@ export class AdminSourcesService implements OnApplicationShutdown {
     const now = new Date();
     const quotaLimit = loadWorkerConfig().searchDailyQuotaPerHost;
     try {
-      const [usedRaw, backoff] = await Promise.all([
+      const [usedRaw, backoff, candidateCount, queueCounts] = await Promise.all([
         quotaLimit === 0 ? Promise.resolve(null) : this.redis.get(searchQuotaRedisKey(host, now)),
         this.jobs.sourceRefreshBackoff(id),
+        this.database.discoveredUrl.count({
+          where: { status: 'CANDIDATE', observations: { some: { sourceId: id } } },
+        }),
+        this.jobs.sourceRefreshQueueCounts(),
       ]);
       const used = usedRaw === null ? 0 : Number(usedRaw);
       return {
         ...source,
         backoff,
+        candidateCount,
+        sourceRefreshQueue: queueCounts,
         searchQuota: {
           host,
           dayUTC: utcDayKey(now),

@@ -14,15 +14,15 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F07 — MVP administrativo |
-| Passo                   | 064 — `feat(admin-web): revisar edital com evidencias` |
-| Estado                  | Passo 064 concluído localmente em frontend `d925fbd` |
+| Passo                   | 065 — `feat(admin-web): monitorar fontes e execucoes` |
+| Estado                  | Passo 065 concluído localmente; frontend `8b6ed8f`, backend em validação |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 064: §§ 9.3, 9.4 e 10.3 |
-| Roteiro consultado      | Passo 064; checkpoint sequencial F07 |
-| Commit anterior backend | `b4153ee` — passo 062 |
-| Repositório frontend    | `d925fbd` — passo 064 |
-| Gate                    | Frontend build, 11 testes, 1 E2E, lint, typecheck, format e diff: PASS |
-| Próximo passo           | 065 — dashboard de fontes e execuções no frontend |
+| Arquitetura consultada  | Passo 065: §§ 9.3, 9.4 e 10.3 |
+| Roteiro consultado      | Passo 065; checkpoint sequencial F07 |
+| Commit anterior backend | `a6c0ffb` — progresso do passo 064 |
+| Repositório frontend    | `8b6ed8f` — passo 065 |
+| Gate                    | Frontend build, 14 testes, 1 E2E; backend build, 180 testes; lint, typecheck, format e diff: PASS |
+| Próximo passo           | 066 — E2E de RBAC e jornada de publicação |
 
 ## Passo 001 — evidências
 
@@ -565,3 +565,12 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Acessibilidade/estética: componentes responsivos, semântica e rótulos associados; tokens, cores, tipografia de cartaz, bordas, sombras e blocos gráficos alinhados à imagem de referência. Navegador CUA indisponível neste ambiente; estrutura verificada pelo Angular TestBed e build.
 - Evidências: frontend `d925fbd`; `corepack pnpm test` (11/11), `corepack pnpm test:e2e` (1/1), build, lint, typecheck, format:check e `git diff --check`: PASS. Testes novos cobrem contexto de evidência, payload versionado, bloqueio de registro histórico e conflito 409.
 - Pendências: configuração operacional do provedor OIDC ainda depende da decisão operacional ADR 0035; testes E2E com identidade/fluxo completo permanecem no passo 066. Nenhum push, deploy, publicação ou migração foi feito.
+
+## Passo 065 — concluído localmente em frontend e backend
+
+- Estado observado antes da implementação: frontend `d925fbd` e backend `a6c0ffb`, ambos limpos. Relidos roteiro 065 e arquitetura §§ 9.3, 9.4 e 10.3; conferidos `GET /admin/sources`, `GET /admin/sources/:id`, histórico CrawlRun, regras de permissão e imagem `style-reference.png`.
+- Implementação frontend: dashboard mostra estado/status e última coleta por fonte, candidatas da fonte selecionada, últimas cinco execuções com HTTP/erro/tentativa, retentativa e contagens `waiting/active/delayed/failed` da fila. A UI esclarece que contagens BullMQ são compartilhadas e não atribuídas a uma fonte específica. Solicitação manual exige confirmação e motivo, e não afirma que o job foi executado; 429 mostra `Retry-After`.
+- Implementação backend: detalhe administrativo retorna quantidade de URLs em estado CANDIDATE observadas pela fonte e contagens reais da fila `source.refresh`; sem dados inventados.
+- Estética/acessibilidade: layout responsivo, estados rotulados, foco visível, tabela semântica, blocos de alto contraste, marfim/preto e acentos lima/azul/laranja/lilás da referência.
+- Evidências: frontend `8b6ed8f`; `corepack pnpm test` (14/14), `test:e2e` (1/1), build, lint, typecheck, format:check e diff: PASS. Backend `corepack pnpm test` (180/180), build, lint, typecheck e format:check: PASS. Testes cobrem falhas observadas, candidatas/fila, bloqueio de fonte e motivo obrigatório.
+- Pendências: navegador CUA indisponível para inspeção visual ao vivo; frontend verificado em TestBed/build. Não foi executada integração com Redis/PostgreSQL reais, nem push/deploy/migração.

@@ -43,6 +43,7 @@ function fixture() {
           Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)),
         ),
     },
+    discoveredUrl: { count: async () => 3 },
     auditEvent: { create: async ({ data }) => (events.push(data), data) },
   };
   database.$transaction = async (callback) => callback(database);
@@ -62,6 +63,7 @@ function fixture() {
   const queue = {
     enqueueManualSourceRefresh: async (id) => (jobs.push(id), { id: 'manual-job-1' }),
     sourceRefreshBackoff: async () => ({ active: false, nextRetryAt: null }),
+    sourceRefreshQueueCounts: async () => ({ waiting: 2, active: 1, delayed: 3, failed: 4 }),
   };
   return { service: new AdminSourcesService(database, queue, redis), events, jobs, keys };
 }
@@ -167,6 +169,25 @@ test('manual run is rate limited by exact host and records the requester', async
     actor,
   );
   await service.configureSource(sourceId, { status: 'ACTIVE', reason: 'Activate' }, actor);
+  const previousDatabaseUrl = process.env.DATABASE_URL;
+  const previousRedisUrl = process.env.REDIS_URL;
+  process.env.DATABASE_URL = 'postgresql://test_user:test_password@127.0.0.1:5433/test_db';
+  process.env.REDIS_URL = 'redis://127.0.0.1:6380';
+  try {
+    const health = await service.get(sourceId);
+    assert.equal(health.candidateCount, 3);
+    assert.deepEqual(health.sourceRefreshQueue, {
+      waiting: 2,
+      active: 1,
+      delayed: 3,
+      failed: 4,
+    });
+  } finally {
+    if (previousDatabaseUrl === undefined) delete process.env.DATABASE_URL;
+    else process.env.DATABASE_URL = previousDatabaseUrl;
+    if (previousRedisUrl === undefined) delete process.env.REDIS_URL;
+    else process.env.REDIS_URL = previousRedisUrl;
+  }
   assert.equal(
     (await service.run(sourceId, { reason: 'Check official correction' }, actor)).state,
     'queued',
