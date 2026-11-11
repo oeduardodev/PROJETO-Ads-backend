@@ -14,15 +14,15 @@
 | Campo                   | Valor |
 | ----------------------- | ----- |
 | Fase                    | F07 — MVP administrativo |
-| Passo                   | 063 — `feat(admin-web): shell protegido e navegação` |
-| Estado                  | Passo 063 concluído no frontend em `5bf1342` |
-| Data                    | 2026-11-08 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 063: §§ 7.3 e 9.1–9.4 |
-| Roteiro consultado      | Passo 063; checkpoint sequencial F07 |
+| Passo                   | 064 — `feat(admin-web): revisar edital com evidencias` |
+| Estado                  | Passo 064 concluído localmente em frontend `d925fbd` |
+| Data                    | 2026-11-11 (America/Sao_Paulo) |
+| Arquitetura consultada  | Passo 064: §§ 9.3, 9.4 e 10.3 |
+| Roteiro consultado      | Passo 064; checkpoint sequencial F07 |
 | Commit anterior backend | `b4153ee` — passo 062 |
-| Repositório frontend    | `5bf1342` — passo 063 |
-| Gate                    | Frontend build, 7 testes, 1 E2E, lint, typecheck, format e diff: PASS |
-| Próximo passo           | 064 — revisão lado a lado no frontend |
+| Repositório frontend    | `d925fbd` — passo 064 |
+| Gate                    | Frontend build, 11 testes, 1 E2E, lint, typecheck, format e diff: PASS |
+| Próximo passo           | 065 — dashboard de fontes e execuções no frontend |
 
 ## Passo 001 — evidências
 
@@ -557,3 +557,11 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Estética: o shell emprega fundo marfim, preto dominante, título muito pesado, blocos lima/laranja/azul/lilás, bordas grossas, sombras deslocadas e formas anguladas da referência, com foco visível, semântica e layout responsivo. A inspeção por navegador local não ficou disponível (`browser access host is unavailable`); build e testes de componente validaram a estrutura.
 - Evidência: frontend `5bf1342`; `corepack pnpm build`, `corepack pnpm test` (7/7), `corepack pnpm test:e2e` (1/1), lint, typecheck, format:check e `git diff --check`: PASS. Testes cobrem redirecionamento sem token, rotas de retorno restritas, provedor ausente e navegação rotulada.
 - Pendências: provedor de identidade e client ID operacionais não configurados; telas reais de revisão e fontes vêm nos passos 064–065. Nenhum token, segredo, edital ou URL oficial foi publicado; sem push/deploy.
+
+## Passo 064 — concluído localmente no frontend
+
+- Estado observado: frontend limpo no commit `5bf1342` antes do passo; backend limpo em `df88c94`. Relidos roteiro 064 e arquitetura §§ 9.3, 9.4 e 10.3; inspecionados contratos reais da fila/detalhe e comandos administrativos, além da referência `style-reference.png`.
+- Implementação: fila de revisão com filtros de estado, paginação e seleção de processo; painel lado a lado com fatos, ofertas/reservas, prazos, requisitos, trechos de evidência, páginas/seções, versão/hash/documento PDF, retificações e decisões anteriores. Correções tipadas enviam `expectedReviewVersion`, motivo e evidência por campo. Aprovação exige fonte selecionada e atestações de escopo/fatos críticos; registro histórico de demonstração não pode ser aprovado. Conflito 409 exige recarga explícita antes de nova decisão.
+- Acessibilidade/estética: componentes responsivos, semântica e rótulos associados; tokens, cores, tipografia de cartaz, bordas, sombras e blocos gráficos alinhados à imagem de referência. Navegador CUA indisponível neste ambiente; estrutura verificada pelo Angular TestBed e build.
+- Evidências: frontend `d925fbd`; `corepack pnpm test` (11/11), `corepack pnpm test:e2e` (1/1), build, lint, typecheck, format:check e `git diff --check`: PASS. Testes novos cobrem contexto de evidência, payload versionado, bloqueio de registro histórico e conflito 409.
+- Pendências: configuração operacional do provedor OIDC ainda depende da decisão operacional ADR 0035; testes E2E com identidade/fluxo completo permanecem no passo 066. Nenhum push, deploy, publicação ou migração foi feito.
