@@ -4,6 +4,7 @@ import { loadWorkerConfig } from '../../config/environment.js';
 import { logStructured } from '../../observability/structured-log.js';
 import { SourceRefreshProcessor } from './source-refresh.processor.js';
 import { UrlFetchProcessor } from './url-fetch.processor.js';
+import { DocumentProcessingProcessor } from './document-processing.processor.js';
 
 @Injectable()
 export class WorkerJobConsumers implements OnModuleInit, OnApplicationShutdown {
@@ -12,6 +13,7 @@ export class WorkerJobConsumers implements OnModuleInit, OnApplicationShutdown {
   constructor(
     private readonly sourceRefresh: SourceRefreshProcessor,
     private readonly urlFetch: UrlFetchProcessor,
+    private readonly documentProcessing: DocumentProcessingProcessor,
   ) {}
 
   onModuleInit(): void {
@@ -65,6 +67,62 @@ export class WorkerJobConsumers implements OnModuleInit, OnApplicationShutdown {
       }),
     );
     this.workers.push(fetchWorker);
+
+    const classifyWorker = new Worker(
+      'document.classify',
+      (job) => this.documentProcessing.classify(job),
+      {
+        connection: { url: config.redisUrl, maxRetriesPerRequest: null },
+        prefix: 'alem-do-sisu',
+        concurrency: config.crawlConcurrency,
+      },
+    );
+    classifyWorker.on('ready', () =>
+      logStructured('info', 'worker.queue.ready', { queue: 'document.classify' }),
+    );
+    classifyWorker.on('error', (error: Error) =>
+      logStructured('error', 'worker.queue.error', {
+        queue: 'document.classify',
+        errorName: error.name,
+      }),
+    );
+    classifyWorker.on('failed', (job, error) =>
+      logStructured('error', 'worker.job.failed', {
+        queue: 'document.classify',
+        jobId: job?.id,
+        attemptsMade: job?.attemptsMade,
+        errorName: error.name,
+      }),
+    );
+    this.workers.push(classifyWorker);
+
+    const extractWorker = new Worker(
+      'document.extract',
+      (job) => this.documentProcessing.extract(job),
+      {
+        connection: { url: config.redisUrl, maxRetriesPerRequest: null },
+        prefix: 'alem-do-sisu',
+        concurrency: config.crawlConcurrency,
+      },
+    );
+    extractWorker.on('ready', () =>
+      logStructured('info', 'worker.queue.ready', { queue: 'document.extract' }),
+    );
+    extractWorker.on('error', (error: Error) =>
+      logStructured('error', 'worker.queue.error', {
+        queue: 'document.extract',
+        errorName: error.name,
+      }),
+    );
+    extractWorker.on('failed', (job, error) =>
+      logStructured('error', 'worker.job.failed', {
+        queue: 'document.extract',
+        jobId: job?.id,
+        attemptsMade: job?.attemptsMade,
+        errorName: error.name,
+      }),
+    );
+    this.workers.push(extractWorker);
   }
 
   async onApplicationShutdown(): Promise<void> {

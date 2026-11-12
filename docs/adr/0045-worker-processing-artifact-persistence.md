@@ -1,6 +1,6 @@
 # ADR 0045 — persistência de resultados de classificação e extração
 
-- Estado: PROPOSTO; decisão pendente do usuário.
+- Estado: ACEITO.
 - Referências: arquitetura §§ 5.1–5.2, 6 e 7.2; roteiro passo 079; ADRs 0008, 0027 e 0028.
 
 ## Contexto
@@ -14,7 +14,7 @@ As filas `document.classify` e `document.extract` e seus produtores existem, mas
 
 ## Decisão
 
-Pendente. Não conectar os consumidores de classificação/extração até o usuário escolher uma alternativa. A proposta recomendada não muda os limites do ADR 0008: execução atual usa apenas fixtures sintéticas locais; snapshots oficiais continuam bloqueados até revisão de licença, retenção e storage.
+Persistir resultados tipados e imutáveis por documento, hash e versão de schema em tabela própria. A chave única inclui documento, hash, tipo de processamento e versão; replays retornam o resultado existente sem atualizá-lo. A implementação não muda os limites do ADR 0008: snapshots oficiais continuam bloqueados até revisão de licença, retenção e storage. Provedores externos continuam desativados com orçamento zero; sem conteúdo processável ou conector ativado, o resultado permanece `PENDING_REVIEW`.
 
 ## Consequências
 

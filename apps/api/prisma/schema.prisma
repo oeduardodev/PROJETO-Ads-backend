@@ -31,6 +31,11 @@ enum DocumentParserKind {
   OCR
 }
 
+enum DocumentProcessorKind {
+  CLASSIFICATION
+  EXTRACTION
+}
+
 enum SourceStatus {
   DRAFT
   ACTIVE
@@ -265,11 +270,28 @@ model Document {
   revisions       Revision[]
   outgoingRelations DocumentRelation[] @relation("document_relation_origin")
   incomingRelations DocumentRelation[] @relation("document_relation_related")
+  processingResults DocumentProcessingResult[]
 
   @@unique([url, version], map: "documents_url_version_key")
   @@index([sha256], map: "documents_sha256_idx")
   @@index([discoveredUrlId], map: "documents_discovered_url_idx")
   @@map("documents")
+}
+
+model DocumentProcessingResult {
+  id            String               @id @default(uuid()) @db.Uuid
+  documentId    String               @map("document_id") @db.Uuid
+  sha256        String               @db.Char(64)
+  processorKind DocumentProcessorKind @map("processor_kind")
+  schemaVersion Int                  @map("schema_version")
+  status        String               @db.VarChar(32)
+  resultJson    Json                 @map("result_json") @db.JsonB
+  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  document      Document             @relation(fields: [documentId], references: [id], onDelete: Restrict)
+
+  @@unique([documentId, sha256, processorKind, schemaVersion], map: "document_processing_results_identity_key")
+  @@index([processorKind, status, createdAt], map: "document_processing_results_kind_status_idx")
+  @@map("document_processing_results")
 }
 
 model DocumentRelation {
