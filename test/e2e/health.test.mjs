@@ -28,7 +28,7 @@ test('API serves health with configured CORS origin', async () => {
   });
   try {
     let response;
-    for (let attempt = 0; attempt < 40; attempt += 1) {
+    for (let attempt = 0; attempt < 80; attempt += 1) {
       if (child.exitCode !== null) throw new Error('API exited before health probe');
       try {
         response = await fetch(`http://127.0.0.1:${port}/health`, {

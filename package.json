@@ -11,6 +11,8 @@
     "perf:public-search": "node test/performance/public-search.mjs",
     "build": "corepack pnpm --filter @alem-do-sisu/api build",
     "test:e2e": "node --test --test-concurrency=1 test/e2e/health.test.mjs test/e2e/worker.test.mjs test/e2e/ingestion.test.mjs test/e2e/admin/review-publication.test.mjs",
+    "test:e2e:repositories": "node --test --test-concurrency=1 test/integration/institutions.test.mjs test/integration/sources.test.mjs test/integration/discovery.test.mjs test/integration/documents.test.mjs test/integration/processes.test.mjs test/integration/reviews.test.mjs",
+    "test:e2e:offline": "node test/e2e/full-pipeline/run-offline.mjs",
     "schemas:generate": "corepack pnpm build && node apps/api/dist/modules/ai/schemas/generate-json-schemas.js",
     "openapi:generate": "corepack pnpm build && node apps/api/dist/openapi/generate.js",
     "openapi:check": "corepack pnpm build && node apps/api/dist/openapi/generate.js --check",
