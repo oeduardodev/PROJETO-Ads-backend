@@ -726,3 +726,10 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Índices UFPB, UFCG e IFPB foram lidos; tentativa de leitura UEPB retornou 502 do serviço de navegação, não prova falha da origem. Matriz preserva status HTTP/robots da última checagem direta e registra o resultado observacional de 2026-11-12. Nenhum novo edital foi incluído.
 - Sem fetch automatizado, snapshots, consulta paga ou IA; custo variável externo desta auditoria = zero. Conectores seguem DRAFT; revisão humana/licença/retensão bloqueiam automação e publicação.
 - Artefato `docs/quality/pilot-report.md`; pendências incluem confirmação direta UEPB, termos/retensão, curadoria de evidências textuais e dados de taxa. Metas de precisão/recall do piloto e cobertura completa permanecem não medidas.
+
+## Passo 083 — pipeline de release e rollback — pendente de staging
+
+- Estado inicial: backend limpo em `5e7e170`; frontend limpo em `f582494`. Relidos checkpoint 083 e arquitetura §§ 10.3, 11–11.1; conferidos os dois workflows CI, documentação Git e remotes.
+- Remotes de código existem, mas não têm push autorizado e a configuração/proteção hospedada, provedor, ambientes, domínio, secrets e staging não estão disponíveis para revisão. Os workflows CI apenas validam qualidade e não fazem deploy.
+- ADR 0044 mantém jobs reais de release pendentes para não criar workflow sem destino. `docs/ops/rollback.md` registra reversão de artefato, compatibilidade de schema, backup, gates manuais e proibição de force push.
+- Validação de deploy/rollback e permissões remotas não executável sem hosting/ambiente e sem publicar os repositórios. Passo parcial; sem push, deploy ou migration.
