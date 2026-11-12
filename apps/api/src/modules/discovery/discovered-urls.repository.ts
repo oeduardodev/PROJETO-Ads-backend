@@ -102,4 +102,17 @@ export class DiscoveredUrlsRepository {
       include: { observations: true },
     });
   }
+
+  getFetchContext(id: string) {
+    return this.database.discoveredUrl.findUnique({
+      where: { id },
+      include: {
+        observations: {
+          include: {
+            source: { include: { allowedDomain: true } },
+          },
+        },
+      },
+    });
+  }
 }

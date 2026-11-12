@@ -26,3 +26,19 @@ test('private, malformed and credentialed URLs are rejected', () => {
     assert.throws(() => normalizeSourceUrl(url), Error, url);
   }
 });
+
+test('reserved fixture domains are accepted only in test mode', () => {
+  const priorNodeEnv = process.env.NODE_ENV;
+  try {
+    process.env.NODE_ENV = 'production';
+    assert.throws(() => normalizeSourceUrl('https://www.example.test/fixture.pdf'));
+    process.env.NODE_ENV = 'test';
+    assert.deepEqual(normalizeSourceUrl('https://www.example.test/fixture.pdf'), {
+      url: 'https://www.example.test/fixture.pdf',
+      host: 'www.example.test',
+    });
+  } finally {
+    if (priorNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = priorNodeEnv;
+  }
+});

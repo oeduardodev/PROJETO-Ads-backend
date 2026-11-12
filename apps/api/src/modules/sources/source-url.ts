@@ -16,13 +16,15 @@ export function normalizeAuthorizedHost(value: string): string {
   const host = value.trim().toLowerCase();
   const labels = host.split('.');
   const tld = labels.at(-1);
+  const fixtureDomain =
+    process.env.NODE_ENV === 'test' && (host.endsWith('.test') || host.endsWith('.example'));
   if (
     host.length > 253 ||
     labels.length < 2 ||
     !labels.every((label) => HOST_LABEL.test(label)) ||
     !tld ||
     !/^[a-z]{2,63}$/u.test(tld) ||
-    RESERVED_TLDS.has(tld) ||
+    (RESERVED_TLDS.has(tld) && !fixtureDomain) ||
     isIP(host)
   ) {
     throw new Error('Host must be a public DNS name');

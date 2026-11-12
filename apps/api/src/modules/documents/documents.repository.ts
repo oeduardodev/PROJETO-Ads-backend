@@ -6,6 +6,7 @@ import { observabilityMetrics } from '../../observability/metrics.registry.js';
 
 export interface FixtureSnapshotInput {
   url: string;
+  discoveredUrlId?: string;
   mediaType: 'text/html' | 'application/pdf';
   bytes: Uint8Array;
   storage: FixtureLocalStorage;
@@ -50,6 +51,7 @@ export class DocumentsRepository {
       }
       return transaction.document.create({
         data: {
+          discoveredUrlId: input.discoveredUrlId,
           url: input.url,
           sha256: stored.sha256,
           storageKey: stored.storageKey,
