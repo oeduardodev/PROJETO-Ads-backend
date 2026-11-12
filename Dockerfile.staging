@@ -17,4 +17,4 @@ RUN apt-get update \
 RUN corepack enable
 COPY --from=build /workspace /workspace
 EXPOSE 3000
-CMD ["pnpm", "--filter", "@alem-do-sisu/api", "start"]
+CMD ["node", "apps/api/dist/main.js"]

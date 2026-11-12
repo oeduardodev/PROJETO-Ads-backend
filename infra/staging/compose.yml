@@ -65,7 +65,7 @@ services:
     build:
       context: ../..
       dockerfile: Dockerfile.staging
-    command: ["pnpm", "--filter", "@alem-do-sisu/api", "start:worker"]
+    command: ["node", "apps/api/dist/worker.js"]
     environment:
       NODE_ENV: production
       LOG_LEVEL: info

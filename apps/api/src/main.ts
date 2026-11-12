@@ -15,6 +15,7 @@ import { requestObservabilityMiddleware } from './observability/request-observab
 
 const config = loadApiConfig();
 const app = await NestFactory.create(AppModule);
+app.enableShutdownHooks();
 app.setGlobalPrefix('api/v1', { exclude: ['health', 'ready'] });
 app.use(apiSecurityHeadersMiddleware);
 app.use(requestObservabilityMiddleware);
