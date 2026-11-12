@@ -702,3 +702,11 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Banco de teste: PostgreSQL 17.7 e Redis 7.4.12 em containers Docker locais, publicados apenas em loopback 5434/6381; migrations e seed local revisada aplicadas somente no banco descartável. Nenhuma chamada externa, produção ou dado real foi usado.
 - Limite e estado: o passo 079 permanece parcial e G5 PENDENTE. As suítes ainda não compõem um único percurso: documento do replay não alimenta revisão e a jornada Angular usa API simulada. Sem consumers conectados para `source.refresh`, `url.fetch` e `document.extract`, não há prova do fluxo de ponta a ponta. Usuário autorizou seguir com E2E offline e registrar esse gate pendente.
 - Próximas evidências: conectar consumers com idempotência, manter candidatos invisíveis antes da aprovação, servir o processo aprovado pelo NestJS real e carregar a mesma resposta no Playwright sem mocks. G5 ainda exige staging, backup/restore, segurança/curadoria e aprovação explícita antes de produção. Sem push, deploy ou migração em produção.
+- Revalidação agregada em 2026-11-12: `corepack pnpm test:e2e:offline` PASS, backend 5/5, PostgreSQL/Redis 25/25 e Playwright 4/4; `pnpm test` 193/193; lint, typecheck, format:check, openapi:check e `git diff --check` PASS. A suíte web é simulada e as suites não formam pipeline único.
+
+## Passo 080 — homologação isolada — pendente de provedor/domínio
+
+- Estado inicial: backend limpo em `73e0a3f`; frontend limpo em `f582494`. Lidos o checkpoint 080 e arquitetura §§ 11–11.2; examinados Compose de desenvolvimento, containers Docker/WSL, configuração Angular/API, migrations, secrets, storage e ADRs 0008/0041.
+- ADR 0043 registra a pendência do provedor, domínio, serviços gerenciados, vault e política de storage. A escolha não pode ser inferida dos repositórios; não foi criado domínio, endpoint ou credencial.
+- Artefatos: `infra/staging/README.md` reserva o diretório sem manifestos inexequíveis; `docs/ops/deploy-staging.md` documenta gates, sequência manual de migration, smoke/E2E, backup/restore e rollback.
+- Resultado: passo parcial. Não há deploy externo nem E2E remoto; Docker local e o runner offline do passo 079 não satisfazem este checkpoint. Sem migrations de produção, push ou deploy.
