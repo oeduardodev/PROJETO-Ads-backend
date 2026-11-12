@@ -710,3 +710,11 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - ADR 0043 registra a pendência do provedor, domínio, serviços gerenciados, vault e política de storage. A escolha não pode ser inferida dos repositórios; não foi criado domínio, endpoint ou credencial.
 - Artefatos: `infra/staging/README.md` reserva o diretório sem manifestos inexequíveis; `docs/ops/deploy-staging.md` documenta gates, sequência manual de migration, smoke/E2E, backup/restore e rollback.
 - Resultado: passo parcial. Não há deploy externo nem E2E remoto; Docker local e o runner offline do passo 079 não satisfazem este checkpoint. Sem migrations de produção, push ou deploy.
+
+## Passo 081 — ensaio local de backup, restore e migrations
+
+- Estado inicial: backend limpo em `c130457`; arquitetura §11 e §11.1 e checkpoint 081 lidos; revisados `docs/ops/migrations.md`, política ADR 0008, schema dos documentos/blobs e serviços Docker temporários.
+- Executado backup PostgreSQL custom-format no banco local descartável `alem_test`, listagem do archive, restore para novo banco `alem_restore_test`, consulta de 16 migrations concluídas e comparação de `documents.sha256`/`document_blobs.sha256`.
+- Fixture não real: um documento e blob sintéticos com hash `17a403a6fd00d9944c0b71633fac55bcee6095376365d92c27bb662855f10121`; o mesmo hash e contagem 1/1 foram observados na origem e no restore. Checksum SHA-256 do arquivo: `43e7256d9f601ef439cd07a21c21d3f0f8597ad175f23c865c1faab3aef8d2ae`.
+- Artefatos: `docs/ops/backup-restore.md` e atualização de `docs/ops/migrations.md`. O roteiro define backup fora do Git, controle de retenção, restore isolado e proibição de operações de produção sem autorização.
+- Pendência: ensaio remoto em homologação, backup automatizado gerenciado e política de retenção/restore exigem o provedor do passo 080. Nenhuma migration de produção, push ou deploy.
