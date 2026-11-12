@@ -13,6 +13,8 @@ Referências: arquitetura §§ 4.1–4.3, 10.1, 13 e 15; roteiro passo 003. A ma
 
 O método inicial é listar links públicos em HTML com origem, URL canônica e data de descoberta; seguir somente páginas e documentos no host explicitamente autorizado da fonte. Notícias ou motores de busca podem sugerir candidatos, mas a confirmação deve ocorrer no edital oficial. Não considerar o título ou a categoria como prova de graduação gratuita fora do SiSU. Guardar edital principal, anexos e retificações como itens distintos nos passos de ingestão.
 
+Rechecagem manual somente leitura em 2026-11-12: os índices UFPB/UFCG/UEPB responderam HTTP 200; o índice IFPB respondeu 503 uma vez, resultado divergente da leitura por browser de 2026-11-11. Os robots atuais responderam UFPB 404, UFCG 200 (bloqueia caminhos internos/administrativos), UEPB 403 e IFPB 404. O status isolado do IFPB não prova indisponibilidade persistente; o 403 da UEPB não é autorização para crawler. Nenhum documento foi seguido ou baixado. As fontes continuam desativadas até revisão de acesso, termos, licença e retenção.
+
 ## Acesso e direitos observados
 
 | Host | `robots.txt` em 2026-11-02 | Encaminhamento |

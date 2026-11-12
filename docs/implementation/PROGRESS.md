@@ -745,6 +745,7 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Sem fetch automatizado, snapshots, consulta paga ou IA; custo variável externo desta auditoria = zero. Conectores seguem DRAFT; revisão humana/licença/retensão bloqueiam automação e publicação.
 - Releitura adicional de índices oficiais em 2026-11-11 local: UFPB, UFCG e IFPB renderizaram conteúdo; UEPB voltou a falhar com 502 no leitor. Apenas listagens foram lidas; nenhum edital baixado ou incluído. `robots.txt` não foi revalidado por ferramenta direta, preservando datas antigas da matriz. Observações e limites registrados em `source-matrix.csv` e `pilot-report.md`; todos os conectores continuam desativados.
 - Artefato `docs/quality/pilot-report.md`; pendências incluem confirmação direta UEPB, termos/retensão, curadoria de evidências textuais e dados de taxa. Metas de precisão/recall do piloto e cobertura completa permanecem não medidas.
+- Rechecagem HTTP direta em 2026-11-12, somente leitura: índices/robots UFPB 200/404, UFCG 200/200, UEPB 200/403 e IFPB 503/404. A resposta 503 isolada não prova indisponibilidade persistente; 403 UEPB não autoriza automação. Apenas índices e `robots.txt` foram lidos; nenhum link de edital foi seguido/baixado e nenhum dado do corpus foi acrescentado. Matriz, política de coleta e relatório foram atualizados; fontes continuam DRAFT. Teste do corpus reexecutado antes do commit complementar.
 
 ## Passo 083 — pipeline de release e rollback — pendente de staging
 

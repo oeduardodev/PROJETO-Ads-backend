@@ -10,8 +10,8 @@ Esta auditoria do passo 082 revisa os quatro índices institucionais, a matriz d
 | --- | ---: | --- | --- |
 | UFPB | 15 artefatos | Índice da PRG acessível, com categorias próprias, SiSU e SiSU+; lista processos PSRC/PSTV/PSIG/PSE de 2027 e SISU+ 2026 | Cada processo e edital precisa de revisão; página de listagem não comprova taxa, prazo ou escopo. |
 | UFCG | 5 artefatos | Página de graduação acessível; mistura SiSU, entradas derivadas, vagas remanescentes e seleções próprias; declara CC BY-ND 3.0 | A licença e a retenção precisam de avaliação antes de crawling ou cópia; não acessar os caminhos bloqueados por robots. |
-| UEPB | 5 artefatos | O leitor web não conseguiu carregar a página (502); a origem não foi confirmada nesta rodada | A matriz preserva o último HTTP 200 direto de 2026-11-02 e robots 403 da mesma data; manter pesquisa manual até rechecagem direta e política esclarecida. |
-| IFPB | 10 artefatos | Portal acessível; separa Técnico, Especialização Técnica, Graduação e Pós-Graduação; a lista corrente de editais mistura categorias e campi | Filtrar cada edital por nível e tipo; termos e coleta automatizada continuam pendentes. |
+| UEPB | 5 artefatos | GET direto ao índice oficial retornou HTTP 200 em 2026-11-12; `robots.txt` retornou 403 | A listagem está acessível para auditoria manual; manter coleta automatizada desativada e esclarecer a política indicada pelo 403 antes de habilitar o crawler. |
+| IFPB | 10 artefatos | GET direto ao portal de editais retornou HTTP 503 uma vez em 2026-11-12, divergindo da leitura pelo browser em 2026-11-11 | Uma resposta isolada não prova indisponibilidade da origem. Revalidar manualmente antes de tratar uma falha como persistente; termos e coleta automatizada continuam pendentes. |
 
 As observações recentes e as datas das últimas confirmações de `robots.txt` estão em [`source-matrix.csv`](../research/source-matrix.csv). Os três índices renderizados são evidência de disponibilidade para leitura, não de completude. Os conectores seguem desligados conforme [`crawl-policy.md`](../research/crawl-policy.md).
 
@@ -35,7 +35,7 @@ Não houve fetch automatizado, snapshot, chamada de busca externa ou chamada de 
 
 ## Pendências bloqueantes
 
-1. Confirmar por acesso direto a UEPB e `robots.txt`; esclarecer termos/limites com cada fonte antes de automatizar.
+1. A página UEPB foi confirmada por acesso direto; esclarecer o `robots.txt` 403 e os termos/limites de cada fonte antes de automatizar. Revalidar a disponibilidade IFPB após a resposta isolada 503.
 2. Rever licença e retenção UFCG; manter storage de snapshots oficiais bloqueado até política aprovada por fonte (ADR 0008).
 3. Curar títulos, trechos curtos e evidências oficiais para o corpus, incluindo taxa de inscrição/isencão; então medir precisão/recall sem derivar entrada dos rótulos.
 4. Revisar as 8 linhas parciais, 3 casos `PENDING_REVIEW`, conflitos e originais de retificação ausentes; não alterar gabarito sem revisão humana.
@@ -55,4 +55,8 @@ Não houve fetch automatizado, snapshot, chamada de busca externa ou chamada de 
 Uma nova leitura em navegador somente leitura confirmou a disponibilidade de conteúdo nos índices oficiais da [UFPB](https://www.prg.ufpb.br/editais/ingressantes/), [UFCG](https://comprov.ufcg.edu.br/graduacao.html) e [IFPB](https://estudante.ifpb.edu.br/editais/). A UFPB lista categorias PSRC/PSTV/PSIG/PSE 2027 e também SiSU/SiSU+; a COMPROV lista ingresso derivado, vagas remanescentes e processo de Psicologia 2026 e declara CC BY-ND 3.0; o IFPB mostra editais de pós-graduação e chamadas por campus cuja categoria não pode ser inferida só pelo título. Nenhum documento foi aberto ou baixado e nenhum candidato foi acrescentado ao corpus.
 
 A página da [UEPB](https://uepb.edu.br/prograd/processos-seletivos/) retornou novamente 502 no leitor web. Isso não confirma falha na origem; `robots.txt` das quatro fontes também não foi revalidado diretamente nesta ferramenta. Permanecem os últimos resultados diretos datados de 2026-11-02 na matriz. Todos os conectores continuam `DRAFT`/desativados, sem fetch, snapshot, classificação ou publicação; autorização, termos/licenças e evidência por processo continuam exigindo revisão humana.
+
+## Rechecagem HTTP direta, somente leitura — 2026-11-12
+
+Uma requisição GET manual por índice e outra por `robots.txt`, com User-Agent identificado, retornaram: UFPB 200/404; UFCG 200/200; UEPB 200/403; IFPB 503/404. No robots da UFCG, as diretivas observadas bloqueiam caminhos administrativos/internos do Joomla; nenhum desses caminhos foi acessado. O 503 do IFPB é uma observação isolada e diverge do browser de 2026-11-11, sem demonstrar falha persistente da origem. A página PROGRAD da UEPB ficou diretamente acessível, mas seu robots 403 não autoriza automação. Foram lidas apenas respostas dos índices e dos arquivos robots; nenhum link de edital foi seguido, nenhum documento baixado e nenhum candidato ou rótulo alterado. As quatro fontes permanecem `DRAFT`; pendem política de acesso/termos/licença e revisão humana antes de qualquer ativação.
 
