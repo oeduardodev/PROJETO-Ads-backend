@@ -11,4 +11,6 @@ Os gates organizam o MVP P0 e suas expansões. Evidência de código local não 
 | G4 — UX pública | Busca/detalhe, filtros e acessibilidade | Playwright cobre as jornadas públicas com API simulada; revisão manual de leitor de tela segue pendente em `../../frontend/docs/quality/a11y.md` | Código local; revisão manual pendente |
 | G5 — MVP publicado | Fluxo E2E, QA, staging, backup, segurança, curadoria e produção aprovada | Passo 079: backend E2E 5/5, integração PostgreSQL/Redis 25/25 e Playwright 4/4 em containers locais; as suítes são independentes e o browser usa API simulada. Consumidores BullMQ de negócio ainda não conectam discovery/fetch/extract. Sem staging ou autorização de produção | Pendente; não declarar MVP publicado |
 
+A avaliação final do passo 084 está em `docs/releases/v1.0-mvp.md` e reteve a release. O rascunho interno de aviso/termos em `docs/legal/privacy-terms-draft.md` não está pronto para publicação; o runbook local em `docs/ops/runbook.md` não descreve uma operação de produção.
+
 O comando `corepack pnpm test:e2e:offline` agrega as suítes offline disponíveis. Seu resultado é evidência de componentes/jornadas, não substitui os critérios ausentes da coluna G5. Qualquer revisão ou liberação deve revalidar todos os gates anteriores. Sem aprovação explícita, não fazer push, deploy ou migration de produção.

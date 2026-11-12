@@ -733,3 +733,11 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Remotes de código existem, mas não têm push autorizado e a configuração/proteção hospedada, provedor, ambientes, domínio, secrets e staging não estão disponíveis para revisão. Os workflows CI apenas validam qualidade e não fazem deploy.
 - ADR 0044 mantém jobs reais de release pendentes para não criar workflow sem destino. `docs/ops/rollback.md` registra reversão de artefato, compatibilidade de schema, backup, gates manuais e proibição de force push.
 - Validação de deploy/rollback e permissões remotas não executável sem hosting/ambiente e sem publicar os repositórios. Passo parcial; sem push, deploy ou migration.
+
+## Passo 084 — avaliação da release 1.0 — retida
+
+- Estado inicial: backend limpo em `c32000d`; frontend limpo em `f582494`. Lidos checkpoint 084 e arquitetura §§ 10.2, 10.3, 11–11.2 e 12.2; inspecionados flags/URLs Angular, E2E mocks, conectores, API, progress e gates.
+- Evidências contrárias à publicação: `catalogEnabled=false`, `apiBaseUrl`/`publicSiteUrl` vazios em produção; nenhuma fonte ativa/processo aprovado; consumers não fecham o fluxo único; Playwright usa API mockada; sem staging/rollback/host/revisão real de acessibilidade. A arquitetura exige fonte oficial e revisão humana; nenhum dado foi publicado.
+- Artefatos: `docs/releases/v1.0-mvp.md` registra checklist e decisão RETIDA; `docs/ops/runbook.md` cobre somente preview local; `docs/legal/privacy-terms-draft.md` é explicitamente rascunho interno e não pode entrar em publicação; `docs/quality/gates.md` aponta G5 pendente.
+- Validação: `corepack pnpm test:e2e:offline` passou após limpar do banco descartável o documento/blob sintéticos usados no ensaio 081: backend 5/5, PostgreSQL/Redis 25/25 e Playwright 4/4. A tentativa anterior ficou 24/25 por resíduo da fixture e não foi ocultada; repetição limpa passou. O runner segue com suítes independentes e API mockada no browser.
+- Resultado: passo 084 alcançado como avaliação de release, não como publicação do MVP. G5 PENDENTE. P0 não está pronto para produção; P1/P2 não iniciados. Sem tag de release, push, deploy ou migration.
