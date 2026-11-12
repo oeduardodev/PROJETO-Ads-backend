@@ -2,11 +2,11 @@
 
 ## Escopo e conclusão
 
-Esta auditoria do passo 082 revisa os quatro índices institucionais, a matriz de fontes e o corpus histórico rotulado em 2026-11-12. Ela mede o inventário e a evidência disponível; não declara cobertura completa, autorização de coleta ou desempenho do classificador. Nenhum registro vigente foi adicionado, corrigido ou publicado. Os quatro conectores permanecem `DRAFT`, com coleta desativada.
+Esta auditoria do passo 082 revisa os quatro índices institucionais, a matriz de fontes e o corpus histórico rotulado em 2026-11-11 (America/Sao_Paulo). Ela mede o inventário e a evidência disponível; não declara cobertura completa, autorização de coleta ou desempenho do classificador. Nenhum registro vigente foi adicionado, corrigido ou publicado. Os quatro conectores permanecem `DRAFT`, com coleta desativada.
 
 ## Cobertura observada
 
-| Instituição | Inventário histórico | Leitura do índice oficial em 2026-11-12 | Limite identificado |
+| Instituição | Inventário histórico | Leitura do índice oficial em 2026-11-11 (America/Sao_Paulo) | Limite identificado |
 | --- | ---: | --- | --- |
 | UFPB | 15 artefatos | Índice da PRG acessível, com categorias próprias, SiSU e SiSU+; lista processos PSRC/PSTV/PSIG/PSE de 2027 e SISU+ 2026 | Cada processo e edital precisa de revisão; página de listagem não comprova taxa, prazo ou escopo. |
 | UFCG | 5 artefatos | Página de graduação acessível; mistura SiSU, entradas derivadas, vagas remanescentes e seleções próprias; declara CC BY-ND 3.0 | A licença e a retenção precisam de avaliação antes de crawling ou cópia; não acessar os caminhos bloqueados por robots. |

@@ -10,4 +10,4 @@ As suítes ainda são independentes: o documento criado no replay de ingestão n
 
 O runtime PostgreSQL/Redis local está disponível e coberto acima. Para fechar o gate, ainda são necessários handlers de produção ligados ao pipeline, fixture sintética revisada e aprovada por curador, consulta do mesmo registro pelo endpoint real e browser sem mocks; o estado anterior à aprovação deve permanecer invisível no catálogo.
 
-Em 2026-11-12, o comando agregado foi executado com fixtures e containers Docker locais: backend E2E 5/5, integração PostgreSQL/Redis 25/25 e Playwright 4/4. Nenhuma consulta de edital real, chamada paga ou migração externa ocorreu. O runtime Docker está disponível via WSL; o pacote Testcontainers não está instalado no workspace.
+Em 2026-11-11 (America/Sao_Paulo), o comando agregado foi executado com fixtures e containers Docker locais: backend E2E 5/5, integração PostgreSQL/Redis 25/25 e Playwright 4/4. Nenhuma consulta de edital real, chamada paga ou migração externa ocorreu. O runtime Docker está disponível via WSL; o pacote Testcontainers não está instalado no workspace.

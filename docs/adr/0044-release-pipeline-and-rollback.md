@@ -2,7 +2,7 @@
 
 - Estado: pendente do provedor e da autorização operacional; sem deploy automático ativo.
 - Passo: 083.
-- Data: 2026-11-12.
+- Data: 2026-11-11 (America/Sao_Paulo).
 - Referências: arquitetura §§ 10.3 e 11–11.1; roteiro passo 083; ADRs 0000, 0041 e 0043.
 
 ## Contexto
