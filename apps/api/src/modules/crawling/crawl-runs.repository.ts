@@ -16,6 +16,31 @@ function validHttpStatus(value: number | undefined): number | undefined {
 export class CrawlRunsRepository {
   constructor(private readonly database: PrismaService) {}
 
+  async startOrResumeRecord(id: string, sourceId: string, attempt: number) {
+    if (!Number.isInteger(attempt) || attempt < 1)
+      throw new Error('Attempt must be a positive integer');
+    const existing = await this.database.crawlRun.findUnique({ where: { id } });
+    if (existing && existing.sourceId !== sourceId) {
+      throw new Error('Crawl run identity is already assigned to a different source');
+    }
+    const run = existing
+      ? await this.database.crawlRun.update({
+          where: { id },
+          data: {
+            attempt,
+            startedAt: new Date(),
+            finishedAt: null,
+            status: CrawlRunStatus.RUNNING,
+            success: null,
+            errorCode: null,
+            httpStatus: null,
+          },
+        })
+      : await this.database.crawlRun.create({ data: { id, sourceId, attempt } });
+    logStructured('info', 'source.crawl.started', { sourceId, crawlRunId: run.id, attempt });
+    return run;
+  }
+
   createRecord(sourceId: string, attempt = 1) {
     if (!Number.isInteger(attempt) || attempt < 1)
       throw new Error('Attempt must be a positive integer');

@@ -97,6 +97,13 @@ export class SourcesRepository {
     });
   }
 
+  getRefreshContext(sourceId: string) {
+    return this.database.source.findUnique({
+      where: { id: sourceId },
+      include: { allowedDomain: true },
+    });
+  }
+
   setSnapshotRetentionPolicy(
     sourceId: string,
     snapshotRetentionDays: number | null,

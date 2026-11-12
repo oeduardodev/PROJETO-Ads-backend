@@ -40,6 +40,7 @@ test('worker stays available without HTTP and closes its Nest context gracefully
   const child = spawn(process.execPath, ['apps/api/dist/worker.js'], {
     env: {
       ...process.env,
+      NODE_ENV: 'test',
       DATABASE_URL: 'postgresql://test_user:test_password@127.0.0.1:5433/test_db',
       REDIS_URL: process.env.TEST_REDIS_URL || 'redis://127.0.0.1:6380',
       LOG_LEVEL: 'error',
