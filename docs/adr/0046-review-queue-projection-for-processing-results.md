@@ -1,6 +1,6 @@
 # ADR 0046 — projeção de resultados de processamento para revisão
 
-- Estado: PROPOSTO; decisão pendente.
+- Estado: ACEITO pelo usuário em 2026-11-12.
 - Referências: arquitetura §§ 5.2, 5.4, 6.2, 7.2 e 12.1–12.2; roteiro passo 079; ADR 0045.
 
 ## Contexto
@@ -17,10 +17,11 @@ Os artefatos de classificação e extração são persistidos imutavelmente por 
 
 ## Decisão
 
-Pendente de decisão. Não projetar automaticamente resultados para `SelectionProcess`, não criar tabela/endpoint/UI de intake e não alterar a fila administrativa até a escolha ser registrada.
+Criar fila própria de artefatos ligada à URL candidata, documento/hash e resultados imutáveis. O curador pode associar um processo existente ou criar um rascunho explicitamente; o worker não cria `SelectionProcess`. Toda ação administrativa usa identidade mapeada no servidor, justificativa, optimistic lock e trilha de auditoria. Rascunhos permanecem invisíveis à API pública.
 
 ## Consequências
 
-- G2/G5 continuam pendentes; o encadeamento BullMQ até resultados `PENDING_REVIEW` não é o fluxo único de extração, curadoria, API e browser.
-- O estado atual permanece seguro: nenhum resultado pendente é público e nenhum processo é criado automaticamente por esse caminho.
-- Após decisão, a implementação deverá preservar idempotência, associação exata de documento/hash/schema, citações verificáveis e revisão humana; replays não podem alterar auditoria nem publicar dados.
+- G2/G5 continuam pendentes; o encadeamento BullMQ até resultados `PENDING_REVIEW` e sua fila autenticada de artefatos não são o fluxo único de extração real, curadoria completa, API pública e browser.
+- Nenhum resultado pendente é público e nenhum processo é criado automaticamente pelo worker.
+- A resolução da fila usa o estado `RESOLVED` para cobrir tanto associação a processo existente quanto criação explícita de rascunho.
+- A fila mantém uma linha idempotente por documento/hash e agrega resultados por versão. O vínculo a um processo é criado somente pela ação explícita do curador, com revisão humana antes de publicação.

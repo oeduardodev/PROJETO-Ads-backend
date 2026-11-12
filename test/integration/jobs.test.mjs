@@ -165,6 +165,12 @@ test('classification persists before enqueueing extraction and both jobs replay 
     );
     assert.ok(persisted.every((result) => result.status === 'PENDING_REVIEW'));
     assert.ok(persisted.every((result) => result.sha256 === sha256 && result.schemaVersion === 1));
+    const [reviewItem] = await database.documentProcessingReviewItem.findMany({
+      where: { documentId: databaseDocumentId, sha256 },
+    });
+    assert.equal(reviewItem.status, 'OPEN');
+    assert.equal(reviewItem.discoveredUrlId, null);
+    assert.equal(reviewItem.processId, null);
 
     const replay = await service.enqueueDocumentClassify(databaseDocumentId, sha256);
     assert.equal(replay.id, classifyJob.id);
@@ -180,6 +186,9 @@ test('classification persists before enqueueing extraction and both jobs replay 
     ]);
     await Promise.all(Object.values(queues).map((queue) => queue.obliterate({ force: true })));
     await service.onApplicationShutdown();
+    await database.documentProcessingReviewItem.deleteMany({
+      where: { documentId: databaseDocumentId },
+    });
     await database.documentProcessingResult.deleteMany({
       where: { documentId: databaseDocumentId },
     });

@@ -9,10 +9,11 @@ const sha256 = 'a'.repeat(64);
 
 function databaseStub() {
   const rows = new Map();
+  const reviewItems = new Map();
   const database = {
     document: {
       async findUnique() {
-        return { sha256 };
+        return { sha256, discoveredUrlId: null };
       },
     },
     documentProcessingResult: {
@@ -35,12 +36,19 @@ function databaseStub() {
         return rows.get(key) ?? null;
       },
     },
+    documentProcessingReviewItem: {
+      async upsert({ where, create }) {
+        const key = `${where.documentId_sha256.documentId}:${where.documentId_sha256.sha256}`;
+        if (!reviewItems.has(key)) reviewItems.set(key, { ...create, status: 'OPEN' });
+        return reviewItems.get(key);
+      },
+    },
   };
-  return { database, rows };
+  return { database, rows, reviewItems };
 }
 
 test('processing results are immutable and idempotent for document/hash/kind/schema', async () => {
-  const { database, rows } = databaseStub();
+  const { database, rows, reviewItems } = databaseStub();
   const repository = new ProcessingResultsRepository(database);
   const input = {
     documentId,
@@ -63,6 +71,7 @@ test('processing results are immutable and idempotent for document/hash/kind/sch
   });
 
   assert.equal(rows.size, 1);
+  assert.equal(reviewItems.size, 1);
   assert.deepEqual(replay.resultJson, first.resultJson);
   assert.equal(replay.status, 'PENDING_REVIEW');
 });

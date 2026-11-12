@@ -36,6 +36,11 @@ enum DocumentProcessorKind {
   EXTRACTION
 }
 
+enum DocumentProcessingReviewStatus {
+  OPEN
+  RESOLVED
+}
+
 enum SourceStatus {
   DRAFT
   ACTIVE
@@ -98,14 +103,14 @@ enum AdminRole {
 }
 
 model Institution {
-  id             String       @id @default(uuid()) @db.Uuid
-  name           String       @db.VarChar(250)
-  normalizedName String       @unique @map("normalized_name") @db.VarChar(250)
-  acronym        String       @unique @db.VarChar(16)
+  id             String             @id @default(uuid()) @db.Uuid
+  name           String             @db.VarChar(250)
+  normalizedName String             @unique @map("normalized_name") @db.VarChar(250)
+  acronym        String             @unique @db.VarChar(16)
   jurisdiction   Jurisdiction
-  publicFlag     Boolean      @default(true) @map("public_flag")
-  verifiedAt     DateTime?    @map("verified_at") @db.Timestamptz(6)
-  referenceUrl   String?      @map("reference_url") @db.Text
+  publicFlag     Boolean            @default(true) @map("public_flag")
+  verifiedAt     DateTime?          @map("verified_at") @db.Timestamptz(6)
+  referenceUrl   String?            @map("reference_url") @db.Text
   campuses       Campus[]
   allowedDomains AllowedDomain[]
   sources        Source[]
@@ -135,13 +140,13 @@ model Campus {
 }
 
 model AllowedDomain {
-  id                String       @id @default(uuid()) @db.Uuid
-  institutionId     String       @map("institution_id") @db.Uuid
-  host              String       @db.VarChar(253)
-  evidenceUrl       String       @map("evidence_url") @db.Text
-  reviewedAt        DateTime?    @map("reviewed_at") @db.Timestamptz(6)
-  collectionAllowed Boolean      @default(false) @map("collection_allowed")
-  institution       Institution  @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  id                String      @id @default(uuid()) @db.Uuid
+  institutionId     String      @map("institution_id") @db.Uuid
+  host              String      @db.VarChar(253)
+  evidenceUrl       String      @map("evidence_url") @db.Text
+  reviewedAt        DateTime?   @map("reviewed_at") @db.Timestamptz(6)
+  collectionAllowed Boolean     @default(false) @map("collection_allowed")
+  institution       Institution @relation(fields: [institutionId], references: [id], onDelete: Restrict)
   sources           Source[]
 
   @@unique([institutionId, host], map: "allowed_domains_institution_host_key")
@@ -150,28 +155,28 @@ model AllowedDomain {
 }
 
 model Source {
-  id               String        @id @default(uuid()) @db.Uuid
-  institutionId    String        @map("institution_id") @db.Uuid
-  allowedDomainId  String        @map("allowed_domain_id") @db.Uuid
-  url              String        @db.Text
-  kind             SourceKind
-  selector         String?       @db.Text
-  frequencyMinutes Int           @default(1440) @map("frequency_minutes")
-  priority         Int           @default(100)
-  status           SourceStatus  @default(DRAFT)
-  health           SourceHealth  @default(UNKNOWN)
-  lastCheckedAt    DateTime?     @map("last_checked_at") @db.Timestamptz(6)
-  lastSuccessAt    DateTime?     @map("last_success_at") @db.Timestamptz(6)
-  etag             String?       @db.VarChar(512)
-  lastModified     String?       @map("last_modified") @db.VarChar(128)
-  discoveryCursor  Json?         @map("discovery_cursor") @db.JsonB
-  strategyLastExecutedAt DateTime? @map("strategy_last_executed_at") @db.Timestamptz(6)
-  snapshotRetentionDays Int?      @map("snapshot_retention_days")
-  retentionReviewedAt DateTime? @map("retention_reviewed_at") @db.Timestamptz(6)
-  institution      Institution   @relation(fields: [institutionId], references: [id], onDelete: Restrict)
-  allowedDomain    AllowedDomain @relation(fields: [allowedDomainId, institutionId], references: [id, institutionId], onDelete: Restrict)
-  crawlRuns        CrawlRun[]
-  observations     DiscoveryObservation[]
+  id                     String                 @id @default(uuid()) @db.Uuid
+  institutionId          String                 @map("institution_id") @db.Uuid
+  allowedDomainId        String                 @map("allowed_domain_id") @db.Uuid
+  url                    String                 @db.Text
+  kind                   SourceKind
+  selector               String?                @db.Text
+  frequencyMinutes       Int                    @default(1440) @map("frequency_minutes")
+  priority               Int                    @default(100)
+  status                 SourceStatus           @default(DRAFT)
+  health                 SourceHealth           @default(UNKNOWN)
+  lastCheckedAt          DateTime?              @map("last_checked_at") @db.Timestamptz(6)
+  lastSuccessAt          DateTime?              @map("last_success_at") @db.Timestamptz(6)
+  etag                   String?                @db.VarChar(512)
+  lastModified           String?                @map("last_modified") @db.VarChar(128)
+  discoveryCursor        Json?                  @map("discovery_cursor") @db.JsonB
+  strategyLastExecutedAt DateTime?              @map("strategy_last_executed_at") @db.Timestamptz(6)
+  snapshotRetentionDays  Int?                   @map("snapshot_retention_days")
+  retentionReviewedAt    DateTime?              @map("retention_reviewed_at") @db.Timestamptz(6)
+  institution            Institution            @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  allowedDomain          AllowedDomain          @relation(fields: [allowedDomainId, institutionId], references: [id, institutionId], onDelete: Restrict)
+  crawlRuns              CrawlRun[]
+  observations           DiscoveryObservation[]
 
   @@unique([institutionId, url], map: "sources_institution_url_key")
   @@index([status, priority], map: "sources_status_priority_idx")
@@ -197,15 +202,16 @@ model CrawlRun {
 }
 
 model DiscoveredUrl {
-  id             String                 @id @default(uuid()) @db.Uuid
-  canonicalUrl   String                 @unique @map("canonical_url") @db.Text
-  foundAt        DateTime               @default(now()) @map("found_at") @db.Timestamptz(6)
-  lastSeenAt     DateTime               @default(now()) @map("last_seen_at") @db.Timestamptz(6)
-  seenCount      Int                    @default(1) @map("seen_count")
-  relevanceScore Float?                 @map("relevance_score")
-  status         DiscoveredUrlStatus    @default(CANDIDATE)
-  observations   DiscoveryObservation[]
-  documents      Document[]
+  id                    String                         @id @default(uuid()) @db.Uuid
+  canonicalUrl          String                         @unique @map("canonical_url") @db.Text
+  foundAt               DateTime                       @default(now()) @map("found_at") @db.Timestamptz(6)
+  lastSeenAt            DateTime                       @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  seenCount             Int                            @default(1) @map("seen_count")
+  relevanceScore        Float?                         @map("relevance_score")
+  status                DiscoveredUrlStatus            @default(CANDIDATE)
+  observations          DiscoveryObservation[]
+  documents             Document[]
+  processingReviewItems DocumentProcessingReviewItem[]
 
   @@map("discovered_urls")
 }
@@ -228,11 +234,11 @@ model DiscoveryObservation {
 }
 
 model DocumentBlob {
-  sha256      String     @id @db.Char(64)
-  storageKey  String     @map("storage_key") @db.Text
-  byteLength  Int        @map("byte_length")
-  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(6)
-  expiredAt   DateTime?  @map("expired_at") @db.Timestamptz(6)
+  sha256      String               @id @db.Char(64)
+  storageKey  String               @map("storage_key") @db.Text
+  byteLength  Int                  @map("byte_length")
+  createdAt   DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiredAt   DateTime?            @map("expired_at") @db.Timestamptz(6)
   documents   Document[]
   parserCache DocumentParseCache[]
 
@@ -254,23 +260,24 @@ model DocumentParseCache {
 }
 
 model Document {
-  id              String         @id @default(uuid()) @db.Uuid
-  discoveredUrlId String?        @map("discovered_url_id") @db.Uuid
-  url             String         @db.Text
-  sha256          String         @db.Char(64)
-  storageKey      String         @map("storage_key") @db.Text
-  mediaType       String         @map("media_type") @db.VarChar(128)
-  version         Int
-  capturedAt      DateTime       @default(now()) @map("captured_at") @db.Timestamptz(6)
-  lastSeenAt      DateTime       @default(now()) @map("last_seen_at") @db.Timestamptz(6)
-  issuedAt        DateTime?      @map("issued_at") @db.Timestamptz(6)
-  blob            DocumentBlob   @relation(fields: [sha256, storageKey], references: [sha256, storageKey], onDelete: Restrict)
-  discoveredUrl   DiscoveredUrl? @relation(fields: [discoveredUrlId], references: [id], onDelete: Restrict)
-  evidence        Evidence[]
-  revisions       Revision[]
-  outgoingRelations DocumentRelation[] @relation("document_relation_origin")
-  incomingRelations DocumentRelation[] @relation("document_relation_related")
-  processingResults DocumentProcessingResult[]
+  id                    String                         @id @default(uuid()) @db.Uuid
+  discoveredUrlId       String?                        @map("discovered_url_id") @db.Uuid
+  url                   String                         @db.Text
+  sha256                String                         @db.Char(64)
+  storageKey            String                         @map("storage_key") @db.Text
+  mediaType             String                         @map("media_type") @db.VarChar(128)
+  version               Int
+  capturedAt            DateTime                       @default(now()) @map("captured_at") @db.Timestamptz(6)
+  lastSeenAt            DateTime                       @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+  issuedAt              DateTime?                      @map("issued_at") @db.Timestamptz(6)
+  blob                  DocumentBlob                   @relation(fields: [sha256, storageKey], references: [sha256, storageKey], onDelete: Restrict)
+  discoveredUrl         DiscoveredUrl?                 @relation(fields: [discoveredUrlId], references: [id], onDelete: Restrict)
+  evidence              Evidence[]
+  revisions             Revision[]
+  outgoingRelations     DocumentRelation[]             @relation("document_relation_origin")
+  incomingRelations     DocumentRelation[]             @relation("document_relation_related")
+  processingResults     DocumentProcessingResult[]
+  processingReviewItems DocumentProcessingReviewItem[]
 
   @@unique([url, version], map: "documents_url_version_key")
   @@index([sha256], map: "documents_sha256_idx")
@@ -279,19 +286,42 @@ model Document {
 }
 
 model DocumentProcessingResult {
-  id            String               @id @default(uuid()) @db.Uuid
-  documentId    String               @map("document_id") @db.Uuid
-  sha256        String               @db.Char(64)
+  id            String                @id @default(uuid()) @db.Uuid
+  documentId    String                @map("document_id") @db.Uuid
+  sha256        String                @db.Char(64)
   processorKind DocumentProcessorKind @map("processor_kind")
-  schemaVersion Int                  @map("schema_version")
-  status        String               @db.VarChar(32)
-  resultJson    Json                 @map("result_json") @db.JsonB
-  createdAt     DateTime             @default(now()) @map("created_at") @db.Timestamptz(6)
-  document      Document             @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  schemaVersion Int                   @map("schema_version")
+  status        String                @db.VarChar(32)
+  resultJson    Json                  @map("result_json") @db.JsonB
+  createdAt     DateTime              @default(now()) @map("created_at") @db.Timestamptz(6)
+  document      Document              @relation(fields: [documentId], references: [id], onDelete: Restrict)
 
   @@unique([documentId, sha256, processorKind, schemaVersion], map: "document_processing_results_identity_key")
   @@index([processorKind, status, createdAt], map: "document_processing_results_kind_status_idx")
   @@map("document_processing_results")
+}
+
+model DocumentProcessingReviewItem {
+  id                    String                         @id @default(uuid()) @db.Uuid
+  documentId            String                         @map("document_id") @db.Uuid
+  sha256                String                         @db.Char(64)
+  discoveredUrlId       String?                        @map("discovered_url_id") @db.Uuid
+  status                DocumentProcessingReviewStatus @default(OPEN)
+  processId             String?                        @map("process_id") @db.Uuid
+  reviewVersion         Int                            @default(0) @map("review_version")
+  createdAt             DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  resolvedAt            DateTime?                      @map("resolved_at") @db.Timestamptz(6)
+  resolvedByAdminUserId String?                        @map("resolved_by_admin_user_id") @db.Uuid
+  document              Document                       @relation(fields: [documentId], references: [id], onDelete: Restrict)
+  discoveredUrl         DiscoveredUrl?                 @relation(fields: [discoveredUrlId], references: [id], onDelete: Restrict)
+  process               SelectionProcess?              @relation(fields: [processId], references: [id], onDelete: Restrict)
+  resolvedBy            AdminUser?                     @relation(fields: [resolvedByAdminUserId], references: [id], onDelete: Restrict)
+
+  @@unique([documentId, sha256], map: "document_processing_review_items_document_hash_key")
+  @@index([status, createdAt, id], map: "document_processing_review_items_status_created_idx")
+  @@index([discoveredUrlId], map: "document_processing_review_items_candidate_idx")
+  @@index([processId], map: "document_processing_review_items_process_idx")
+  @@map("document_processing_review_items")
 }
 
 model DocumentRelation {
@@ -310,29 +340,30 @@ model DocumentRelation {
 }
 
 model SelectionProcess {
-  id              String              @id @default(uuid()) @db.Uuid
-  institutionId   String              @map("institution_id") @db.Uuid
-  noticeCode      String?             @map("notice_code") @db.VarChar(100)
-  noticeYear      Int?                @map("notice_year")
-  selectionType   String?             @map("selection_type") @db.VarChar(64)
-  regularSisuFlow Boolean?            @map("regular_sisu_flow")
-  requiresEnem    Boolean?            @map("requires_enem")
-  tuitionFree     Boolean?            @map("tuition_free")
-  demoHistorical  Boolean             @default(false) @map("demo_historical")
-  referenceUrl    String?             @map("reference_url") @db.Text
-  verifiedAt      DateTime?           @map("verified_at") @db.Timestamptz(6)
-  ingestionState  ProcessIngestionState @default(CANDIDATE) @map("ingestion_state")
-  ingestionStateReason String?         @map("ingestion_state_reason") @db.Text
-  publicationStatus PublicationStatus @default(RASCUNHO) @map("publication_status")
-  reviewVersion   Int                 @default(0) @map("review_version")
-  createdAt       DateTime            @default(now()) @map("created_at") @db.Timestamptz(6)
-  institution     Institution         @relation(fields: [institutionId], references: [id], onDelete: Restrict)
-  offerings       Offering[]
-  windows         ApplicationWindow[]
-  requirements    Requirement[]
-  evidence        Evidence[]
-  revisions       Revision[]
-  reviewDecisions ReviewDecision[]
+  id                    String                         @id @default(uuid()) @db.Uuid
+  institutionId         String                         @map("institution_id") @db.Uuid
+  noticeCode            String?                        @map("notice_code") @db.VarChar(100)
+  noticeYear            Int?                           @map("notice_year")
+  selectionType         String?                        @map("selection_type") @db.VarChar(64)
+  regularSisuFlow       Boolean?                       @map("regular_sisu_flow")
+  requiresEnem          Boolean?                       @map("requires_enem")
+  tuitionFree           Boolean?                       @map("tuition_free")
+  demoHistorical        Boolean                        @default(false) @map("demo_historical")
+  referenceUrl          String?                        @map("reference_url") @db.Text
+  verifiedAt            DateTime?                      @map("verified_at") @db.Timestamptz(6)
+  ingestionState        ProcessIngestionState          @default(CANDIDATE) @map("ingestion_state")
+  ingestionStateReason  String?                        @map("ingestion_state_reason") @db.Text
+  publicationStatus     PublicationStatus              @default(RASCUNHO) @map("publication_status")
+  reviewVersion         Int                            @default(0) @map("review_version")
+  createdAt             DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  institution           Institution                    @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  offerings             Offering[]
+  windows               ApplicationWindow[]
+  requirements          Requirement[]
+  evidence              Evidence[]
+  revisions             Revision[]
+  reviewDecisions       ReviewDecision[]
+  processingReviewItems DocumentProcessingReviewItem[]
 
   @@unique([institutionId, noticeCode, noticeYear], map: "processes_institution_notice_year_key")
   @@unique([id, institutionId], map: "processes_id_institution_key")
@@ -391,14 +422,15 @@ model ReviewDecision {
 }
 
 model AdminUser {
-  id        String       @id @default(uuid()) @db.Uuid
-  issuer    String       @db.VarChar(512)
-  subject   String       @db.VarChar(255)
-  role      AdminRole
-  active    Boolean      @default(true)
-  createdAt DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt DateTime     @updatedAt @map("updated_at") @db.Timestamptz(6)
-  auditEvents AuditEvent[]
+  id                            String                         @id @default(uuid()) @db.Uuid
+  issuer                        String                         @db.VarChar(512)
+  subject                       String                         @db.VarChar(255)
+  role                          AdminRole
+  active                        Boolean                        @default(true)
+  createdAt                     DateTime                       @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                     DateTime                       @updatedAt @map("updated_at") @db.Timestamptz(6)
+  auditEvents                   AuditEvent[]
+  resolvedProcessingReviewItems DocumentProcessingReviewItem[]
 
   @@unique([issuer, subject], map: "admin_users_issuer_subject_key")
   @@index([active, role], map: "admin_users_active_role_idx")
@@ -464,18 +496,18 @@ model OfferingReservation {
 }
 
 model ApplicationWindow {
-  id              String            @id @default(uuid()) @db.Uuid
-  processId       String            @map("process_id") @db.Uuid
-  offeringId      String?           @map("offering_id") @db.Uuid
-  label           String?           @db.VarChar(150)
-  startDate       DateTime?         @map("start_date") @db.Date
-  startTime       String?           @map("start_time") @db.VarChar(5)
-  endDate         DateTime?         @map("end_date") @db.Date
-  endTime         String?           @map("end_time") @db.VarChar(5)
-  timezone        String?           @db.VarChar(64)
-  instructionsUrl String?           @map("instructions_url") @db.Text
-  process         SelectionProcess  @relation(fields: [processId], references: [id], onDelete: Restrict)
-  offering        Offering?         @relation(fields: [offeringId, processId], references: [id, processId], onDelete: Restrict)
+  id              String           @id @default(uuid()) @db.Uuid
+  processId       String           @map("process_id") @db.Uuid
+  offeringId      String?          @map("offering_id") @db.Uuid
+  label           String?          @db.VarChar(150)
+  startDate       DateTime?        @map("start_date") @db.Date
+  startTime       String?          @map("start_time") @db.VarChar(5)
+  endDate         DateTime?        @map("end_date") @db.Date
+  endTime         String?          @map("end_time") @db.VarChar(5)
+  timezone        String?          @db.VarChar(64)
+  instructionsUrl String?          @map("instructions_url") @db.Text
+  process         SelectionProcess @relation(fields: [processId], references: [id], onDelete: Restrict)
+  offering        Offering?        @relation(fields: [offeringId, processId], references: [id, processId], onDelete: Restrict)
 
   @@index([processId, endDate], map: "windows_process_end_date_idx")
   @@index([endDate, endTime], map: "windows_end_date_time_idx")

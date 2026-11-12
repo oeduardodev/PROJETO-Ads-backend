@@ -29,6 +29,10 @@ import { AdminReviewQueueService } from './admin-review-queue.service.js';
 import { AdminReviewCommandsService } from './commands/admin-review-commands.service.js';
 import { logStructured } from '../../observability/structured-log.js';
 import { observabilityMetrics } from '../../observability/metrics.registry.js';
+import {
+  ProcessingReviewService,
+  type ProcessingReviewResolution,
+} from './processing-review.service.js';
 
 interface AuthenticatedAdminRequest {
   requestId?: string;
@@ -67,6 +71,7 @@ export class AdminReviewController {
   constructor(
     private readonly reviews: AdminReviewQueueService,
     private readonly commands: AdminReviewCommandsService,
+    private readonly processingReviews: ProcessingReviewService,
   ) {}
 
   @Get('review-queue')
@@ -80,6 +85,49 @@ export class AdminReviewController {
   @ApiQuery({ name: 'page_size', required: false, type: Number, minimum: 1, maximum: 100 })
   list(@Query() query: Record<string, unknown>) {
     return this.reviews.list(query);
+  }
+
+  @Get('processing-review-queue')
+  @ApiOperation({
+    operationId: 'listAdminProcessingReviewQueue',
+    summary: 'Listar artefatos pendentes de revisao humana',
+  })
+  listProcessingArtifacts(@Query() query: Record<string, unknown>) {
+    return this.processingReviews.list(query);
+  }
+
+  @Post('processing-review-queue/:id/resolve')
+  @ApiOperation({
+    operationId: 'resolveAdminProcessingReviewItem',
+    summary: 'Associar artefato a processo ou criar rascunho',
+  })
+  @ApiBadRequestResponse({ description: 'Proveniencia, instituicao ou justificativa invalida' })
+  @ApiConflictResponse({ description: 'Versao desatualizada ou item ja resolvido' })
+  resolveProcessingArtifact(
+    @Param('id') id: string,
+    @Body() body: ProcessingReviewResolution,
+    @Req() request: AuthenticatedAdminRequest,
+  ) {
+    const admin = request.adminUser;
+    if (!admin) throw new UnauthorizedException();
+    return this.processingReviews.resolve(id, body, {
+      id: admin.id,
+      issuer: admin.issuer,
+      subject: admin.subject,
+      requestId: request.requestId ?? randomUUID(),
+    });
+  }
+
+  @Get('processing-review-queue/:id/process-options')
+  @ApiOperation({
+    operationId: 'listAdminProcessingReviewProcessOptions',
+    summary: 'Listar processos nao publicados compativeis com a proveniencia',
+  })
+  processingReviewProcessOptions(
+    @Param('id') id: string,
+    @Query('institution_id') institutionId?: string,
+  ) {
+    return this.processingReviews.processOptions(id, institutionId);
   }
 
   @Get('processes/:id')

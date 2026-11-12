@@ -80,7 +80,7 @@ export class ProcessingResultsRepository {
     const sha256 = input.sha256.toLowerCase();
     const document = await this.database.document.findUnique({
       where: { id: input.documentId },
-      select: { sha256: true },
+      select: { sha256: true, discoveredUrlId: true },
     });
     if (!document) throw new Error('Processing result requires an existing document');
     if (document.sha256 !== sha256)
@@ -110,6 +110,19 @@ export class ProcessingResultsRepository {
       },
     });
     if (!stored) throw new Error('Processing result was not persisted');
+    if (input.status === 'PENDING_REVIEW') {
+      await this.database.documentProcessingReviewItem.upsert({
+        where: {
+          documentId_sha256: { documentId: input.documentId, sha256 },
+        },
+        create: {
+          documentId: input.documentId,
+          sha256,
+          discoveredUrlId: document.discoveredUrlId,
+        },
+        update: {},
+      });
+    }
     return stored;
   }
 }
