@@ -13,16 +13,17 @@
 
 | Campo                   | Valor |
 | ----------------------- | ----- |
-| Fase                    | F08 - catalogo publico |
-| Passo                   | 075 - `test(web): jornadas publicas e acessibilidade` |
-| Estado                  | Passo 075 registrado localmente; frontend `f582494`, backend neste commit |
+| Fase                    | F08 — catálogo público / avaliação P0 |
+| Passo                   | 084 — avaliação da release 1.0, RETIDA |
+| Estado                  | Checkpoints 080–084 reavaliados; somente staging local e evidências documentais acrescentados |
 | Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passo 075: secoes 9.3/9.4 e alvo WCAG 2.2 AA |
-| Roteiro consultado      | Passo 075; F08/P0, sequencial |
-| Commit anterior backend | `5b0155e` - ADR provisoria de SEO |
-| Repositorio frontend    | Limpo apos commit `f582494`; ahead 13, sem push |
-| Gate                    | Frontend 47 unitarios, 4 E2E, axe sem violacoes, build, lint, typecheck, format: PASS |
-| Proximo passo           | 076 - testes de confiabilidade do frontend |
+| Arquitetura consultada  | Passos 080–084: §§ 4.1–5.2, 10.1–12.2 conforme checkpoint |
+| Roteiro consultado      | Passos 080–084; F08/P0, gates G5 preservados |
+| Commit backend          | `9eb6a02` antes desta avaliação; local, sem push |
+| Commit frontend         | `73a98a8`; local, sem push |
+| Repositórios            | Git independentes; backend e frontend com commits locais não enviados |
+| Gate                    | G5 PENDENTE: pipeline de negócio não integrado, fontes desativadas, sem staging externo/domínio, curadoria ou autorização de publicação |
+| Próximo passo           | Resolver pendências externas e do pipeline integrado antes de reconsiderar publicação |
 
 ## Passo 073 - evidencias
 
@@ -736,12 +737,15 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Estado inicial: backend limpo em `5e7e170`; frontend limpo em `f582494`. Relidos checkpoint 083 e arquitetura §§ 10.3, 11–11.1; conferidos os dois workflows CI, documentação Git e remotes.
 - Remotes de código existem, mas não têm push autorizado e a configuração/proteção hospedada, provedor, ambientes, domínio, secrets e staging não estão disponíveis para revisão. Os workflows CI apenas validam qualidade e não fazem deploy.
 - ADR 0044 mantém jobs reais de release pendentes para não criar workflow sem destino. `docs/ops/rollback.md` registra reversão de artefato, compatibilidade de schema, backup, gates manuais e proibição de force push.
-- Validação de deploy/rollback e permissões remotas não executável sem hosting/ambiente e sem publicar os repositórios. Passo parcial; sem push, deploy ou migration.
+- Reavaliação depois do passo 080: Compose e start/stop locais passaram, mas não verificam domínio, TLS, permissions/rulesets remotos, deploy externo ou rollback de artefato. `.github/workflows/` contém apenas `ci.yml`; release workflow continua ausente por decisão do ADR 0044.
+- Validação de deploy/rollback e permissões remotas não executável sem hosting/ambiente. Remotes permanecem sem push. Passo parcial; sem push, deploy ou migration.
 
 ## Passo 084 — avaliação da release 1.0 — retida
 
 - Estado inicial: backend limpo em `c32000d`; frontend limpo em `f582494`. Lidos checkpoint 084 e arquitetura §§ 10.2, 10.3, 11–11.2 e 12.2; inspecionados flags/URLs Angular, E2E mocks, conectores, API, progress e gates.
-- Evidências contrárias à publicação: `catalogEnabled=false`, `apiBaseUrl`/`publicSiteUrl` vazios em produção; nenhuma fonte ativa/processo aprovado; consumers não fecham o fluxo único; Playwright usa API mockada; sem staging/rollback/host/revisão real de acessibilidade. A arquitetura exige fonte oficial e revisão humana; nenhum dado foi publicado.
-- Artefatos: `docs/releases/v1.0-mvp.md` registra checklist e decisão RETIDA; `docs/ops/runbook.md` cobre somente preview local; `docs/legal/privacy-terms-draft.md` é explicitamente rascunho interno e não pode entrar em publicação; `docs/quality/gates.md` aponta G5 pendente.
+- Evidências contrárias à publicação: `catalogEnabled=false`, `apiBaseUrl`/`publicSiteUrl` vazios em produção; nenhuma fonte ativa/processo aprovado; consumers não fecham o fluxo único; sem homologação externa, rollback ensaiado, host ou revisão real de acessibilidade. Há teste browser→API real em staging local vazio, além do Playwright mockado. A arquitetura exige fonte oficial e revisão humana; nenhum dado foi publicado.
+- Artefatos: `docs/releases/v1.0-mvp.md` registra checklist e decisão RETIDA; `docs/ops/runbook.md` cobre preview e Compose local; `docs/legal/privacy-terms-draft.md` é explicitamente rascunho interno e não pode entrar em publicação; `docs/quality/gates.md` aponta G5 pendente.
 - Validação: `corepack pnpm test:e2e:offline` passou após limpar do banco descartável o documento/blob sintéticos usados no ensaio 081: backend 5/5, PostgreSQL/Redis 25/25 e Playwright 4/4. A tentativa anterior ficou 24/25 por resíduo da fixture e não foi ocultada; repetição limpa passou. O runner segue com suítes independentes e API mockada no browser.
+- Evidências novas: staging local construiu web/API/worker, aplicou 16 migrations manualmente e validou browser→API real 1/1 com catálogo vazio; backup/restore local comparou 16 migrations e hashes; nova auditoria leu somente índices oficiais e não adicionou editais. Esses ensaios não conectam descoberta, revisão e publicação.
+- Fechamento documental: `corepack pnpm test:e2e:offline` reexecutado com TEST_DATABASE_URL/TEST_REDIS_URL vazios — backend 5/5 e Playwright simulado 4/4 passaram; integração DB/Redis ficou explicitamente SKIPPED. Compose/API real 1/1 e corpus 35/35 também passaram nesta rodada; `git diff --check` limpo.
 - Resultado: passo 084 alcançado como avaliação de release, não como publicação do MVP. G5 PENDENTE. P0 não está pronto para produção; P1/P2 não iniciados. Sem tag de release, push, deploy ou migration.
