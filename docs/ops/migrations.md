@@ -11,7 +11,7 @@ O job `database` do CI cria um serviço PostgreSQL efêmero com schema vazio, ex
 3. Definir responsável, janela, observabilidade, critério de abortar e plano de retorno. Para alteração destrutiva, preparar migration compensatória e estratégia de preservação dos dados.
 4. Aplicar somente com autorização explícita para o ambiente. Depois, conferir `_prisma_migrations`, `migrate status`, constraints e consultas. Não iniciar API/worker com DDL automático.
 
-O passo 081 ensaiou `pg_dump` custom format, checksum SHA-256, listagem `pg_restore --list`, restore em banco descartável e comparação dos hashes ordenados de `documents` e `document_blobs`. O roteiro detalhado, limites e resultado estão em [backup-restore.md](backup-restore.md). O ensaio não constitui backup de staging ou produção.
+O passo 081 ensaiou `pg_dump` custom format, checksum SHA-256, listagem `pg_restore --list`, restore em banco descartável e comparação dos hashes ordenados de `documents` e `document_blobs`. Em 2026-11-12, o reensaio após a migration 17 também incluiu um resultado de processamento tipado e imutável: origem e restore coincidiram em 17 migrations, hash de documento/blob e uma linha de resultado. A migration foi aplicada apenas em bancos `_test`; `alem_staging` permaneceu na versão anterior. O roteiro detalhado, limites e checksums estão em [backup-restore.md](backup-restore.md). Esses ensaios não constituem backup de staging ou produção.
 
 Exemplo para **banco local descartável**, com credenciais fornecidas por variável de ambiente, nunca no comando ou no Git:
 

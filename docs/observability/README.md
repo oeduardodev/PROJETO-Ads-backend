@@ -16,6 +16,6 @@ Os contadores em memória reiniciam com o processo. Medidas persistentes de font
 
 ## Limites conhecidos
 
-- Os produtores BullMQ existem, mas consumidores de fetch/extract ainda não estão integrados. Não há evidência de rastreamento vivo ponta a ponta; os IDs e relações persistidas permitem auditar quando o pipeline consumidor for conectado.
+- Os consumers `source.refresh`, `url.fetch`, `document.classify` e `document.extract` existem. Os dois últimos persistem resultados tipados, mas sem parser/contexto/conector ativado retornam `PENDING_REVIEW`; não há evidência de rastreamento vivo ponta a ponta de descoberta até curadoria/publicação.
 - Alertas são regras de avaliação, não notificações enviadas. Destino, retenção de logs, dashboards e exporter de métricas do worker dependem da infraestrutura de homologaçao.
 - O alerta de zero candidatos continua sendo aviso de revisão, não incidente automático, conforme ADR 0023.
