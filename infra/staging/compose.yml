@@ -1,0 +1,96 @@
+name: alem-do-sisu-staging-local
+
+services:
+  postgres:
+    image: postgres:17.7-alpine@sha256:bb377b7239d2774ac8cc76f481596ce96c5a6b5e9d141f6d0a0ee371a6e7c0f2
+    environment:
+      POSTGRES_DB: alem_staging
+      POSTGRES_USER: alem_staging
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Configure infra/staging/.env}
+    volumes:
+      - staging_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$${POSTGRES_USER}\" -d \"$${POSTGRES_DB}\""]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  redis:
+    image: redis:7.4.12-alpine@sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - staging_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  api:
+    build:
+      context: ../..
+      dockerfile: Dockerfile.staging
+    environment:
+      NODE_ENV: production
+      HOST: 0.0.0.0
+      PORT: 3000
+      LOG_LEVEL: info
+      CORS_ORIGINS: http://127.0.0.1:8080
+      DATABASE_URL: postgresql://alem_staging:${POSTGRES_PASSWORD:?Configure infra/staging/.env}@postgres:5432/alem_staging?schema=public
+      REDIS_URL: redis://redis:6379
+      AI_MAX_TOKENS_PER_DOCUMENT: "0"
+      OCR_DAILY_PAGE_BUDGET: "0"
+      SEARCH_DAILY_QUOTA_PER_HOST: "0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:3100:3000"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:3000/ready').then((r) => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 4s
+      retries: 12
+      start_period: 30s
+
+  worker:
+    image: alem-do-sisu-staging-local-api
+    build:
+      context: ../..
+      dockerfile: Dockerfile.staging
+    command: ["pnpm", "--filter", "@alem-do-sisu/api", "start:worker"]
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+      DATABASE_URL: postgresql://alem_staging:${POSTGRES_PASSWORD:?Configure infra/staging/.env}@postgres:5432/alem_staging?schema=public
+      REDIS_URL: redis://redis:6379
+      AI_MAX_TOKENS_PER_DOCUMENT: "0"
+      OCR_DAILY_PAGE_BUDGET: "0"
+      SEARCH_DAILY_QUOTA_PER_HOST: "0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  web:
+    build:
+      context: ../../../frontend
+      dockerfile: Dockerfile.staging
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:8080:80"
+
+volumes:
+  staging_postgres_data:
+  staging_redis_data:

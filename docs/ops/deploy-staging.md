@@ -2,6 +2,8 @@
 
 O deploy de homologação aguarda a escolha de provedor e domínio (ADR 0043). Este roteiro descreve os gates operacionais; ele não contém nomes de serviços, endpoints ou credenciais presumidos e não executa deploy.
 
+Há um Compose local isolado em `infra/staging/compose.yml` para exercitar containers, migrations manuais e browser→API sem mocks em loopback. Consulte o README desse diretório. Ele não é o deploy de homologação externa descrito abaixo.
+
 ## Pré-requisitos
 
 - Hosting compatível com Angular CSR, containers NestJS API e worker contínuo.

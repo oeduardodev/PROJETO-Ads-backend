@@ -16,7 +16,7 @@ O passo 080 pede web, API, worker, PostgreSQL, Redis, object storage, domínio d
 
 ## Decisão
 
-Manter a alternativa 2. Não criar domínio, credenciais, buckets, retenção ou configuração específica de provedor. Um staging local via Docker não será chamado de homologação externa e não satisfaz o teste E2E em domínio real. Depois da escolha do provedor, implementar arquivos em `infra/staging/`, carregar segredos fora do Git, provisionar serviços isolados, validar backup/restore e executar migrations manualmente em revisão controlada. Não ativar armazenamento de snapshots oficiais sem revisão por fonte conforme ADR 0008.
+Manter a alternativa 2 para hospedagem externa e registrar um Compose local, isolado e limitado a loopback para testes reprodutíveis; ele não será chamado de homologação externa e não satisfaz E2E em domínio real. Não criar domínio público, credenciais gerenciadas, buckets, retenção ou configuração específica de provedor por suposição. Depois da escolha do provedor, estender a instalação para serviços isolados externos, carregar segredos fora do Git, validar backup/restore e executar migrations manualmente em revisão controlada. Não ativar armazenamento de snapshots oficiais sem revisão por fonte conforme ADR 0008.
 
 ## Pendências
 

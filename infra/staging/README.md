@@ -1,8 +1,40 @@
-# Homologação
+# Staging local isolado
 
-Este diretório está reservado para a configuração do ambiente isolado do passo 080. O provedor de hospedagem, domínio, serviços gerenciados e storage ainda não foram escolhidos (ADR 0043); por isso não há manifestos executáveis nem endpoint de homologação configurado.
+`compose.yml` executa web, API, worker, PostgreSQL e Redis em uma rede Docker própria. Web/API são publicados apenas em loopback (`127.0.0.1:8080` e `127.0.0.1:3100`); DB/Redis não têm portas no host. Isso é staging **local**, não homologação externa. O provedor, domínio público, serviços gerenciados, vault e storage oficial permanecem sem decisão conforme ADR 0043/0008.
 
-Não substitua estes valores por domínio ou credenciais inventados. Não use `compose.dev.yml` como homologação: ele contém somente PostgreSQL e Redis locais de desenvolvimento. A instalação deve incluir web, API e worker separados, PostgreSQL e Redis isolados, storage privado habilitado apenas após revisão de retenção, TLS e secrets em vault. Migrations devem ser uma ação manual revisada, depois de backup e com procedimento de rollback documentado.
+## Iniciar
 
-Os testes `pnpm test:e2e:offline` e `pnpm test:integration` verificam componentes localmente; não comprovam deploy ou E2E em homologação.
+1. Gere uma senha hexadecimal aleatória de 64 caracteres, por exemplo com `[Convert]::ToHexString([Security.Cryptography.RandomNumberGenerator]::GetBytes(32))`, e grave-a como `POSTGRES_PASSWORD` em `infra/staging/.env`. Esse arquivo é ignorado pelo Git.
+2. Execute no PowerShell a partir deste diretório:
+
+```powershell
+./start.ps1
+```
+
+3. Aplique migrations manualmente somente depois que PostgreSQL estiver saudável:
+
+```powershell
+$envFile = Join-Path (Get-Location) '.env'
+$composeFile = Join-Path (Get-Location) 'compose.yml'
+docker compose --env-file $envFile -f $composeFile run --rm api pnpm --filter @alem-do-sisu/api db:migrate:deploy
+```
+
+Migrations não são aplicadas pelo entrypoint/API/worker. O catálogo local usa o build Angular `staging`, chama a API real em loopback e não inclui fixture ou edital. Até seed de processos passa pelos controles de revisão existentes. AI, OCR e quota de busca ficam em zero. Não há storage de documentos conectado; snapshots oficiais permanecem bloqueados.
+
+## Verificar
+
+- Web: `http://127.0.0.1:8080`
+- Readiness API: `http://127.0.0.1:3100/ready`
+- Playwright real sem mocks: no repositório frontend, `$env:STAGING_BASE_URL='http://127.0.0.1:8080'; corepack pnpm --filter @alem-do-sisu/web exec playwright test --config=playwright.staging.config.ts`
+- A suíte de integração usa um banco de teste separado; nunca redirecione `TEST_DATABASE_URL` para `alem_staging`.
+
+## Parar
+
+```powershell
+./stop.ps1
+```
+
+`stop.ps1` preserva os volumes para o próximo ensaio. Para reiniciar do zero, remova manualmente somente os volumes identificados pelo projeto `alem-do-sisu-staging-local` após confirmar que não contêm dados a preservar. Não use este ambiente para fontes reais, dados oficiais ou produção.
+
+E2E local prova apenas a implantação de containers locais e o caminho browser→API com catálogo vazio. Não comprova domínio/TLS externo, storage, backup gerenciado, fontes ativas, pipeline de descoberta/curadoria nem gate G5.
 

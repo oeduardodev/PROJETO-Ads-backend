@@ -1,0 +1,20 @@
+FROM node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d AS build
+WORKDIR /workspace
+RUN apt-get update \
+  && apt-get install --no-install-recommends -y ca-certificates openssl \
+  && rm -rf /var/lib/apt/lists/*
+RUN corepack enable
+COPY . .
+RUN pnpm install --frozen-lockfile \
+  && pnpm --filter @alem-do-sisu/api build
+
+FROM node:24.15.0-bookworm-slim@sha256:4e6b70dd6cbfc88c8157ba19aa3d9f9cce6ba4703576d55459e45efcbc9c5f5d
+ENV NODE_ENV=production
+WORKDIR /workspace
+RUN apt-get update \
+  && apt-get install --no-install-recommends -y ca-certificates openssl \
+  && rm -rf /var/lib/apt/lists/*
+RUN corepack enable
+COPY --from=build /workspace /workspace
+EXPOSE 3000
+CMD ["pnpm", "--filter", "@alem-do-sisu/api", "start"]

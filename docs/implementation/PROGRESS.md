@@ -704,12 +704,14 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Próximas evidências: conectar consumers com idempotência, manter candidatos invisíveis antes da aprovação, servir o processo aprovado pelo NestJS real e carregar a mesma resposta no Playwright sem mocks. G5 ainda exige staging, backup/restore, segurança/curadoria e aprovação explícita antes de produção. Sem push, deploy ou migração em produção.
 - Revalidação agregada em 2026-11-12: `corepack pnpm test:e2e:offline` PASS, backend 5/5, PostgreSQL/Redis 25/25 e Playwright 4/4; `pnpm test` 193/193; lint, typecheck, format:check, openapi:check e `git diff --check` PASS. A suíte web é simulada e as suites não formam pipeline único.
 
-## Passo 080 — homologação isolada — pendente de provedor/domínio
+## Passo 080 — staging local isolado; homologação externa pendente
 
 - Estado inicial: backend limpo em `73e0a3f`; frontend limpo em `f582494`. Lidos o checkpoint 080 e arquitetura §§ 11–11.2; examinados Compose de desenvolvimento, containers Docker/WSL, configuração Angular/API, migrations, secrets, storage e ADRs 0008/0041.
 - ADR 0043 registra a pendência do provedor, domínio, serviços gerenciados, vault e política de storage. A escolha não pode ser inferida dos repositórios; não foi criado domínio, endpoint ou credencial.
-- Artefatos: `infra/staging/README.md` reserva o diretório sem manifestos inexequíveis; `docs/ops/deploy-staging.md` documenta gates, sequência manual de migration, smoke/E2E, backup/restore e rollback.
-- Resultado: passo parcial. Não há deploy externo nem E2E remoto; Docker local e o runner offline do passo 079 não satisfazem este checkpoint. Sem migrations de produção, push ou deploy.
+- Decisão preservada: ADR 0043 mantém sem escolha o provedor, domínio, serviços gerenciados, vault e storage oficial. Compose local loopback é uma camada executável de ensaio; não é homologação externa.
+- Artefatos: `infra/staging/compose.yml`, `Dockerfile.staging`, `.dockerignore`, scripts PowerShell de start/stop, `infra/staging/.env.example` e `.gitignore`; Angular CSR usa API real local e catálogo vazio. Segredos não são versionados; Postgres/Redis não publicam portas no host; AI/OCR/busca têm orçamento zero; migrations continuam manuais.
+- Testes locais: build Docker de API/worker/web PASS; 16 migrations aplicadas apenas no volume local `alem_staging`; `/ready`, `/api/v1/processes`, `/api/v1/filters`, `/api/v1/institutions` e `/oportunidades` responderam HTTP 200; catálogo e instituições ficaram vazios sem seed inventada. Playwright contra API real, sem mocks, 1/1 PASS. Scripts `start.ps1` e `stop.ps1` exercitados; stack encerrada sem remover volumes. Frontend: format, lint, typecheck, 47 testes, build e Playwright 4/4 PASS. Backend: format, lint, typecheck, 193 testes e offline E2E 5/5 PASS; integração DB/Redis não executada nesta repetição por ausência de `TEST_DATABASE_URL`.
+- Resultado: passo parcial. Sem deploy externo ou E2E em domínio real; sem backup/restore gerenciado, storage oficial ou fluxo E2E de negócio integrado. Gates dependentes dos ADRs 0008/0043 e do passo 079 continuam pendentes. Nenhuma migration de produção, push ou deploy.
 
 ## Passo 081 — ensaio local de backup, restore e migrations
 
