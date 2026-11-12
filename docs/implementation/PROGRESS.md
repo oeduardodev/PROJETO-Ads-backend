@@ -718,3 +718,11 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Fixture não real: um documento e blob sintéticos com hash `17a403a6fd00d9944c0b71633fac55bcee6095376365d92c27bb662855f10121`; o mesmo hash e contagem 1/1 foram observados na origem e no restore. Checksum SHA-256 do arquivo: `43e7256d9f601ef439cd07a21c21d3f0f8597ad175f23c865c1faab3aef8d2ae`.
 - Artefatos: `docs/ops/backup-restore.md` e atualização de `docs/ops/migrations.md`. O roteiro define backup fora do Git, controle de retenção, restore isolado e proibição de operações de produção sem autorização.
 - Pendência: ensaio remoto em homologação, backup automatizado gerenciado e política de retenção/restore exigem o provedor do passo 080. Nenhuma migration de produção, push ou deploy.
+
+## Passo 082 — auditoria do piloto de fontes/corpus — parcial
+
+- Estado inicial: backend limpo em `09e1fd9`; frontend limpo em `f582494`. Relidos checkpoint 082 e arquitetura §§ 4.1–4.3, 5.1–5.2, 10.1 e 11.2; examinados matrix, corpus, ADR 0030 e política de coleta.
+- `py test/fixtures/institutions/validate_golden_dataset.py` PASS: 35 artefatos em quatro instituições; 29 `IN_SCOPE`, 3 `OUT_OF_SCOPE`, 3 `PENDING_REVIEW`; ENEM 12/15/8 (true/false/unknown); oito revisões parciais. Taxa de inscrição não tem campo no dataset; não há precisão/recall real sem curadoria de títulos/trechos.
+- Índices UFPB, UFCG e IFPB foram lidos; tentativa de leitura UEPB retornou 502 do serviço de navegação, não prova falha da origem. Matriz preserva status HTTP/robots da última checagem direta e registra o resultado observacional de 2026-11-12. Nenhum novo edital foi incluído.
+- Sem fetch automatizado, snapshots, consulta paga ou IA; custo variável externo desta auditoria = zero. Conectores seguem DRAFT; revisão humana/licença/retensão bloqueiam automação e publicação.
+- Artefato `docs/quality/pilot-report.md`; pendências incluem confirmação direta UEPB, termos/retensão, curadoria de evidências textuais e dados de taxa. Metas de precisão/recall do piloto e cobertura completa permanecem não medidas.

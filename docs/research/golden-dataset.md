@@ -1,5 +1,7 @@
 # Corpus histórico rotulado — passo 004
 
+O inventário e as limitações foram reavaliados no [relatório de auditoria do piloto](../quality/pilot-report.md), passo 082. A reavaliação não altera rótulos nem transforma artefatos em processos únicos.
+
 O CSV contém gabarito manual por campo, data de conferência e URL de origem para 35 artefatos históricos oficiais. A coluna `field_evidence` aponta as seções usadas; as notas abaixo registram conflitos entre versões. `UNKNOWN` significa não confirmado; jamais se interpreta como falso, zero ou 23h59. `IN_SCOPE` indica somente enquadramento na amostra histórica e **não** autorização para publicação ou inscrição vigente. Oito registros de páginas ou revisões têm campos deliberadamente desconhecidos; três casos de vagas remanescentes estão em `PENDING_REVIEW` por decisão do ADR 0003. O gate G0 depende também do passo 005 e da revisão do checkpoint. Os editais IFPB-01/02, com inscrições futuras em novembro de 2026, permanecem somente na lista de candidatos e não contam como históricos.
 
 ## Conferências e limitações
