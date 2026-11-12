@@ -34,6 +34,8 @@ Compare o inventário `_prisma_migrations`, constraints e consultas críticas en
 
 Em 2026-11-12, PostgreSQL 17.7 descartável via Docker/WSL foi copiado com `pg_dump` 18 e restaurado em `alem_restore_test`. O arquivo custom-format passou `pg_restore --list`; SHA-256 do arquivo: `43e7256d9f601ef439cd07a21c21d3f0f8597ad175f23c865c1faab3aef8d2ae`. Origem e restore continham 16 migrations concluídas, um documento e um blob sintéticos, com o mesmo hash `17a403a6fd00d9944c0b71633fac55bcee6095376365d92c27bb662855f10121`. O banco restore é descartável e não representa staging ou produção.
 
+No mesmo dia, a base vazia do Compose local de staging passou um ensaio adicional: `pg_dump` 18 custom-format, `pg_restore --list` com 178 entradas e restore isolado em `alem_staging_restore_test`. SHA-256 temporário: `ecdae6a9474185423837eb461bce8e9ed1306de06bbe3887dcc1e85794b54d54`. Origem e restore tinham 16 migrations concluídas, zero documentos e zero blobs; a comparação de contagens e hashes ordenados passou. O arquivo e a base de restore foram removidos; os volumes do Compose foram preservados. Este teste não valida backup gerenciado, retenção externa nem restore de snapshots oficiais.
+
 ## Antes de migration persistente
 
 Siga também [migrations.md](migrations.md): revisar schema/SQL, fazer e validar backup, ensaiar restore, acordar janela/rollback e executar migration manualmente com autorização para o ambiente. API e worker nunca aplicam DDL ao iniciar. Em staging, repetir a restauração e comparar hashes antes de aprovar qualquer migration crítica.

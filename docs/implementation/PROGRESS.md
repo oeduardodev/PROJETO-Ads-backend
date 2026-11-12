@@ -719,6 +719,7 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - Executado backup PostgreSQL custom-format no banco local descartável `alem_test`, listagem do archive, restore para novo banco `alem_restore_test`, consulta de 16 migrations concluídas e comparação de `documents.sha256`/`document_blobs.sha256`.
 - Fixture não real: um documento e blob sintéticos com hash `17a403a6fd00d9944c0b71633fac55bcee6095376365d92c27bb662855f10121`; o mesmo hash e contagem 1/1 foram observados na origem e no restore. Checksum SHA-256 do arquivo: `43e7256d9f601ef439cd07a21c21d3f0f8597ad175f23c865c1faab3aef8d2ae`.
 - Artefatos: `docs/ops/backup-restore.md` e atualização de `docs/ops/migrations.md`. O roteiro define backup fora do Git, controle de retenção, restore isolado e proibição de operações de produção sem autorização.
+- Reensaio após o passo 080: o banco vazio do Compose local foi exportado em formato custom, o inventário `pg_restore --list` apresentou 178 entradas e o restore isolado `alem_staging_restore_test` preservou 16 migrations concluídas, zero documentos e zero blobs. Contagens e hashes ordenados foram comparados; banco e arquivo temporários removidos, volumes preservados. Evidência e SHA-256 em `docs/ops/backup-restore.md`.
 - Pendência: ensaio remoto em homologação, backup automatizado gerenciado e política de retenção/restore exigem o provedor do passo 080. Nenhuma migration de produção, push ou deploy.
 
 ## Passo 082 — auditoria do piloto de fontes/corpus — parcial

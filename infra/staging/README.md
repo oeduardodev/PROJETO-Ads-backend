@@ -16,7 +16,9 @@
 ```powershell
 $envFile = Join-Path (Get-Location) '.env'
 $composeFile = Join-Path (Get-Location) 'compose.yml'
-docker compose --env-file $envFile -f $composeFile run --rm api pnpm --filter @alem-do-sisu/api db:migrate:deploy
+$wslEnvFile = (& wsl.exe -d Ubuntu -- wslpath -a $envFile).Trim()
+$wslComposeFile = (& wsl.exe -d Ubuntu -- wslpath -a $composeFile).Trim()
+wsl.exe -d Ubuntu -- docker compose --env-file $wslEnvFile -f $wslComposeFile run --rm api pnpm --filter @alem-do-sisu/api db:migrate:deploy
 ```
 
 Migrations não são aplicadas pelo entrypoint/API/worker. O catálogo local usa o build Angular `staging`, chama a API real em loopback e não inclui fixture ou edital. Até seed de processos passa pelos controles de revisão existentes. AI, OCR e quota de busca ficam em zero. Não há storage de documentos conectado; snapshots oficiais permanecem bloqueados.
