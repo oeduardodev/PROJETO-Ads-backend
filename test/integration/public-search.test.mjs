@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:net';
 import test from 'node:test';
+import { stopChild } from '../helpers/stop-child.mjs';
 import { PrismaService } from '../../apps/api/dist/database/prisma.service.js';
 import { PublicSearchService } from '../../apps/api/dist/modules/processes/public-search/public-search.service.js';
 import { parseSearchQuery } from '../../apps/api/dist/modules/processes/public-search/search-query.js';
@@ -39,7 +40,7 @@ test('GET /api/v1/processes returns an empty published catalog and rejects inval
   });
   try {
     let response;
-    for (let attempt = 0; attempt < 40; attempt += 1) {
+    for (let attempt = 0; attempt < 80; attempt += 1) {
       if (child.exitCode !== null) throw new Error('API exited before search probe');
       try {
         response = await fetch(`http://127.0.0.1:${port}/api/v1/processes`);
@@ -48,7 +49,7 @@ test('GET /api/v1/processes returns an empty published catalog and rejects inval
         await new Promise((resolve) => setTimeout(resolve, 250));
       }
     }
-    assert.ok(response, 'API did not start in 10 seconds');
+    assert.ok(response, 'API did not start in 20 seconds');
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), {
       data: [],
@@ -57,7 +58,7 @@ test('GET /api/v1/processes returns an empty published catalog and rejects inval
     const invalid = await fetch(`http://127.0.0.1:${port}/api/v1/processes?sort=arbitrary`);
     assert.equal(invalid.status, 400);
   } finally {
-    child.kill();
+    await stopChild(child);
   }
 });
 

@@ -23,6 +23,7 @@ async function run(name, cwd, script = 'test:e2e') {
 await run('Backend offline E2E fixtures', backendRoot);
 if (process.env.TEST_DATABASE_URL) {
   const testDatabase = new URL(process.env.TEST_DATABASE_URL);
+  const testRedis = process.env.TEST_REDIS_URL ? new URL(process.env.TEST_REDIS_URL) : null;
   if (
     !['127.0.0.1', 'localhost', '[::1]'].includes(testDatabase.hostname) ||
     !/(?:_e2e|_test)$/u.test(testDatabase.pathname.slice(1))
@@ -31,13 +32,20 @@ if (process.env.TEST_DATABASE_URL) {
       'TEST_DATABASE_URL must target loopback and a database ending in _e2e or _test',
     );
   }
+  if (
+    !testRedis ||
+    testRedis.protocol !== 'redis:' ||
+    !['127.0.0.1', 'localhost', '[::1]'].includes(testRedis.hostname)
+  ) {
+    throw new Error('TEST_REDIS_URL must target a local Redis service');
+  }
   await run(
-    'PostgreSQL repository integration (migrations and local seed required)',
+    'PostgreSQL and Redis integration (migrations and local seed required)',
     backendRoot,
-    'test:e2e:repositories',
+    'test:integration',
   );
 } else {
-  console.log('\n=== PostgreSQL integration skipped: TEST_DATABASE_URL is not set ===');
+  console.log('\n=== Database/Redis integration skipped: TEST_DATABASE_URL is not set ===');
 }
 await run('Angular Playwright journeys with mocked API', frontendRoot);
 console.log('\nOffline checks passed; independent suites do not prove one connected pipeline.');

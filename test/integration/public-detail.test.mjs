@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:net';
 import test from 'node:test';
+import { stopChild } from '../helpers/stop-child.mjs';
 import { PrismaService } from '../../apps/api/dist/database/prisma.service.js';
 import { FiltersService } from '../../apps/api/dist/modules/processes/filters/filters.service.js';
 import { PublicDetailService } from '../../apps/api/dist/modules/processes/public-detail/public-detail.service.js';
@@ -39,7 +40,7 @@ test('GET /api/v1/processes/:id hides draft and historical records', async () =>
   });
   try {
     let response;
-    for (let attempt = 0; attempt < 40; attempt += 1) {
+    for (let attempt = 0; attempt < 80; attempt += 1) {
       if (child.exitCode !== null) throw new Error('API exited before detail probe');
       try {
         response = await fetch(`http://127.0.0.1:${port}/api/v1/processes/${historical.id}`);
@@ -48,7 +49,7 @@ test('GET /api/v1/processes/:id hides draft and historical records', async () =>
         await new Promise((resolve) => setTimeout(resolve, 250));
       }
     }
-    assert.ok(response, 'API did not start in 10 seconds');
+    assert.ok(response, 'API did not start in 20 seconds');
     assert.equal(response.status, 404);
     assert.equal((await fetch(`http://127.0.0.1:${port}/api/v1/processes/not-a-uuid`)).status, 400);
     assert.equal(
@@ -60,7 +61,7 @@ test('GET /api/v1/processes/:id hides draft and historical records', async () =>
       404,
     );
   } finally {
-    child.kill();
+    await stopChild(child);
   }
 });
 

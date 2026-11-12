@@ -42,7 +42,7 @@ test('API serves health with configured CORS origin', async () => {
         await new Promise((resolve) => setTimeout(resolve, 250));
       }
     }
-    assert.ok(response, 'API did not start in 10 seconds');
+    assert.ok(response, 'API did not start in 20 seconds');
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('access-control-allow-origin'), 'http://127.0.0.1:4200');
     assert.equal(response.headers.get('x-content-type-options'), 'nosniff');

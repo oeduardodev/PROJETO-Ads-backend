@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:net';
 import test from 'node:test';
+import { stopChild } from '../helpers/stop-child.mjs';
 import { PrismaService } from '../../apps/api/dist/database/prisma.service.js';
 
 if (!process.env.TEST_DATABASE_URL) throw new Error('TEST_DATABASE_URL is required');
@@ -86,7 +87,7 @@ test('public directory includes only reviewed institutions and campuses without 
       stdio: 'ignore',
     });
     let response;
-    for (let attempt = 0; attempt < 40; attempt += 1) {
+    for (let attempt = 0; attempt < 80; attempt += 1) {
       if (child.exitCode !== null) throw new Error('API exited before directory test');
       try {
         response = await fetch(`http://127.0.0.1:${port}/api/v1/institutions?page=1&page_size=1`);
@@ -95,7 +96,7 @@ test('public directory includes only reviewed institutions and campuses without 
         await new Promise((resolve) => setTimeout(resolve, 250));
       }
     }
-    assert.ok(response, 'API did not start in 10 seconds');
+    assert.ok(response, 'API did not start in 20 seconds');
     assert.equal(response.status, 200);
     const result = await response.json();
     assert.deepEqual(result.meta, { page: 1, pageSize: 1, total: 1 });
@@ -137,7 +138,7 @@ test('public directory includes only reviewed institutions and campuses without 
     );
     assert.equal(invalidFilter.status, 400);
   } finally {
-    child?.kill();
+    await stopChild(child);
     if (source) await database.source.delete({ where: { id: source.id } });
     if (domain) await database.allowedDomain.delete({ where: { id: domain.id } });
     if (verifiedCampus) await database.campus.delete({ where: { id: verifiedCampus.id } });

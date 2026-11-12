@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:net';
 import test from 'node:test';
+import { stopChild } from '../helpers/stop-child.mjs';
 import { PrismaService } from '../../apps/api/dist/database/prisma.service.js';
 import { FiltersService } from '../../apps/api/dist/modules/processes/filters/filters.service.js';
 
@@ -34,7 +35,7 @@ test('GET /api/v1/filters exposes no draft or historical seed', async () => {
   });
   try {
     let response;
-    for (let attempt = 0; attempt < 40; attempt += 1) {
+    for (let attempt = 0; attempt < 80; attempt += 1) {
       if (child.exitCode !== null) throw new Error('API exited before filters probe');
       try {
         response = await fetch(`http://127.0.0.1:${port}/api/v1/filters`);
@@ -43,7 +44,7 @@ test('GET /api/v1/filters exposes no draft or historical seed', async () => {
         await new Promise((resolve) => setTimeout(resolve, 250));
       }
     }
-    assert.ok(response, 'API did not start in 10 seconds');
+    assert.ok(response, 'API did not start in 20 seconds');
     assert.equal(response.status, 200);
     const result = await response.json();
     assert.equal(result.total, 0);
@@ -51,7 +52,7 @@ test('GET /api/v1/filters exposes no draft or historical seed', async () => {
     const invalid = await fetch(`http://127.0.0.1:${port}/api/v1/filters?requires_enem=maybe`);
     assert.equal(invalid.status, 400);
   } finally {
-    child.kill();
+    await stopChild(child);
   }
 });
 

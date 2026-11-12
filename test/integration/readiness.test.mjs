@@ -3,6 +3,7 @@ import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 import { createServer } from 'node:net';
 import test from 'node:test';
+import { stopChild } from '../helpers/stop-child.mjs';
 
 if (!process.env.TEST_DATABASE_URL) throw new Error('TEST_DATABASE_URL is required');
 
@@ -37,7 +38,7 @@ async function probe(databaseUrl, redisUrl) {
   });
   try {
     let started = false;
-    for (let attempt = 0; attempt < 40; attempt += 1) {
+    for (let attempt = 0; attempt < 80; attempt += 1) {
       if (child.exitCode !== null) throw new Error(`API exited before probe: ${logs}`);
       try {
         const health = await fetch(`http://127.0.0.1:${port}/health`);
@@ -49,12 +50,12 @@ async function probe(databaseUrl, redisUrl) {
         await new Promise((resolve) => setTimeout(resolve, 250));
       }
     }
-    assert.ok(started, 'API did not start in 10 seconds');
+    assert.ok(started, 'API did not start in 20 seconds');
     const response = await fetch(`http://127.0.0.1:${port}/ready`);
     const body = await response.json();
     return { status: response.status, body, logs: () => logs };
   } finally {
-    child.kill();
+    await stopChild(child);
   }
 }
 

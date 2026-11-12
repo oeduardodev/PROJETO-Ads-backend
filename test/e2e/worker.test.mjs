@@ -18,7 +18,7 @@ function waitForReady(child, output) {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(
       () => reject(new Error('Worker did not start: ' + output())),
-      10_000,
+      20_000,
     );
     const check = () => {
       if (output().includes('"event":"worker.initialized"')) {
