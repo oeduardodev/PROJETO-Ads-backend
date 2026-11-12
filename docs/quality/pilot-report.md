@@ -50,3 +50,9 @@ Não houve fetch automatizado, snapshot, chamada de busca externa ou chamada de 
 - Fonte oficial UEPB: [PROGRAD — processos seletivos](https://uepb.edu.br/prograd/processos-seletivos/); leitura falhou no serviço de navegação, origem não confirmada.
 - Fonte oficial IFPB: [Portal do Estudante — editais](https://estudante.ifpb.edu.br/editais/).
 
+## Releitura manual de índices — 2026-11-11 (America/Sao_Paulo)
+
+Uma nova leitura em navegador somente leitura confirmou a disponibilidade de conteúdo nos índices oficiais da [UFPB](https://www.prg.ufpb.br/editais/ingressantes/), [UFCG](https://comprov.ufcg.edu.br/graduacao.html) e [IFPB](https://estudante.ifpb.edu.br/editais/). A UFPB lista categorias PSRC/PSTV/PSIG/PSE 2027 e também SiSU/SiSU+; a COMPROV lista ingresso derivado, vagas remanescentes e processo de Psicologia 2026 e declara CC BY-ND 3.0; o IFPB mostra editais de pós-graduação e chamadas por campus cuja categoria não pode ser inferida só pelo título. Nenhum documento foi aberto ou baixado e nenhum candidato foi acrescentado ao corpus.
+
+A página da [UEPB](https://uepb.edu.br/prograd/processos-seletivos/) retornou novamente 502 no leitor web. Isso não confirma falha na origem; `robots.txt` das quatro fontes também não foi revalidado diretamente nesta ferramenta. Permanecem os últimos resultados diretos datados de 2026-11-02 na matriz. Todos os conectores continuam `DRAFT`/desativados, sem fetch, snapshot, classificação ou publicação; autorização, termos/licenças e evidência por processo continuam exigindo revisão humana.
+
