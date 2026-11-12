@@ -18,6 +18,7 @@ import {
   UrlFetchProcessor,
 } from './url-fetch.processor.js';
 import { DocumentProcessingProcessor } from './document-processing.processor.js';
+import { DocumentProcessingContentService } from './document-processing-content.service.js';
 
 function workerHttpClient(options: ConstructorParameters<typeof ResponsibleHttpClient>[0]) {
   if (process.env.NODE_ENV === 'test')
@@ -46,6 +47,7 @@ function workerHttpClient(options: ConstructorParameters<typeof ResponsibleHttpC
       useFactory: () => loadWorkerConfig().maxPdfBytes,
     },
     UrlFetchProcessor,
+    DocumentProcessingContentService,
     DocumentProcessingProcessor,
     WorkerJobConsumers,
   ],

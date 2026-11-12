@@ -15,15 +15,15 @@
 | ----------------------- | ----- |
 | Fase                    | F08 — catálogo público / avaliação P0 |
 | Passo                   | 084 — avaliação da release 1.0, RETIDA |
-| Estado                  | Checkpoints 080–084 reavaliados; somente staging local e evidências documentais acrescentados |
-| Data                    | 2026-11-11 (America/Sao_Paulo) |
-| Arquitetura consultada  | Passos 080–084: §§ 4.1–5.2, 10.1–12.2 conforme checkpoint |
-| Roteiro consultado      | Passos 080–084; F08/P0, gates G5 preservados |
-| Commit backend          | `9eb6a02` antes desta avaliação; local, sem push |
-| Commit frontend         | `73a98a8`; local, sem push |
+| Estado                  | Passos 080-084 reavaliados; continuacao do passo 079 conectou parser de fixtures ao resultado de revisao; sem staging externo |
+| Data                    | 2026-11-12 (America/Sao_Paulo) |
+| Arquitetura consultada  | Passos 079 e 080-084; secoes 5.2, 5.4, 6.2, 7.2, 12.1-12.2 e 10.1 conforme checkpoint |
+| Roteiro consultado      | Passos 079 e 080-084; F08/P0, gates G5 preservados |
+| Commit backend          | `46cf3c8` antes desta continuacao; local, sem push |
+| Commit frontend         | `ea0c0a5`; local, sem push |
 | Repositórios            | Git independentes; backend e frontend com commits locais não enviados |
-| Gate                    | G5 PENDENTE: pipeline de negócio não integrado, fontes desativadas, sem staging externo/domínio, curadoria ou autorização de publicação |
-| Próximo passo           | Resolver pendências externas e do pipeline integrado antes de reconsiderar publicação |
+| Gate                    | G5 PENDENTE: parser/classificacao limitados a fixtures autorizadas; extracao externa desligada; sem fluxo unico completo, fontes ativas em producao, staging externo ou aprovacao de publicacao |
+| Proximo passo           | Conectar revisao administrativa ao mesmo fluxo de API/browser e resolver pre-requisitos humanos/operacionais de G5 |
 
 ## Passo 073 - evidencias
 
@@ -785,3 +785,11 @@ The inspected `style-reference.png` defines a poster/collage language: ivory bac
 - UI administrativa `/admin/processing` usa a sessão OIDC existente e o sistema visual de curadoria; apresenta origem, hash, resultados tipados e opções elegíveis, com ação explícita de associação ou criação de rascunho. A rota não é adicionada ao contrato OpenAPI público.
 - Validação final: `corepack pnpm test` backend 208/208; `corepack pnpm test:integration` PostgreSQL/Redis 27/27; `corepack pnpm test:e2e:offline` backend 5/5 + integração 27/27 + Playwright 5/5; frontend 48/48, lint, typecheck, format check e build sem avisos de orçamento; backend lint, typecheck, format check e `openapi:check` PASS. Migration 18 aplicada do zero no banco descartável e seed local, sem tocar `alem_staging`; `git diff --check` PASS.
 - Limites: consumidores continuam retornando placeholders `PENDING_REVIEW`; sem parser/IA real, cotação de conteúdo oficial, evidência de texto, fluxo browser→API end-to-end desta tela ou publicação. A fila administrativa não fecha G2/G5 e o gate G5/release 1.0 segue RETIDO. Migration testada só no banco descartável `alem_step079_review_test`; nenhum dado do staging persistente/produção foi alterado.
+
+#### Continuacao do passo 079 - parser real em fixtures e evidencia para curadoria (2026-11-12)
+
+- ID antes da implementacao: passo 079 (continuidade); backend `46cf3c8`, frontend `ea0c0a5`, ambos limpos. Releitura do checkpoint 079 e arquitetura secoes 5.2, 5.4, 6.2, 7.2 e 12.1-12.2. O roteiro exige replay offline e casos incertos sem publicacao sem aprovacao; ADR 0046 ja estava ACEITO e sua fila propria de artefatos foi preservada.
+- Implementacao restrita a bytes locais de teste: o worker confere SHA-256, proveniencia e autorizacao ativa/revisada do host exato; usa os parsers HTML/PDF e cache versionado existente. A classificacao persiste evidencia textual como `PENDING_REVIEW`; sem conector de IA, nao tenta classificar nem descartar automaticamente. Extracao continua pendente, e bytes oficiais seguem bloqueados sem politica/storage revistos.
+- Integracao BullMQ/PostgreSQL/Redis: fixture HTML autorizada percorreu captura local, `document.classify`, parser/cache, `document.extract`, resultados imutaveis e item OPEN da fila propria. O replay nao duplicou resultados. Nenhum `SelectionProcess` foi criado automaticamente.
+- Validacao final desta rodada: backend `pnpm test` 211/211; `pnpm lint`, `pnpm typecheck`, `pnpm format:check` PASS; `pnpm test:integration` 27/27; `pnpm test:e2e:offline` backend 5/5, PostgreSQL/Redis 27/27, Playwright 5/5. As 18 migrations e seed local foram aplicadas somente ao banco descartavel `alem_step079_test` em loopback; containers removidos apos verificacao. Sem chamadas a fontes oficiais, sem dados publicados e sem alteracao de staging/producao.
+- Limites restantes: o worker ainda nao usa o classificador/extrator IA real; todo conteudo fica pendente, e a tela administrativa nao foi exercitada no mesmo percurso que API publica e navegador. Faltam revisao humana das fontes e amostras, decisao de storage/retencao oficial, hosting/dominio/staging e autorizacao de publicacao. G5 segue PENDENTE e a release 1.0 continua RETIDA; P1/P2 nao iniciados.

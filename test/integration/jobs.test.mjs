@@ -2,10 +2,26 @@ import assert from 'node:assert/strict';
 import { createHash, randomUUID } from 'node:crypto';
 import { createRequire } from 'node:module';
 import test from 'node:test';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
 import { PrismaService } from '../../apps/api/dist/database/prisma.service.js';
-import { DocumentProcessorKind } from '../../apps/api/dist/generated/prisma/enums.js';
+import {
+  DocumentParserKind,
+  DocumentProcessorKind,
+  DocumentProcessingReviewStatus,
+  DiscoveredUrlStatus,
+  Jurisdiction,
+  SourceHealth,
+  SourceKind,
+  SourceStatus,
+  CrawlRunStatus,
+} from '../../apps/api/dist/generated/prisma/enums.js';
+import { DocumentsRepository } from '../../apps/api/dist/modules/documents/documents.repository.js';
+import { FixtureLocalStorage } from '../../apps/api/dist/modules/documents/fixture-local-storage.js';
+import { ParserCacheRepository } from '../../apps/api/dist/modules/documents/cache/parser-cache.repository.js';
 import { ProcessingResultsRepository } from '../../apps/api/dist/modules/documents/processing-results.repository.js';
 import { DocumentProcessingProcessor } from '../../apps/api/dist/modules/jobs/document-processing.processor.js';
+import { DocumentProcessingContentService } from '../../apps/api/dist/modules/jobs/document-processing-content.service.js';
 import { JobsService } from '../../apps/api/dist/modules/jobs/jobs.service.js';
 import {
   DEFAULT_JOB_OPTIONS,
@@ -18,8 +34,14 @@ const redisUrl = process.env.TEST_REDIS_URL || process.env.REDIS_URL || 'redis:/
 const redisConnection = { url: redisUrl, maxRetriesPerRequest: null };
 if (!process.env.TEST_DATABASE_URL) throw new Error('TEST_DATABASE_URL is required');
 process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+const previousNodeEnv = process.env.NODE_ENV;
+process.env.NODE_ENV = 'test';
 const database = new PrismaService();
-test.after(async () => database.$disconnect());
+test.after(async () => {
+  await database.$disconnect();
+  if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+  else process.env.NODE_ENV = previousNodeEnv;
+});
 
 async function waitForState(queue, jobId, expected, timeoutMs = 15_000) {
   const deadline = Date.now() + timeoutMs;
@@ -109,17 +131,31 @@ test('classification persists before enqueueing extraction and both jobs replay 
   const prefix = 'test-step079-' + randomUUID();
   const queues = createJobQueues(redisUrl, prefix);
   const service = new JobsService(queues);
-  const databaseDocumentId = randomUUID();
-  const bytesIdentity = 'step079:' + randomUUID();
-  const sha256 = createHash('sha256').update(bytesIdentity).digest('hex');
-  const storageKey = 'fixture-local/' + sha256;
-  const documentUrl = 'fixture://local/step079/' + randomUUID();
+  let databaseDocumentId;
+  const suffix = randomUUID().replaceAll('-', '').slice(0, 10).toUpperCase();
+  const institutionId = randomUUID();
+  const allowedDomainId = randomUUID();
+  const sourceId = randomUUID();
+  const crawlRunId = randomUUID();
+  const discoveredUrlId = randomUUID();
+  const sourceHost = 'www.example.test';
+  const canonicalUrl = `https://${sourceHost}/step079/${randomUUID()}`;
+  const bytes = Buffer.from(
+    '<!doctype html><html><body><main><h1>Graduation selection</h1><p>Independent selection for undergraduate admission.</p></main></body></html>',
+  );
+  const storage = new FixtureLocalStorage(
+    join(tmpdir(), 'alem-do-sisu-worker-fixtures', String(process.pid)),
+  );
+  const documents = new DocumentsRepository(database);
+  const sha256 = createHash('sha256').update(bytes).digest('hex');
+  let fixtureDocument;
   const events = ['document.classify', 'document.extract'].map(
     (queueName) => new QueueEvents(queueName, { connection: redisConnection, prefix }),
   );
   const processing = new DocumentProcessingProcessor(
     new ProcessingResultsRepository(database),
     service,
+    new DocumentProcessingContentService(database, new ParserCacheRepository(database)),
   );
   const classifyWorker = new Worker('document.classify', (job) => processing.classify(job), {
     connection: redisConnection,
@@ -131,32 +167,79 @@ test('classification persists before enqueueing extraction and both jobs replay 
   });
 
   try {
-    await database.documentBlob.create({
-      data: { sha256, storageKey, byteLength: 1 },
-    });
-    await database.document.create({
+    await database.institution.create({
       data: {
-        id: databaseDocumentId,
-        url: documentUrl,
-        sha256,
-        storageKey,
-        mediaType: 'application/pdf',
-        version: 1,
+        id: institutionId,
+        name: `Fixture Institution ${suffix}`,
+        normalizedName: `fixture institution ${suffix.toLowerCase()}`,
+        acronym: `T${suffix}`,
+        jurisdiction: Jurisdiction.FEDERAL,
       },
     });
-    await Promise.all([
-      ...events.map((event) => event.waitUntilReady()),
-      classifyWorker.waitUntilReady(),
-      extractWorker.waitUntilReady(),
-    ]);
+    await database.allowedDomain.create({
+      data: {
+        id: allowedDomainId,
+        institutionId,
+        host: sourceHost,
+        evidenceUrl: `https://${sourceHost}/about`,
+        reviewedAt: new Date(),
+        collectionAllowed: true,
+      },
+    });
+    await database.source.create({
+      data: {
+        id: sourceId,
+        institutionId,
+        allowedDomainId,
+        url: `https://${sourceHost}/index`,
+        kind: SourceKind.HTML_INDEX,
+        status: SourceStatus.ACTIVE,
+        health: SourceHealth.HEALTHY,
+      },
+    });
+    await database.crawlRun.create({
+      data: {
+        id: crawlRunId,
+        sourceId,
+        status: CrawlRunStatus.SUCCEEDED,
+        success: true,
+        startedAt: new Date(),
+        finishedAt: new Date(),
+      },
+    });
+    await database.discoveredUrl.create({
+      data: {
+        id: discoveredUrlId,
+        canonicalUrl,
+        status: DiscoveredUrlStatus.CANDIDATE,
+        observations: {
+          create: { sourceId, crawlRunId },
+        },
+      },
+    });
+    fixtureDocument = await documents.recordFixtureSnapshot({
+      url: `fixture://local/candidate/${discoveredUrlId}`,
+      discoveredUrlId,
+      mediaType: 'text/html',
+      bytes,
+      storage,
+    });
+    databaseDocumentId = fixtureDocument.id;
+    await Promise.all(
+      [
+        events.map((event) => event.waitUntilReady()),
+        classifyWorker.waitUntilReady(),
+        extractWorker.waitUntilReady(),
+      ].flat(),
+    );
 
-    const classifyJob = await service.enqueueDocumentClassify(databaseDocumentId, sha256);
+    const classifyJob = await service.enqueueDocumentClassify(fixtureDocument.id, sha256);
     await waitForState(queues['document.classify'], classifyJob.id, 'completed');
-    const extractJobId = `document-extract-${databaseDocumentId}-v1`;
+    const extractJobId = `document-extract-${fixtureDocument.id}-v1`;
     await waitForState(queues['document.extract'], extractJobId, 'completed');
 
     const persisted = await database.documentProcessingResult.findMany({
-      where: { documentId: databaseDocumentId },
+      where: { documentId: fixtureDocument.id },
       orderBy: { processorKind: 'asc' },
     });
     assert.deepEqual(
@@ -165,34 +248,58 @@ test('classification persists before enqueueing extraction and both jobs replay 
     );
     assert.ok(persisted.every((result) => result.status === 'PENDING_REVIEW'));
     assert.ok(persisted.every((result) => result.sha256 === sha256 && result.schemaVersion === 1));
-    const [reviewItem] = await database.documentProcessingReviewItem.findMany({
-      where: { documentId: databaseDocumentId, sha256 },
+    const classification = persisted.find(
+      (result) => result.processorKind === DocumentProcessorKind.CLASSIFICATION,
+    );
+    assert.equal(classification.resultJson.reason, 'SCOPE_REQUIRES_HUMAN_REVIEW');
+    assert.equal(
+      classification.resultJson.result.evidence[0].excerpt,
+      'Graduation selection\nIndependent selection for undergraduate admission.',
+    );
+    assert.equal(
+      await database.documentParseCache.count({
+        where: { sha256, parserKind: DocumentParserKind.HTML_DOCUMENT, parserVersion: 1 },
+      }),
+      1,
+    );
+    const reviewItem = await database.documentProcessingReviewItem.findUniqueOrThrow({
+      where: { documentId_sha256: { documentId: fixtureDocument.id, sha256 } },
     });
-    assert.equal(reviewItem.status, 'OPEN');
-    assert.equal(reviewItem.discoveredUrlId, null);
+    assert.equal(reviewItem.status, DocumentProcessingReviewStatus.OPEN);
+    assert.equal(reviewItem.discoveredUrlId, discoveredUrlId);
     assert.equal(reviewItem.processId, null);
 
-    const replay = await service.enqueueDocumentClassify(databaseDocumentId, sha256);
+    const replay = await service.enqueueDocumentClassify(fixtureDocument.id, sha256);
     assert.equal(replay.id, classifyJob.id);
     assert.equal(
-      await database.documentProcessingResult.count({ where: { documentId: databaseDocumentId } }),
+      await database.documentProcessingResult.count({ where: { documentId: fixtureDocument.id } }),
       2,
     );
   } finally {
     await Promise.all([
       classifyWorker.close(),
       extractWorker.close(),
-      ...events.map((e) => e.close()),
+      ...events.map((event) => event.close()),
     ]);
     await Promise.all(Object.values(queues).map((queue) => queue.obliterate({ force: true })));
     await service.onApplicationShutdown();
-    await database.documentProcessingReviewItem.deleteMany({
-      where: { documentId: databaseDocumentId },
-    });
-    await database.documentProcessingResult.deleteMany({
-      where: { documentId: databaseDocumentId },
-    });
-    await database.document.deleteMany({ where: { id: databaseDocumentId } });
-    await database.documentBlob.deleteMany({ where: { sha256 } });
+    if (databaseDocumentId) {
+      await database.documentProcessingReviewItem.deleteMany({
+        where: { documentId: databaseDocumentId },
+      });
+      await database.documentProcessingResult.deleteMany({
+        where: { documentId: databaseDocumentId },
+      });
+      await database.document.deleteMany({ where: { id: databaseDocumentId } });
+      await database.documentParseCache.deleteMany({ where: { sha256 } });
+      await database.documentBlob.deleteMany({ where: { sha256 } });
+      await storage.delete(storage.identify(bytes).storageKey);
+    }
+    await database.discoveryObservation.deleteMany({ where: { discoveredUrlId } });
+    await database.discoveredUrl.deleteMany({ where: { id: discoveredUrlId } });
+    await database.crawlRun.deleteMany({ where: { id: crawlRunId } });
+    await database.source.deleteMany({ where: { id: sourceId } });
+    await database.allowedDomain.deleteMany({ where: { id: allowedDomainId } });
+    await database.institution.deleteMany({ where: { id: institutionId } });
   }
 });

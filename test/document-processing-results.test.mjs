@@ -118,6 +118,18 @@ test('document job consumers persist conservative review results without enablin
         return { id: 'document-extract-job' };
       },
     },
+    {
+      async parseFixture(id, hash) {
+        assert.equal(id, documentId);
+        assert.equal(hash, sha256);
+        return {
+          title: 'Página de seleção',
+          excerpts: [
+            { pageOrSection: 'Inscrições', text: 'Seleção própria para ingresso na graduação.' },
+          ],
+        };
+      },
+    },
   );
   await processor.classify({ data: { documentId, sha256 } });
   await processor.extract({ data: { documentId, schemaVersion: 1 } });
@@ -131,7 +143,11 @@ test('document job consumers persist conservative review results without enablin
     recorded.map((item) => item.processorKind),
     [DocumentProcessorKind.CLASSIFICATION, DocumentProcessorKind.EXTRACTION],
   );
-  assert.equal(recorded[0].result.reason, 'CLASSIFICATION_CONNECTOR_NOT_CONFIGURED');
-  assert.equal(recorded[1].result.reason, 'EXTRACTION_CONNECTOR_NOT_CONFIGURED');
+  assert.equal(recorded[0].result.reason, 'SCOPE_REQUIRES_HUMAN_REVIEW');
+  assert.equal(
+    recorded[0].result.result.evidence[0].excerpt,
+    'Seleção própria para ingresso na graduação.',
+  );
+  assert.equal(recorded[1].result.reason, 'AI_PROVIDER_DISABLED');
   assert.deepEqual(enqueued, [{ documentId, schemaVersion: 1 }]);
 });
