@@ -91,16 +91,25 @@ test('processing results reject a hash that does not match the document', async 
 
 test('document job consumers persist conservative review results without enabling external AI', async () => {
   const recorded = [];
-  const processor = new DocumentProcessingProcessor({
-    async documentHash(id) {
-      assert.equal(id, documentId);
-      return sha256;
+  const enqueued = [];
+  const processor = new DocumentProcessingProcessor(
+    {
+      async documentHash(id) {
+        assert.equal(id, documentId);
+        return sha256;
+      },
+      async recordImmutable(input) {
+        recorded.push(input);
+        return input;
+      },
     },
-    async recordImmutable(input) {
-      recorded.push(input);
-      return input;
+    {
+      async enqueueDocumentExtract(documentId, schemaVersion) {
+        enqueued.push({ documentId, schemaVersion });
+        return { id: 'document-extract-job' };
+      },
     },
-  });
+  );
   await processor.classify({ data: { documentId, sha256 } });
   await processor.extract({ data: { documentId, schemaVersion: 1 } });
 
@@ -115,4 +124,5 @@ test('document job consumers persist conservative review results without enablin
   );
   assert.equal(recorded[0].result.reason, 'CLASSIFICATION_CONNECTOR_NOT_CONFIGURED');
   assert.equal(recorded[1].result.reason, 'EXTRACTION_CONNECTOR_NOT_CONFIGURED');
+  assert.deepEqual(enqueued, [{ documentId, schemaVersion: 1 }]);
 });

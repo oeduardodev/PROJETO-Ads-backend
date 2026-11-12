@@ -16,6 +16,6 @@ Os contadores em memória reiniciam com o processo. Medidas persistentes de font
 
 ## Limites conhecidos
 
-- Os consumers `source.refresh`, `url.fetch`, `document.classify` e `document.extract` existem. Os dois últimos persistem resultados tipados, mas sem parser/contexto/conector ativado retornam `PENDING_REVIEW`; não há evidência de rastreamento vivo ponta a ponta de descoberta até curadoria/publicação.
+- Os consumers `source.refresh`, `url.fetch`, `document.classify` e `document.extract` existem. `document.classify` persiste antes de enfileirar extração. Os dois últimos persistem resultados tipados, mas sem parser/contexto/conector ativado retornam `PENDING_REVIEW`; não há evidência de rastreamento vivo ponta a ponta de descoberta até curadoria/publicação.
 - Alertas são regras de avaliação, não notificações enviadas. Destino, retenção de logs, dashboards e exporter de métricas do worker dependem da infraestrutura de homologaçao.
 - O alerta de zero candidatos continua sendo aviso de revisão, não incidente automático, conforme ADR 0023.
