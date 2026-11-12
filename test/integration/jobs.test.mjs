@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { PrismaService } from '../../apps/api/dist/database/prisma.service.js';
 import {
+  AdminRole,
   DocumentParserKind,
   DocumentProcessorKind,
   DocumentProcessingReviewStatus,
@@ -23,6 +24,7 @@ import { ProcessingResultsRepository } from '../../apps/api/dist/modules/documen
 import { DocumentProcessingProcessor } from '../../apps/api/dist/modules/jobs/document-processing.processor.js';
 import { DocumentProcessingContentService } from '../../apps/api/dist/modules/jobs/document-processing-content.service.js';
 import { JobsService } from '../../apps/api/dist/modules/jobs/jobs.service.js';
+import { ProcessingReviewService } from '../../apps/api/dist/modules/reviews/processing-review.service.js';
 import {
   DEFAULT_JOB_OPTIONS,
   createJobQueues,
@@ -149,6 +151,9 @@ test('classification persists before enqueueing extraction and both jobs replay 
   const documents = new DocumentsRepository(database);
   const sha256 = createHash('sha256').update(bytes).digest('hex');
   let fixtureDocument;
+  let processingReviewItemId;
+  let admin;
+  let reviewedProcessId;
   const events = ['document.classify', 'document.extract'].map(
     (queueName) => new QueueEvents(queueName, { connection: redisConnection, prefix }),
   );
@@ -174,6 +179,7 @@ test('classification persists before enqueueing extraction and both jobs replay 
         normalizedName: `fixture institution ${suffix.toLowerCase()}`,
         acronym: `T${suffix}`,
         jurisdiction: Jurisdiction.FEDERAL,
+        verifiedAt: new Date(),
       },
     });
     await database.allowedDomain.create({
@@ -265,9 +271,48 @@ test('classification persists before enqueueing extraction and both jobs replay 
     const reviewItem = await database.documentProcessingReviewItem.findUniqueOrThrow({
       where: { documentId_sha256: { documentId: fixtureDocument.id, sha256 } },
     });
+    processingReviewItemId = reviewItem.id;
     assert.equal(reviewItem.status, DocumentProcessingReviewStatus.OPEN);
     assert.equal(reviewItem.discoveredUrlId, discoveredUrlId);
     assert.equal(reviewItem.processId, null);
+
+    admin = await database.adminUser.create({
+      data: {
+        issuer: `https://issuer-${suffix}.example.test`,
+        subject: `curator-${suffix}`,
+        role: AdminRole.CURATOR,
+      },
+    });
+    const resolution = await new ProcessingReviewService(database).resolve(
+      reviewItem.id,
+      {
+        expectedReviewVersion: 0,
+        institutionId,
+        reason: 'Review fixture evidence and begin a private draft.',
+      },
+      { id: admin.id, issuer: admin.issuer, subject: admin.subject, requestId: suffix },
+    );
+    reviewedProcessId = resolution.processId;
+    assert.equal(resolution.status, 'RESOLVED');
+    assert.equal(resolution.reviewVersion, 1);
+    const draft = await database.selectionProcess.findUniqueOrThrow({
+      where: { id: reviewedProcessId },
+    });
+    assert.equal(draft.publicationStatus, 'RASCUNHO');
+    assert.equal(draft.ingestionState, 'NEEDS_REVIEW');
+    assert.equal(draft.referenceUrl, canonicalUrl);
+    assert.equal(draft.noticeCode, null);
+    assert.equal(
+      await database.auditEvent.count({
+        where: { resourceType: 'DocumentProcessingReviewItem', resourceId: reviewItem.id },
+      }),
+      1,
+    );
+    const resolvedItem = await database.documentProcessingReviewItem.findUniqueOrThrow({
+      where: { id: reviewItem.id },
+    });
+    assert.equal(resolvedItem.status, DocumentProcessingReviewStatus.RESOLVED);
+    assert.equal(resolvedItem.processId, reviewedProcessId);
 
     const replay = await service.enqueueDocumentClassify(fixtureDocument.id, sha256);
     assert.equal(replay.id, classifyJob.id);
@@ -284,12 +329,24 @@ test('classification persists before enqueueing extraction and both jobs replay 
     await Promise.all(Object.values(queues).map((queue) => queue.obliterate({ force: true })));
     await service.onApplicationShutdown();
     if (databaseDocumentId) {
+      if (processingReviewItemId) {
+        await database.auditEvent.deleteMany({
+          where: {
+            resourceType: 'DocumentProcessingReviewItem',
+            resourceId: processingReviewItemId,
+          },
+        });
+      }
       await database.documentProcessingReviewItem.deleteMany({
         where: { documentId: databaseDocumentId },
       });
       await database.documentProcessingResult.deleteMany({
         where: { documentId: databaseDocumentId },
       });
+      if (reviewedProcessId) {
+        await database.selectionProcess.delete({ where: { id: reviewedProcessId } });
+      }
+      if (admin) await database.adminUser.delete({ where: { id: admin.id } });
       await database.document.deleteMany({ where: { id: databaseDocumentId } });
       await database.documentParseCache.deleteMany({ where: { sha256 } });
       await database.documentBlob.deleteMany({ where: { sha256 } });
