@@ -21,7 +21,7 @@ export function publishedProcessWhere(query: FilterQuery): Prisma.SelectionProce
     referenceUrl: { not: null },
     selectionType: { not: null },
     verifiedAt: { not: null },
-    reviewDecisions: { some: { decision: 'APPROVE' } },
+    reviewDecisions: { some: { decision: { in: ['APPROVE', 'APPROVED_AND_PUBLISHED'] } } },
     institution: {
       is: {
         publicFlag: true,

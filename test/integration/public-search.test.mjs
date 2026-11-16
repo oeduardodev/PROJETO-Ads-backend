@@ -125,7 +125,7 @@ test('published search handles accents, null ENEM, precise windows, sort and sta
             data: {
               processId: process.id,
               reviewerId: 'fixture-only',
-              decision: 'APPROVE',
+              decision: 'APPROVED_AND_PUBLISHED',
               reason: 'Transação sintética revertida',
             },
           });

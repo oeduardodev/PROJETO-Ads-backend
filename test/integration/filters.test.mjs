@@ -127,7 +127,7 @@ test('facets count distinct published processes under combined filters and hide 
             data: {
               processId: process.id,
               reviewerId: 'fixture-only',
-              decision: 'APPROVE',
+              decision: 'APPROVED_AND_PUBLISHED',
               reason: 'Transação sintética revertida após o teste',
             },
           });

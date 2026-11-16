@@ -122,7 +122,7 @@ test('detail, list and facets expose only links on reviewed active exact hosts',
             data: {
               processId: process.id,
               reviewerId: 'private-reviewer',
-              decision: 'APPROVE',
+              decision: 'APPROVED_AND_PUBLISHED',
               reason: 'private-review-reason',
             },
           });

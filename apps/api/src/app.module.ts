@@ -21,6 +21,7 @@ import { AuthzModule } from './modules/authz/authz.module.js';
 import { DatabaseModule } from './database/database.module.js';
 import { ApiRateLimitModule } from './common/security/api-rate-limit.module.js';
 import { ObservabilityModule } from './observability/observability.module.js';
+import { OfficialFeedModule } from './modules/official-feed/official-feed.module.js';
 
 @Module({
   imports: [
@@ -46,6 +47,7 @@ import { ObservabilityModule } from './observability/observability.module.js';
     AuthModule,
     AuthzModule,
     ObservabilityModule,
+    OfficialFeedModule,
   ],
 })
 export class AppModule {}
