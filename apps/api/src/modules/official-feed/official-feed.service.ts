@@ -27,11 +27,15 @@ const UEPB_SEARCH_TERMS = [
 ] as const;
 
 export interface OfficialFeedItem {
+  institutionId?: number;
   institution: string;
+  state?: string;
   title: string;
   url: string;
   category: (typeof CATEGORIES)[number];
   checkedAt: string;
+  pageKind?: 'edital' | 'selection_page';
+  sourceUrl?: string;
 }
 
 interface Candidate {
@@ -69,18 +73,30 @@ function robotsAllows(content: string, path: string): boolean {
 export class OfficialFeedService implements OnModuleInit, OnApplicationShutdown {
   private readonly logger = new Logger(OfficialFeedService.name);
   private items: OfficialFeedItem[] = [];
+  private nationalItems: OfficialFeedItem[] = [];
+  private nationalCheckedAt: string | null = null;
+  private nationalSourceCount = 0;
   private timer: NodeJS.Timeout | undefined;
   private running = false;
   private checkedAt: string | null = null;
 
   async onModuleInit(): Promise<void> {
-    if (!process.env.LLM_PROVIDER_KEY) return;
+    await this.loadNationalSnapshot();
+    if (!process.env.LLM_PROVIDER_KEY) {
+      this.startTimer();
+      return;
+    }
     await this.loadCached();
     if (!this.checkedAt || Date.now() - Date.parse(this.checkedAt) >= INTERVAL_MS) {
       void this.refresh();
     }
+    this.startTimer();
+  }
+
+  private startTimer(): void {
     this.timer = setInterval(
       () => {
+        void this.loadNationalSnapshot();
         if (!this.checkedAt || Date.now() - Date.parse(this.checkedAt) >= INTERVAL_MS) {
           void this.refresh();
         }
@@ -95,7 +111,82 @@ export class OfficialFeedService implements OnModuleInit, OnApplicationShutdown 
   }
 
   snapshot(): { items: OfficialFeedItem[]; checkedAt: string | null; sourceCount: number } {
-    return { items: [...this.items], checkedAt: this.checkedAt, sourceCount: SOURCES.length };
+    const merged = new Map<string, OfficialFeedItem>();
+    for (const item of [...this.nationalItems, ...this.items]) merged.set(item.url, item);
+    const checkedAt =
+      [this.nationalCheckedAt, this.checkedAt]
+        .filter((value): value is string => !!value)
+        .sort()
+        .at(-1) ?? null;
+    return {
+      items: [...merged.values()],
+      checkedAt,
+      sourceCount: SOURCES.length + this.nationalSourceCount,
+    };
+  }
+
+  private nationalPath(): string {
+    return (
+      process.env.NATIONAL_OFFICIAL_FEED_PATH ||
+      join(process.cwd(), '..', 'frontend', 'apps', 'web', 'public', 'official-feed.json')
+    );
+  }
+
+  private async loadNationalSnapshot(): Promise<void> {
+    try {
+      const raw: unknown = JSON.parse(await readFile(this.nationalPath(), 'utf8'));
+      if (!raw || typeof raw !== 'object') return;
+      const data = raw as {
+        version?: unknown;
+        checkedAt?: unknown;
+        sourceCount?: unknown;
+        items?: unknown;
+      };
+      if (data.version !== 1 || !Array.isArray(data.items)) return;
+      const valid = data.items.filter((item): item is OfficialFeedItem => {
+        if (!item || typeof item !== 'object') return false;
+        const value = item as Partial<OfficialFeedItem>;
+        if (
+          !Number.isSafeInteger(value.institutionId) ||
+          typeof value.institution !== 'string' ||
+          typeof value.title !== 'string' ||
+          typeof value.url !== 'string' ||
+          typeof value.sourceUrl !== 'string' ||
+          typeof value.checkedAt !== 'string' ||
+          !Number.isFinite(Date.parse(value.checkedAt)) ||
+          !CATEGORIES.includes(value.category!)
+        )
+          return false;
+        try {
+          const link = new URL(value.url);
+          const source = new URL(value.sourceUrl);
+          return (
+            link.protocol === 'https:' &&
+            source.protocol === 'https:' &&
+            link.hostname === source.hostname &&
+            !link.username &&
+            !link.password &&
+            !link.port &&
+            !source.username &&
+            !source.password &&
+            !source.port
+          );
+        } catch {
+          return false;
+        }
+      });
+      this.nationalItems = valid;
+      this.nationalCheckedAt =
+        typeof data.checkedAt === 'string' && Number.isFinite(Date.parse(data.checkedAt))
+          ? data.checkedAt
+          : null;
+      this.nationalSourceCount =
+        Number.isSafeInteger(data.sourceCount) && Number(data.sourceCount) >= 0
+          ? Number(data.sourceCount)
+          : 0;
+    } catch {
+      // Keep the last valid snapshot if the file is missing or being replaced.
+    }
   }
 
   async refresh(): Promise<void> {
@@ -263,7 +354,15 @@ export class OfficialFeedService implements OnModuleInit, OnApplicationShutdown 
     try {
       await mkdir(dirname(path), { recursive: true });
       const temp = `${path}.${process.pid}.tmp`;
-      await writeFile(temp, JSON.stringify(this.snapshot()), 'utf8');
+      await writeFile(
+        temp,
+        JSON.stringify({
+          items: this.items,
+          checkedAt: this.checkedAt,
+          sourceCount: SOURCES.length,
+        }),
+        'utf8',
+      );
       await rename(temp, path);
     } catch (error) {
       this.logger.warn(

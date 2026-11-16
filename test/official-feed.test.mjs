@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { OfficialFeedService } from '../apps/api/dist/modules/official-feed/official-feed.service.js';
@@ -34,8 +34,10 @@ test('last valid official feed survives a restart without making a new Gemini ca
   const folder = await mkdtemp(join(tmpdir(), 'alem-official-feed-'));
   const oldKey = process.env.LLM_PROVIDER_KEY;
   const oldCache = process.env.OFFICIAL_FEED_CACHE_PATH;
+  const oldNational = process.env.NATIONAL_OFFICIAL_FEED_PATH;
   process.env.LLM_PROVIDER_KEY = 'test-only';
   process.env.OFFICIAL_FEED_CACHE_PATH = join(folder, 'feed.json');
+  process.env.NATIONAL_OFFICIAL_FEED_PATH = join(folder, 'missing-national.json');
   try {
     const first = new OfficialFeedService();
     first.fetchUepbCandidates = async () => [];
@@ -69,6 +71,59 @@ test('last valid official feed survives a restart without making a new Gemini ca
     else process.env.LLM_PROVIDER_KEY = oldKey;
     if (oldCache === undefined) delete process.env.OFFICIAL_FEED_CACHE_PATH;
     else process.env.OFFICIAL_FEED_CACHE_PATH = oldCache;
+    if (oldNational === undefined) delete process.env.NATIONAL_OFFICIAL_FEED_PATH;
+    else process.env.NATIONAL_OFFICIAL_FEED_PATH = oldNational;
+    await rm(folder, { recursive: true, force: true });
+  }
+});
+
+test('serves the national snapshot without Gemini or a database and rejects foreign links', async () => {
+  const folder = await mkdtemp(join(tmpdir(), 'alem-national-feed-'));
+  const oldPath = process.env.NATIONAL_OFFICIAL_FEED_PATH;
+  const oldKey = process.env.LLM_PROVIDER_KEY;
+  const path = join(folder, 'official-feed.json');
+  process.env.NATIONAL_OFFICIAL_FEED_PATH = path;
+  delete process.env.LLM_PROVIDER_KEY;
+  await writeFile(
+    path,
+    JSON.stringify({
+      version: 1,
+      checkedAt: '2026-11-16T00:00:00.000Z',
+      sourceCount: 2,
+      items: [
+        {
+          institutionId: 29,
+          institution: 'UECE',
+          state: 'CE',
+          title: 'Ingresso de graduados 2026',
+          url: 'https://www.uece.br/ingresso-de-graduados/',
+          category: 'Ingresso de graduados',
+          sourceUrl: 'https://www.uece.br/',
+          checkedAt: '2026-11-16T00:00:00.000Z',
+        },
+        {
+          institutionId: 29,
+          institution: 'UECE',
+          title: 'Link indevido',
+          url: 'https://example.test/edital/',
+          category: 'Ingresso de graduados',
+          sourceUrl: 'https://www.uece.br/',
+          checkedAt: '2026-11-16T00:00:00.000Z',
+        },
+      ],
+    }),
+  );
+  try {
+    const service = new OfficialFeedService();
+    await service.onModuleInit();
+    assert.equal(service.snapshot().items.length, 1);
+    assert.equal(service.snapshot().sourceCount, 6);
+    service.onApplicationShutdown();
+  } finally {
+    if (oldPath === undefined) delete process.env.NATIONAL_OFFICIAL_FEED_PATH;
+    else process.env.NATIONAL_OFFICIAL_FEED_PATH = oldPath;
+    if (oldKey === undefined) delete process.env.LLM_PROVIDER_KEY;
+    else process.env.LLM_PROVIDER_KEY = oldKey;
     await rm(folder, { recursive: true, force: true });
   }
 });
